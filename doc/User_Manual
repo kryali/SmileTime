@@ -1,0 +1,12 @@
+This document is expected to introduce how this program is built and run. 
+
+BUILD:
+1. Compile and build the program by "make". 
+2. Clean the previous build by "make clean". 
+3. You need to give more information if you use any open source libraries. Don't assume the TA's computer has the same libraries as yours. You should include libraries and modify Makefile, of tell instructions on how to install those libraries. 
+
+RUN: 
+1. There are two binaries built: recorder and player. 
+2. recorder only takes on parameter, the file name that all video and audio data will be recorded to. Press CTRL+C to stop recording. 
+3. player only takes on parameter, the file name that it reads all video and audio data. Press CTRL+C to stop playing. Otherwise the player will quit until the whole file is played. 
+4. Add detail instructions on how to test any feature you have implemented. 
