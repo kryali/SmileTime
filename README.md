@@ -1,3 +1,4 @@
+#Hello World
 This package is provided as an example of how you should prepare your MP submission. You should put all your source code files to "src" and documentation files to "doc". Then create a zip of tar ball for the whole directory. 
 
 The files in src can actually be compiled by "make" and the binary execution can be run. The source codes give some ideas on how your program flow can be. Of course, the actual implementation is much more complex than my sample. But if you are new to Makefile or unfamilar with Linux programming, you can just use my Makefile and add more codes to existing files. 
