@@ -109,7 +109,7 @@ void video_record_init()
 	}
 
 	printf ("Current input: %s\n", input.name);
-
+	video_frame_init(defaultRect.width, defaultRect.height, 4);
 	video_frame_copy();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }

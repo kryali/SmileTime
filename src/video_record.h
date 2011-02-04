@@ -2,4 +2,4 @@ void video_record_init();
 void video_frame_copy();
 void video_frame_compress();
 void video_close();
-void video_frame_init();
+void video_frame_init(int width, int height, int pixel_bytes);
