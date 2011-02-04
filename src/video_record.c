@@ -28,6 +28,7 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 int camera_fd = -1;
 char* camera_name = "/dev/video";
 size_t frame_size;
+size_t pixel_size;
 char* frame_buffer;
 
 //This function initialize the camera device and V4L2 interface
@@ -106,10 +107,6 @@ void video_record_init()
 
 	printf ("Current input: %s\n", input.name);
 
-	//somehow find frame size from camera?
-	frame_size = 1024;//not sure what this should be
-	frame_buffer = malloc(frame_size);
-
 	video_frame_copy();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
@@ -142,4 +139,11 @@ void video_close()
 	{
 		printf("error closing: %d\n", camera_fd);
 	}
+}
+
+void video_frame_init(int width, int height, int pixel_bytes)
+{
+	frame_size = width*height;
+	pixel_size = pixel_bytes;
+	frame_buffer = malloc(frame_size * pixel_size);
 }
