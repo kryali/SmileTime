@@ -14,6 +14,11 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 
+#ifndef V4L2_PIX_FMT_PJPG
+#define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
+#endif
+
+
 //SOURCES:
 /*
 http://v4l2spec.bytesex.org/spec/book1.htm
@@ -63,7 +68,7 @@ void video_record_init()
 	
 	// Grab the default dimensions
 	struct v4l2_rect defaultRect;
-	defaultRect = crop.defrect;
+	defaultRect = crop.bounds;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
 
@@ -72,7 +77,7 @@ void video_record_init()
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	format.fmt.pix.width = defaultRect.width;
 	format.fmt.pix.height = defaultRect.height;
-//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
+	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
 
 	if(ioctl(camera_fd, VIDIOC_G_FMT, &format) == -1){
 		printf("Format not supported\n");
@@ -80,7 +85,7 @@ void video_record_init()
 	}
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
-	printf("Image Width: %d",pix_format.width);
+	printf("Image Width: %d\n",pix_format.width);
 
 	//found these online
 	struct v4l2_input input;
@@ -105,15 +110,16 @@ void video_record_init()
 	frame_size = 1024;//not sure what this should be
 	frame_buffer = malloc(frame_size);
 
-
-
+	video_frame_copy();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
 void video_frame_copy()
 {
-	read(camera_fd, frame_buffer, frame_size);
+	if( read(camera_fd, frame_buffer, frame_size)==-1){
+		perror("read");
+	}
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
