@@ -27,7 +27,6 @@ void onExit()
 
 int main(int argc, char*argv[])
 {
-	video_record_init();
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
         usage();
@@ -41,7 +40,7 @@ int main(int argc, char*argv[])
     video_record_init();
     video_play_init();
     audio_record_init();
-
+/*
     while(stopRecording == 0)
     {
         video_frame_copy();
@@ -56,6 +55,7 @@ int main(int argc, char*argv[])
         printf("[MAIN] One frame has bee captured, sleep for a while and continue...\n");
         usleep(1000000);
     }
+*/
 
     printf("[MAIN] Quit recorder\n");
     return 0;
