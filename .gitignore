@@ -10,3 +10,7 @@
 *.lai
 *.la
 *.a
+
+# Executables
+src/recorder
+src/player
