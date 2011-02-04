@@ -33,10 +33,27 @@ void video_record_init()
 		printf("Couldn't get cropping info\n");
 		perror("ioctl");
 	}
+	
+	// Grab the default dimensions
 	struct v4l2_rect defaultRect;
 	defaultRect = crop.defrect;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
+
+	// Set the format of the image from the video
+	struct v4l2_format format;
+	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	format.fmt.pix.width = defaultRect.width;
+	format.fmt.pix.height = defaultRect.height;
+//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
+
+	if(ioctl(fd, VIDIOC_G_FMT, &format) == -1){
+		printf("Format not supported\n");
+		perror("ioctl");
+	}
+	struct v4l2_pix_format pix_format;
+	pix_format = format.fmt.pix;
+	printf("Image Width: %d",pix_format.width);
 
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
