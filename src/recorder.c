@@ -21,12 +21,13 @@ void usage()
 void onExit()
 {
     printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
-
+    video_close();
     stopRecording = 1;
 }
 
 int main(int argc, char*argv[])
 {
+	video_record_init();
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
         usage();
