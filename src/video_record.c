@@ -1,8 +1,14 @@
 #include <stdio.h>
+#include <sys/ioctl.h>
 
 void video_record_init()
 {
-    printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
+	int fd;
+	struct v4l2_capability;
+	if(ioctl(fd, VIDIOC_QUERYCAP, &v4l2_capability)==-1){
+		perror("ioctl");
+	}
+    //kkkoprintf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
 
 void video_frame_copy()
