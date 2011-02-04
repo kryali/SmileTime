@@ -57,6 +57,9 @@ void video_record_init()
 	if( !(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ){
 		printf("No video capture capabilities!\n");
 	}
+	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
+		printf("No read/writecapabilities!\n");
+	}
 
 	// Get information about the video cropping and scaling abilities
 	struct v4l2_cropcap crop;
@@ -79,7 +82,7 @@ void video_record_init()
 	format.fmt.pix.height = defaultRect.height;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
 
-	if(ioctl(camera_fd, VIDIOC_G_FMT, &format) == -1){
+	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		printf("Format not supported\n");
 		perror("ioctl");
 	}
@@ -131,6 +134,7 @@ void video_frame_compress()
 //Closes the camera and frees all memory
 void video_close()
 {
+	printf("Closing stream");
 	int closed = close(camera_fd);
 	if(closed == 0)
 	{
