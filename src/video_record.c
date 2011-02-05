@@ -83,8 +83,6 @@ void video_record_init(){
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
 
-/*
-
 	//found these online
 	struct v4l2_input input;
 	int index;
@@ -103,10 +101,30 @@ void video_record_init(){
 	}
 
 	printf ("Current input: %s\n", input.name);
-	video_frame_init(defaultRect.width, defaultRect.height, 4);
-	video_frame_copy();
-*/
+	
+	struct v4l2_requestbuffers reqbuf;
+	reqbuf.type = V4L2_CAP_VIDEO_CAPTURE;
+	reqbuf.count = 32;
+	reqbuf.memory = V4L2_MEMORY_MMAP;
+	if (ioctl (camera_fd, VIDIOC_REQBUFS, &reqbuf) == -1){
+		perror("ioctl");
+		exit(EXIT_FAILURE);
+	}	
+	printf("Buffer count: %d\n", reqbuf.count);
+	
+	struct v4l2_buffer buf;
+	buf.type = V4L2_CAP_VIDEO_CAPTURE;
+	buf.index = 0;
+	if( ioctl ( camera_fd, VIDIOC_QUERYBUF, &buf) == -1 ){
+		perror("VIDIOC_QUERYBUF");
+	}
+
+	printf("Buffer length: %d\n", buf.length);
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
+}
+
+void mmap_init(){
+	
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
@@ -159,5 +177,8 @@ void print_Camera_Info(){
 	}
 	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
 		printf("No read/write capabilities!\n");
+	}
+	if( !(cap.capabilities & V4L2_CAP_STREAMING) ){
+		printf("No streaming capabilities!\n");
 	}
 }
