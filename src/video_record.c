@@ -59,7 +59,7 @@ void video_record_init()
 		printf("No video capture capabilities!\n");
 	}
 	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
-		printf("No read/writecapabilities!\n");
+		printf("No read/write capabilities!\n");
 	}
 
 	// Get information about the video cropping and scaling abilities
@@ -75,15 +75,21 @@ void video_record_init()
 	defaultRect = crop.bounds;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
+	struct v4l2_fmtdesc fmtdesc;
+	if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
+		perror("ioctl");
+	}
+	
 
+/*
 	// Set the format of the image from the video
 	struct v4l2_format format;
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	format.fmt.pix.width = defaultRect.width;
-	format.fmt.pix.height = defaultRect.height;
-	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
+//	format.fmt.pix.width = defaultRect.width;
+//	format.fmt.pix.height = defaultRect.height;
+//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
 
-	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
+	if(ioctl(camera_fd, VIDIOC_G_FMT, &format) == -1){
 		printf("Format not supported\n");
 		perror("ioctl");
 	}
@@ -111,6 +117,7 @@ void video_record_init()
 	printf ("Current input: %s\n", input.name);
 	video_frame_init(defaultRect.width, defaultRect.height, 4);
 	video_frame_copy();
+*/
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
 
