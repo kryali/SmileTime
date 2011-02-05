@@ -32,34 +32,12 @@ size_t pixel_size;
 char* frame_buffer;
 
 //This function initialize the camera device and V4L2 interface
-void video_record_init()
-{
+void video_record_init(){
 	//open camera
 	camera_fd = open(camera_name, O_RDWR | O_NONBLOCK);
-	if(camera_fd == -1)
-	{
+	if(camera_fd == -1){
 		printf("error opening camera %s\n", camera_name);
 		return;
-	}
-
-	//find capabilities of camera
-	struct v4l2_capability cap;
-	ioctl(camera_fd, VIDIOC_QUERYCAP, &cap);
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) 
-	{
-                fprintf (stderr, "%s is not a camera\n", camera_name);
-                return;
-        }
-
-	// Print out basic statistics
-	printf("Driver: %s\n", cap.driver);
-	printf("Device: %s\n", cap.card);
-	printf("bus_info: %s\n", cap.bus_info);
-	if( !(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ){
-		printf("No video capture capabilities!\n");
-	}
-	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
-		printf("No read/write capabilities!\n");
 	}
 
 	// Get information about the video cropping and scaling abilities
@@ -122,39 +100,54 @@ void video_record_init()
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
-void video_frame_copy()
-{
+void video_frame_copy(){
 	if( read(camera_fd, frame_buffer, frame_size)==-1){
 		perror("read");
 	}
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void video_frame_compress()
-{
+void video_frame_compress(){
 	
 }
 
 //Closes the camera and frees all memory
-void video_close()
-{
+void video_close(){
 	printf("Closing stream");
 	int closed = close(camera_fd);
-	if(closed == 0)
-	{
+	if(closed == 0){
 		printf("closed: %d\n", camera_fd);
 		camera_fd = -1;
 		free(frame_buffer);
 	}
-	else
-	{
+	else{
 		printf("error closing: %d\n", camera_fd);
 	}
 }
 
-void video_frame_init(int width, int height, int pixel_bytes)
-{
+//Initializes the video frame buffer
+void video_frame_init(int width, int height, int pixel_bytes){
 	frame_size = width*height;
 	pixel_size = pixel_bytes;
 	frame_buffer = malloc(frame_size * pixel_size);
+}
+
+//find capabilities of camera and print them out
+void print_Camera_Info(){
+	struct v4l2_capability cap;
+	ioctl(camera_fd, VIDIOC_QUERYCAP, &cap);
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)){
+                fprintf (stderr, "%s is not a camera\n", camera_name);
+                return;
+        }
+	// Print out basic statistics
+	printf("Driver: %s\n", cap.driver);
+	printf("Device: %s\n", cap.card);
+	printf("bus_info: %s\n", cap.bus_info);
+	if( !(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ){
+		printf("No video capture capabilities!\n");
+	}
+	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
+		printf("No read/write capabilities!\n");
+	}
 }
