@@ -116,7 +116,6 @@ void video_record_init(){
 
 	set_format();	
 
-	print_default_crop();
 	mmap_init();	
 
 	read_frame();
