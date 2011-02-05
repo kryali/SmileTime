@@ -43,7 +43,7 @@ struct buffer * buffers = NULL;
 //This function initialize the camera device and V4L2 interface
 void video_record_init(){
 	//open camera
-	camera_fd = open(camera_name, O_RDWR | O_NONBLOCK);
+	camera_fd = open(camera_name, O_RDWR );
 	if(camera_fd == -1){
 		printf("error opening camera %s\n", camera_name);
 		return;
@@ -116,7 +116,7 @@ void mmap_init(){
 	// Request that the device start using the buffers
 	// - Find the number of support buffers
 	struct v4l2_requestbuffers reqbuf;
-	reqbuf.type = V4L2_CAP_VIDEO_CAPTURE;
+	reqbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	reqbuf.count = 5;
 	reqbuf.memory = V4L2_MEMORY_MMAP;
 	if (ioctl (camera_fd, VIDIOC_REQBUFS, &reqbuf) == -1){
@@ -125,13 +125,13 @@ void mmap_init(){
 	}	
 	printf("Buffer count: %d\n", reqbuf.count);
 	
-	buffers = malloc( reqbuf.count * sizeof(struct buffer));
+	buffers = malloc( reqbuf.count * sizeof(*buffers));
 	int i =0;
 
 	// Mmap memory for each slice of the buffer	
 	for(; i < reqbuf.count; i++){
 		struct v4l2_buffer buf;
-		buf.type = V4L2_CAP_VIDEO_CAPTURE;
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
 		buf.index = i;
 		if( ioctl ( camera_fd, VIDIOC_QUERYBUF, &buf) == -1 ){
@@ -141,22 +141,36 @@ void mmap_init(){
 		printf("Index: %d, Buffer offset: %d\n", i, buf.m.offset);
 		buffers[i].length = buf.length; 
 		buffers[i].start = mmap( NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, camera_fd, buf.m.offset);
+		if (buffers[i].start == MAP_FAILED){
+			perror("mmap");
+		}
+	}
+	
+	// Start capturing
+	for(i=0; i <reqbuf.count; i++){
+		struct v4l2_buffer buf;
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = V4L2_MEMORY_MMAP;
+		buf.index = i;
+		if( ioctl(camera_fd, VIDIOC_QBUF, &buf) == -1 ){
+			perror("VIDIOC_QBUF");
+		}
+	}
+
+	int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if( ioctl(camera_fd, VIDIOC_STREAMON, &type) == -1){
+		perror("VIDIOC_STREAMON");
 	}
 	
 	struct v4l2_buffer buf;
-	buf.type = V4L2_CAP_VIDEO_CAPTURE;
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
-	buf.index = 0;
-	if( ioctl(camera_fd, VIDIOC_QBUF, &buf) == -1){
-		perror("VIDIOC_QBUF");
-	}
-
 	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
 		perror("VIDIOC_DQBUF");
 	}
 	
 	printf("Read buffer index:%d\n", buf.index);
-		
+
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
