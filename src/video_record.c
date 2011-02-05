@@ -40,17 +40,7 @@ struct buffer {
 
 struct buffer * buffers = NULL;
 
-//This function initialize the camera device and V4L2 interface
-void video_record_init(){
-	//open camera
-	camera_fd = open(camera_name, O_RDWR );
-	if(camera_fd == -1){
-		printf("error opening camera %s\n", camera_name);
-		return;
-	}
-
-	print_Camera_Info();
-
+void print_default_crop(){
 	// Get information about the video cropping and scaling abilities
 	struct v4l2_cropcap crop;
 	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // Set the cropping request to be specific to video capture
@@ -58,8 +48,6 @@ void video_record_init(){
 		printf("Couldn't get cropping info\n");
 		perror("ioctl");
 	}
-	
-	// Grab the default dimensions
 	struct v4l2_rect defaultRect;
 	defaultRect = crop.bounds;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
@@ -71,24 +59,9 @@ void video_record_init(){
 		perror("ioctl");
 	}
 	printf("Format: %s\n", fmtdesc.description);
-	
+}
 
-	// Set the format of the image from the video
-	struct v4l2_format format;
-	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	format.fmt.pix.width = 640;
-	format.fmt.pix.width = 480;
-	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
-	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
-
-	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
-		printf("Format not supported\n");
-		perror("ioctl");
-	}
-	struct v4l2_pix_format pix_format;
-	pix_format = format.fmt.pix;
-	printf("Image Width: %d\n",pix_format.width);
-
+void print_input_info(){
 	//found these online
 	struct v4l2_input input;
 	int index;
@@ -108,9 +81,42 @@ void video_record_init(){
 
 	printf ("Current input: %s\n", input.name);
 
+}
+
+void set_format(){
+	// Set the format of the image from the video
+	struct v4l2_format format;
+	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	format.fmt.pix.width = 640;
+	format.fmt.pix.width = 480;
+	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
+	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+
+	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
+		printf("Format not supported\n");
+		perror("ioctl");
+	}
+	struct v4l2_pix_format pix_format;
+	pix_format = format.fmt.pix;
+	printf("Image Width: %d\n",pix_format.width);
+}
+
+//This function initialize the camera device and V4L2 interface
+void video_record_init(){
+
+	//open camera
+	camera_fd = open(camera_name, O_RDWR );
+	if(camera_fd == -1){
+		printf("error opening camera %s\n", camera_name);
+		return;
+	}
+
+	print_Camera_Info();
+
+	set_format();	
+
 	mmap_init();	
 
-//	FILE * frame_fd = fopen( strcat(defaultPath, "1.jpg"), "w+");
 	FILE * frame_fd = fopen( "1.jpg", "w+");
 	if( fwrite(buffers[0].start, buffers[0].length, 1, frame_fd) != 1)
 		perror("fwrite");

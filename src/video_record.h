@@ -4,3 +4,6 @@ void video_frame_compress();
 void video_close();
 void print_Camera_Info();
 void mmap_init();
+void print_default_crop();
+void print_input_info();
+void set_format();
