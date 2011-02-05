@@ -32,9 +32,6 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 
 int camera_fd = -1;
 char* camera_name = "/dev/video";
-size_t frame_size;
-size_t pixel_size;
-char* frame_buffer;
 
 struct buffer {
 	void * start;
@@ -164,9 +161,7 @@ void mmap_init(){
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
 void video_frame_copy(){
-	if( read(camera_fd, frame_buffer, frame_size)==-1){
-		perror("read");
-	}
+
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
@@ -181,18 +176,10 @@ void video_close(){
 	if(closed == 0){
 		printf("closed: %d\n", camera_fd);
 		camera_fd = -1;
-		free(frame_buffer);
 	}
 	else{
 		printf("error closing: %d\n", camera_fd);
 	}
-}
-
-//Initializes the video frame buffer
-void video_frame_init(int width, int height, int pixel_bytes){
-	frame_size = width*height;
-	pixel_size = pixel_bytes;
-	frame_buffer = malloc(frame_size * pixel_size);
 }
 
 //find capabilities of camera and print them out
