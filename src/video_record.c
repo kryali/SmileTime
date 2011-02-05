@@ -31,9 +31,6 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 
 int camera_fd = -1;
 char* camera_name = "/dev/video";
-size_t frame_size;
-size_t pixel_size;
-char* frame_buffer;
 
 //This function initialize the camera device and V4L2 interface
 void video_record_init(){
@@ -82,8 +79,7 @@ void video_record_init(){
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
-
-/*
+	print_Camera_Info();
 
 	//found these online
 	struct v4l2_input input;
@@ -103,17 +99,13 @@ void video_record_init(){
 	}
 
 	printf ("Current input: %s\n", input.name);
-	video_frame_init(defaultRect.width, defaultRect.height, 4);
 	video_frame_copy();
-*/
-    //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
+
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
 void video_frame_copy(){
-	if( read(camera_fd, frame_buffer, frame_size)==-1){
-		perror("read");
-	}
+
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
@@ -128,18 +120,10 @@ void video_close(){
 	if(closed == 0){
 		printf("closed: %d\n", camera_fd);
 		camera_fd = -1;
-		free(frame_buffer);
 	}
 	else{
 		printf("error closing: %d\n", camera_fd);
 	}
-}
-
-//Initializes the video frame buffer
-void video_frame_init(int width, int height, int pixel_bytes){
-	frame_size = width*height;
-	pixel_size = pixel_bytes;
-	frame_buffer = malloc(frame_size * pixel_size);
 }
 
 //find capabilities of camera and print them out
