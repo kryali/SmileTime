@@ -9,6 +9,7 @@
 #include "audio_record.h"
 #include "io_tools.h"
 
+char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
 
 void usage()
@@ -32,7 +33,6 @@ int main(int argc, char*argv[])
         usage();
         return 0;
     }
-
     signal( SIGINT,&onExit);
 
     printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
@@ -52,7 +52,7 @@ int main(int argc, char*argv[])
         video_save();
         audio_save();
 
-        printf("[MAIN] One frame has bee captured, sleep for a while and continue...\n");
+        printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
         usleep(1000000);
     }
 */
