@@ -88,7 +88,7 @@ void set_format(){
 	struct v4l2_format format;
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	format.fmt.pix.width = 640;
-	format.fmt.pix.width = 480;
+	format.fmt.pix.height = 480;
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 
@@ -113,8 +113,10 @@ void video_record_init(){
 
 	print_Camera_Info();
 
+
 	set_format();	
 
+	print_default_crop();
 	mmap_init();	
 
 	read_frame();
