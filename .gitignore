@@ -11,6 +11,9 @@
 *.la
 *.a
 
+# Swap files
+*.swp
+
 # Executables
 src/recorder
 src/player
