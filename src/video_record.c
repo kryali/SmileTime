@@ -76,9 +76,10 @@ void video_record_init(){
 	// Set the format of the image from the video
 	struct v4l2_format format;
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	format.fmt.pix.width = defaultRect.width;
-	format.fmt.pix.height = defaultRect.height;
-	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
+	format.fmt.pix.width = 640;
+	format.fmt.pix.width = 480;
+	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
+	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		printf("Format not supported\n");
@@ -108,6 +109,12 @@ void video_record_init(){
 	printf ("Current input: %s\n", input.name);
 
 	mmap_init();	
+
+//	FILE * frame_fd = fopen( strcat(defaultPath, "1.jpg"), "w+");
+	FILE * frame_fd = fopen( "1.jpg", "w+");
+	if( fwrite(buffers[0].start, buffers[0].length, 1, frame_fd) != 1)
+		perror("fwrite");
+	fclose(frame_fd);
 
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
