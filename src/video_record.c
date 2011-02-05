@@ -18,6 +18,10 @@
 #define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
 #endif
 
+#ifndef V4L2_PIX_FMT_MJPG
+#define V4L2_PIX_FMT_MJPG v4l2_fourcc('M', 'J', 'P', 'G')
+#endif
+
 
 //SOURCES:
 /*
@@ -54,26 +58,30 @@ void video_record_init(){
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
 	struct v4l2_fmtdesc fmtdesc;
+	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
+		printf("Format query failed\n");
 		perror("ioctl");
 	}
+	printf("Format: %s\n", fmtdesc.description);
 	
 
-/*
 	// Set the format of the image from the video
 	struct v4l2_format format;
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//	format.fmt.pix.width = defaultRect.width;
-//	format.fmt.pix.height = defaultRect.height;
-//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_PJPG;
+	format.fmt.pix.width = defaultRect.width;
+	format.fmt.pix.height = defaultRect.height;
+	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 
-	if(ioctl(camera_fd, VIDIOC_G_FMT, &format) == -1){
+	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		printf("Format not supported\n");
 		perror("ioctl");
 	}
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
+
+/*
 
 	//found these online
 	struct v4l2_input input;
