@@ -44,6 +44,8 @@ void video_record_init(){
 		return;
 	}
 
+	print_Camera_Info();
+
 	// Get information about the video cropping and scaling abilities
 	struct v4l2_cropcap crop;
 	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // Set the cropping request to be specific to video capture
