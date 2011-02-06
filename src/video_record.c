@@ -23,6 +23,10 @@
 #define V4L2_PIX_FMT_MJPG v4l2_fourcc('M', 'J', 'P', 'G')
 #endif
 
+#ifndef V4L2_PIX_FMT_JPEG
+#define V4L2_PIX_FMT_JPEG v4l2_fourcc('J', 'P', 'E', 'G')
+#endif
+
 
 //SOURCES:
 /*
@@ -52,13 +56,17 @@ void print_default_crop(){
 	defaultRect = crop.bounds;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
-	struct v4l2_fmtdesc fmtdesc;
-	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
-		printf("Format query failed\n");
-		perror("ioctl");
+	int i = 0;
+	for(; i < 5; i++){
+		struct v4l2_fmtdesc fmtdesc;
+		fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		fmtdesc.index = 1;
+		if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
+			printf("Format query failed\n");
+			perror("ioctl");
+		}
+		printf("Format: %s\n", fmtdesc.description);
 	}
-	printf("Format: %s\n", fmtdesc.description);
 }
 
 void print_input_info(){
@@ -90,15 +98,17 @@ void set_format(){
 	format.fmt.pix.width = 640;
 	format.fmt.pix.height = 480;
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
-	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
-		printf("Format not supported\n");
-		perror("ioctl");
+		perror("VIDIOC_S_FMT");
 	}
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
+	if(!(format.fmt.pix.pixelformat & V4L2_PIX_FMT_MJPG)){
+		printf("Error: MJPG compressions wasn't set\n");
+	}
 }
 
 //This function initialize the camera device and V4L2 interface
@@ -112,7 +122,6 @@ void video_record_init(){
 	}
 
 	print_Camera_Info();
-
 
 	set_format();	
 
@@ -135,7 +144,7 @@ void read_frame(){
 	printf("Read buffer index:%d\n", buf.index);
 
 	// WRITE buffer to file
-	FILE * frame_fd = fopen( "1.jpg", "w+");
+	FILE * frame_fd = fopen( "1.yuv", "w+");
 	if( fwrite(buffers[buf.index].start, buffers[buf.index].length, 1, frame_fd) != 1)
 		perror("fwrite");
 	fclose(frame_fd);
