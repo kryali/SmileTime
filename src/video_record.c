@@ -127,36 +127,8 @@ void video_record_init(){
 
 	mmap_init();	
 
-	read_frame();
+	video_frame_copy();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
-}
-
-void read_frame(){
-
-	// DEQUEUE frame from buffer
-	struct v4l2_buffer buf;
-	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	buf.memory = V4L2_MEMORY_MMAP;
-	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
-		perror("VIDIOC_DQBUF");
-	}
-	
-	printf("Read buffer index:%d\n", buf.index);
-
-	// WRITE buffer to file
-	FILE * frame_fd = fopen( "1.yuv", "w+");
-	if( fwrite(buffers[buf.index].start, buffers[buf.index].length, 1, frame_fd) != 1)
-		perror("fwrite");
-	fclose(frame_fd);
-
-	// ENQUEUE frame into buffer
-	struct v4l2_buffer bufQ;
-	bufQ.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	bufQ.memory = V4L2_MEMORY_MMAP;
-	bufQ.index = buf.index;
-	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
-		perror("VIDIOC_QBUF");
-	}
 }
 
 void mmap_init(){
@@ -214,6 +186,31 @@ void mmap_init(){
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
 void video_frame_copy(){
+
+	// DEQUEUE frame from buffer
+	struct v4l2_buffer buf;
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
+		perror("VIDIOC_DQBUF");
+	}
+	
+	printf("Read buffer index:%d\n", buf.index);
+
+	// WRITE buffer to file
+	FILE * frame_fd = fopen( "1.yuv", "w+");
+	if( fwrite(buffers[buf.index].start, buffers[buf.index].length, 1, frame_fd) != 1)
+		perror("fwrite");
+	fclose(frame_fd);
+
+	// ENQUEUE frame into buffer
+	struct v4l2_buffer bufQ;
+	bufQ.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	bufQ.memory = V4L2_MEMORY_MMAP;
+	bufQ.index = buf.index;
+	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
+		perror("VIDIOC_QBUF");
+	}
 
 }
 

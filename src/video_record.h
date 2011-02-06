@@ -7,4 +7,3 @@ void mmap_init();
 void print_default_crop();
 void print_input_info();
 void set_format();
-void read_frame();
