@@ -16,7 +16,7 @@
 
 
 int microphone_fd = -1;
-char* microphone_name = "/dev/video";
+char* microphone_name = "/dev/audio2";
 
 void audio_record_init()
 {

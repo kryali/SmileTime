@@ -28,6 +28,7 @@
 #endif
 
 
+
 //SOURCES:
 /*
 http://v4l2spec.bytesex.org/spec/book1.htm
@@ -255,3 +256,4 @@ void print_Camera_Info(){
 		printf("No streaming capabilities!\n");
 	}
 }
+
