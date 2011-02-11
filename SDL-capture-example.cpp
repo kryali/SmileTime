@@ -531,7 +531,7 @@ static void init_device (void)
 			if (!(cap.capabilities & V4L2_CAP_STREAMING)) 
 			{
 				fprintf (stderr, "%s does not support streaming i/o\n",dev_name);
-				exit (EXIT_FAILURE);
+				//exit (EXIT_FAILURE);
 			}
 			break;
 	}

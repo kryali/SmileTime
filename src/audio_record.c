@@ -3,41 +3,90 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
-#include <string.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <asm/types.h>
 #include <sys/time.h>
-#include <fcntl.h>
-#include <linux/videodev2.h>
-#include <sys/ioctl.h>
+#include <alsa/asoundlib.h>
 
-
+// http://www.equalarea.com/paul/alsa-audio.html
 int microphone_fd = -1;
-char* microphone_name = "/dev/audio2";
+char* microphone_name = "default";
 
 void audio_record_init()
 {
-    	//open microphone
-	microphone_fd = open(microphone_name, O_RDWR);
-	if(microphone_fd == -1){
-		printf("error opening microphone %s\n", microphone_name);
-		return;
-	}
-	printf("File Descriptor: %d\n", microphone_fd);
+		int i;
+		int err;
+		short buf[128];
+		snd_pcm_t *capture_handle;
+		snd_pcm_hw_params_t *hw_params;
+		int rate = 44100;
+		if ((err = snd_pcm_open (&capture_handle, microphone_name, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+			fprintf (stderr, "cannot open audio device %s (%s)\n", 
+				 microphone_name,
+				 snd_strerror (err));
+			exit (1);
+		}
 
-	struct v4l2_audio audio;
+		if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
+			fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
 
-	memset (&audio, 0, sizeof (audio));
+		if ((err = snd_pcm_hw_params_any (capture_handle, hw_params)) < 0) {
+			fprintf (stderr, "cannot initialize hardware parameter structure (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
 
-	if (-1 == ioctl (microphone_fd, VIDIOC_G_AUDIO, &audio)) {
-	        perror ("VIDIOC_G_AUDIO");
- 	       exit (EXIT_FAILURE);
-	}
+		if ((err = snd_pcm_hw_params_set_access (capture_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+			fprintf (stderr, "cannot set access type (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
 
-	printf ("Current input: %s\n", audio.name);
+		if ((err = snd_pcm_hw_params_set_format (capture_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+			fprintf (stderr, "cannot set sample format (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
+
+		if ((err = snd_pcm_hw_params_set_rate_near (capture_handle, hw_params, &rate, 0)) < 0) {
+			fprintf (stderr, "cannot set sample rate (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
+
+		if ((err = snd_pcm_hw_params_set_channels (capture_handle, hw_params, 2)) < 0) {
+			fprintf (stderr, "cannot set channel count (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
+
+		if ((err = snd_pcm_hw_params (capture_handle, hw_params)) < 0) {
+			fprintf (stderr, "cannot set parameters (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
+
+		snd_pcm_hw_params_free (hw_params);
+
+		if ((err = snd_pcm_prepare (capture_handle)) < 0) {
+			fprintf (stderr, "cannot prepare audio interface for use (%s)\n",
+				 snd_strerror (err));
+			exit (1);
+		}
+		printf("reading from interface\n");
+		for (i = 0; i < 10; ++i) {
+			printf("%d\n",i);
+			if ((err = snd_pcm_readi (capture_handle, buf, 128)) != 128) {
+				fprintf (stderr, "read from audio interface failed (%s)\n",
+					 snd_strerror (err));
+				exit (1);
+			}
+		}
+		printf("closing interface");
+		snd_pcm_close (capture_handle);
+		exit (0);
 
 }
 
