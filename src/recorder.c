@@ -39,7 +39,7 @@ int main(int argc, char*argv[])
 
     video_record_init();
     video_play_init();
-    audio_record_init();
+//    audio_record_init();
 
 /*
     while(stopRecording == 0)

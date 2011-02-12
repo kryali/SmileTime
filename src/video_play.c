@@ -32,7 +32,7 @@ int sdl_init(){
 	}
 
 	//Set the window caption
-	SDL_WM_SetCaption( "Video4Linux + SDL", NULL );
+	SDL_WM_SetCaption( "Logitech View", NULL );
 
 	//Load the images
 
@@ -44,7 +44,8 @@ int sdl_init(){
 	{
 		return 1;    
 	}
-
+	
+	SDL_Delay(4000);
   return 0;
 }
 

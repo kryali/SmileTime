@@ -36,7 +36,7 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 */
 
 int camera_fd = -1;
-char* camera_name = "/dev/video";
+char* camera_name = "/dev/video0";
 
 struct buffer {
 	void * start;
