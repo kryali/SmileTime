@@ -8,7 +8,7 @@ SDLFLAGS = $(shell sdl-config --cflags)
 MATH_LIB=-lm 
 JPEG_LIB=-ljpeg
 
-CFLAGS = -O2 $(SDLFLAGS) -Wall -g 
+CFLAGS = -O2 $(SDLFLAGS) -Wall -g  -lasound
 
 REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o
