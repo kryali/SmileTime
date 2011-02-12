@@ -1,11 +1,22 @@
 #include <stdio.h>
 #include "SDL/SDL.h"
 
+#define SDL_YV12_OVERLAY  0x32315659  /* Planar mode: Y + V + U */
+#define SDL_IYUV_OVERLAY  0x56555949  /* Planar mode: Y + U + V */
+#define SDL_YUY2_OVERLAY  0x32595559  /* Packed mode: Y0+U0+Y1+V0 */
+#define SDL_UYVY_OVERLAY  0x59565955  /* Packed mode: U0+Y0+V0+Y1 */
+#define SDL_YVYU_OVERLAY  0x55595659  /* Packed mode: Y0+V0+Y1+U0 */`
+#define SDL_YUYV_OVERLAY 0x56595559
+
+// Super helpful link: http://sdl.beuc.net/sdl.wiki/SDL_Overlay`
+
 //The surfaces that will be used
 SDL_Surface *message = NULL;
 SDL_Surface *background = NULL;
 SDL_Surface *screen = NULL;
 SDL_Surface *cam_surface = NULL;
+
+SDL_Overlay * overlay = NULL;
 
 //The attributes of the screen
 const int SCREEN_WIDTH = 640;
@@ -34,6 +45,9 @@ int sdl_init(){
 	//Set the window caption
 	SDL_WM_SetCaption( "Logitech View", NULL );
 
+
+	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUYV_OVERLAY, screen);
+
 	//Load the images
 
 	//createCamImage (CAM_WIDTH*2,CAM_HEIGHT*2);
@@ -45,7 +59,8 @@ int sdl_init(){
 		return 1;    
 	}
 	
-	SDL_Delay(4000);
+	SDL_Delay(1100);
+
   return 0;
 }
 
