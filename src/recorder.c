@@ -4,6 +4,13 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <libavutil/avutil.h>
+#include <libavutil/log.h>
+#include <libavutil/avstring.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+
 #include "video_record.h"
 #include "video_play.h"
 #include "audio_record.h"
@@ -36,6 +43,9 @@ int main(int argc, char*argv[])
     signal( SIGINT,&onExit);
 
     printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
+
+    avcodec_init();
+    av_register_all();
 
     video_record_init();
     video_play_init();

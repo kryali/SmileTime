@@ -2,6 +2,8 @@ INSTALLROOT=$(PWD)
 
 CC=gcc
 
+FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lvpx -lx264
+
 SDLLIBS = $(shell sdl-config --libs) 
 SDLFLAGS = $(shell sdl-config --cflags)
 
@@ -21,10 +23,10 @@ clean:
 
 # Applications:
 recorder:	$(REC_OBJECTS)
-	$(CC)	$(CFLAGS) $(REC_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) -o $@
+	$(CC)	$(CFLAGS) $(REC_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) $(FFMPEG_LIB) -o $@
 
 player:	$(PLAY_OBJECTS)
-	$(CC)	$(CFLAGS) $(PLAY_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) -o $@
+	$(CC)	$(CFLAGS) $(PLAY_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) $(FFMPEG_LIB) -o $@
 
 recorder.o:	recorder.c
 
