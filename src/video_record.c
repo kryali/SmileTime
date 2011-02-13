@@ -127,7 +127,7 @@ void video_record_init(){
 	read_frame();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 
-  encode_frame("/home/mark/Desktop/out.webm");
+  encode_frame("/home/mark/Desktop/out.mkv");
 }
 
 void encode_frame(const char *filename)
@@ -142,7 +142,7 @@ void encode_frame(const char *filename)
    printf("Video encoding\n");
 
    /* find the mpeg1 video encoder */
-   codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+   codec = avcodec_find_encoder(CODEC_ID_H264);
    if (!codec) {
        fprintf(stderr, "codec not found\n");
        exit(1);
@@ -161,6 +161,12 @@ void encode_frame(const char *filename)
    c->gop_size = 10; /* emit one intra frame every ten frames */
    c->max_b_frames=1;
    c->pix_fmt = PIX_FMT_YUV420P;
+
+    c->me_range = 16;
+    c->max_qdiff = 4;
+    c->qmin = 10;
+    c->qmax = 51;
+    c->qcompress = 0.6; 
 
    /* open it */
    if (avcodec_open(c, codec) < 0) {
@@ -222,11 +228,12 @@ void encode_frame(const char *filename)
    }
 
    /* add sequence end code to have a real mpeg file */
-   outbuf[0] = 0x00;
+   /*outbuf[0] = 0x00;
    outbuf[1] = 0x00;
    outbuf[2] = 0x01;
    outbuf[3] = 0xb7;
    fwrite(outbuf, 1, 4, f);
+   */
    fclose(f);
    free(picture_buf);
    free(outbuf);
