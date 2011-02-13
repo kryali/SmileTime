@@ -22,7 +22,7 @@ SDL_Overlay * overlay = NULL;
 //The attributes of the screen
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
-const int SCREEN_BPP = 8;
+const int SCREEN_BPP = 16;
 const int CAM_WIDTH = 320;
 const int CAM_HEIGHT = 240;
 
@@ -54,44 +54,20 @@ int sdl_init(){
 		exit(EXIT_FAILURE);
 	}
 	
-	SDL_LockYUVOverlay(overlay);
-
-	if(buffers == NULL){
-		exit(EXIT_FAILURE);
-	}
-
-	printf("Planes :%d\n", overlay->planes);
-	printf("WIDTH: %d HEIGHT: %d\n", overlay->w, overlay->h);
-	printf("HARDWARE ACCELERATION: %d\n", overlay->hw_overlay);
-	printf("Format: 0x%x\n", overlay->format);
-
-	overlay->pixels[0] = buffers[0].start;
-
-	printf("Buffer Length: %d\n", buffers[0].length);
-
-	SDL_UnlockYUVOverlay(overlay);
-
-	SDL_Rect video_rect;
-	video_rect.x = 0;
-	video_rect.y = 0;
-	video_rect.w = SCREEN_WIDTH;
-	video_rect.h = SCREEN_HEIGHT;
-	SDL_DisplayYUVOverlay(overlay, &video_rect);
-
 	//Load the images
 
 	//createCamImage (CAM_WIDTH*2,CAM_HEIGHT*2);
 
 	//apply_surface (0,0,cam_surface,screen);
 	//Update the screen
+/*
 	if( SDL_Flip( screen ) == -1 )
 	{
 		return 1;    
 	}
-	
-	SDL_Delay(1100);
+*/
+//	SDL_Delay(1100);
 
-  return 0;
 }
 
 void video_play_init()
@@ -105,8 +81,37 @@ void video_frame_decompress()
     printf("[V_PLAY] This function decompresses the video frame read from media file\n");
 }
 
-void video_frame_display()
-{
-    printf("[V_PLAY] This function displays the video frame on the screen\n");
+void print_overlay_info(){
+	printf("Planes :%d\n", overlay->planes);
+	printf("WIDTH: %d HEIGHT: %d\n", overlay->w, overlay->h);
+	printf("HARDWARE ACCELERATION: %d\n", overlay->hw_overlay);
+	printf("Format: 0x%x\n", overlay->format);
 }
 
+void video_frame_display(int index)
+{
+    printf("[V_PLAY] This function displays the video frame on the screen\n");
+	SDL_LockYUVOverlay(overlay);
+
+	if(buffers == NULL){
+		exit(EXIT_FAILURE);
+	}
+
+	overlay->pixels[index] = buffers[index].start;
+
+	SDL_UnlockYUVOverlay(overlay);
+
+	SDL_Rect video_rect;
+	video_rect.x = 0;
+	video_rect.y = 0;
+	video_rect.w = SCREEN_WIDTH;
+	video_rect.h = SCREEN_HEIGHT;
+	SDL_DisplayYUVOverlay(overlay, &video_rect);
+
+}
+
+void sdl_quit(){
+	printf("Freeing SDL\n");
+	SDL_FreeYUVOverlay(overlay);
+	//SDL_Quit();
+}

@@ -15,6 +15,8 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 
+#define BUFFERCOUNT 1
+
 #ifndef V4L2_PIX_FMT_PJPG
 #define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
 #endif
@@ -143,7 +145,6 @@ void video_record_init(){
 
 	mmap_init();	
 
-	video_frame_copy();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
 
@@ -152,7 +153,7 @@ void mmap_init(){
 	// - Find the number of support buffers
 	struct v4l2_requestbuffers reqbuf;
 	reqbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	reqbuf.count = 5;
+	reqbuf.count = BUFFERCOUNT;
 	reqbuf.memory = V4L2_MEMORY_MMAP;
 	if (ioctl (camera_fd, VIDIOC_REQBUFS, &reqbuf) == -1){
 		perror("ioctl");
@@ -201,7 +202,7 @@ void mmap_init(){
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
-void video_frame_copy(){
+int video_frame_copy(){
 
 	// DEQUEUE frame from buffer
 	struct v4l2_buffer buf;
@@ -213,12 +214,6 @@ void video_frame_copy(){
 	
 	printf("Read buffer index:%d\n", buf.index);
 
-	// WRITE buffer to file
-	FILE * frame_fd = fopen( "1.yuv", "w+");
-	if( fwrite(buffers[buf.index].start, buffers[buf.index].length, 1, frame_fd) != 1)
-		perror("fwrite");
-	fclose(frame_fd);
-
 	// ENQUEUE frame into buffer
 	struct v4l2_buffer bufQ;
 	bufQ.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -227,7 +222,7 @@ void video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
 		perror("VIDIOC_QBUF");
 	}
-
+	return buf.index;
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature

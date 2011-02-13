@@ -24,8 +24,9 @@ void usage()
 void onExit()
 {
     printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
-    video_close();
     stopRecording = 1;
+    video_close();
+	sdl_quit();
 }
 
 int main(int argc, char*argv[])
@@ -45,11 +46,13 @@ int main(int argc, char*argv[])
     video_play_init();
 //    audio_record_init();
 
-/*
+	int bufferIndex = 0;
     while(stopRecording == 0)
     {
-        video_frame_copy();
-        video_frame_display();
+        bufferIndex = video_frame_copy();
+        video_frame_display(bufferIndex);
+		//usleep(40000);
+/*
         video_frame_compress();
         audio_segment_copy();
         audio_segment_compress();
@@ -59,9 +62,9 @@ int main(int argc, char*argv[])
 
         printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
         usleep(1000000);
-    }
 */
+    }
 
     printf("[MAIN] Quit recorder\n");
-    return 0;
+
 }
