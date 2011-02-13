@@ -65,7 +65,7 @@ int sdl_init(){
 	printf("HARDWARE ACCELERATION: %d\n", overlay->hw_overlay);
 	printf("Format: 0x%x\n", overlay->format);
 
-//	overlay->pixels = buffers[0].start;
+	overlay->pixels[0] = buffers[0].start;
 
 	printf("Buffer Length: %d\n", buffers[0].length);
 
