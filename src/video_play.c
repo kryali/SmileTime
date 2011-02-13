@@ -8,7 +8,6 @@
 #define SDL_YUY2_OVERLAY  0x32595559  /* Packed mode: Y0+U0+Y1+V0 */
 #define SDL_UYVY_OVERLAY  0x59565955  /* Packed mode: U0+Y0+V0+Y1 */
 #define SDL_YVYU_OVERLAY  0x55595659  /* Packed mode: Y0+V0+Y1+U0 */`
-#define SDL_YUYV_OVERLAY 0x56595559
 
 // Super helpful link: http://sdl.beuc.net/sdl.wiki/SDL_Overlay`
 
@@ -23,7 +22,7 @@ SDL_Overlay * overlay = NULL;
 //The attributes of the screen
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
-const int SCREEN_BPP = 16;
+const int SCREEN_BPP = 8;
 const int CAM_WIDTH = 320;
 const int CAM_HEIGHT = 240;
 
@@ -36,11 +35,12 @@ int sdl_init(){
 	}
 
 	//Set up the screen
-	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP, SDL_SWSURFACE );
+	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP, SDL_SWSURFACE | SDL_ANYFORMAT );
 
 	//If there was in error in setting up the screen
 	if( screen == NULL )
 	{
+		printf("Screen setup failed!\n");
 		return 1;    
 	}
 
@@ -48,7 +48,7 @@ int sdl_init(){
 	SDL_WM_SetCaption( "Logitech View", NULL );
 
 
-	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUYV_OVERLAY, screen);
+	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
 	if(overlay == NULL){
 		printf("Failed to create Overlay\n");
 		exit(EXIT_FAILURE);
@@ -60,9 +60,23 @@ int sdl_init(){
 		exit(EXIT_FAILURE);
 	}
 
+	printf("Planes :%d\n", overlay->planes);
+	printf("WIDTH: %d HEIGHT: %d\n", overlay->w, overlay->h);
+	printf("HARDWARE ACCELERATION: %d\n", overlay->hw_overlay);
+	printf("Format: 0x%x\n", overlay->format);
+
 //	overlay->pixels = buffers[0].start;
 
+	printf("Buffer Length: %d\n", buffers[0].length);
+
 	SDL_UnlockYUVOverlay(overlay);
+
+	SDL_Rect video_rect;
+	video_rect.x = 0;
+	video_rect.y = 0;
+	video_rect.w = SCREEN_WIDTH;
+	video_rect.h = SCREEN_HEIGHT;
+	SDL_DisplayYUVOverlay(overlay, &video_rect);
 
 	//Load the images
 
