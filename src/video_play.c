@@ -23,7 +23,7 @@ SDL_Overlay * overlay = NULL;
 //The attributes of the screen
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
-const int SCREEN_BPP = 32;
+const int SCREEN_BPP = 16;
 const int CAM_WIDTH = 320;
 const int CAM_HEIGHT = 240;
 
@@ -49,12 +49,17 @@ int sdl_init(){
 
 
 	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUYV_OVERLAY, screen);
+	if(overlay == NULL){
+		printf("Failed to create Overlay\n");
+		exit(EXIT_FAILURE);
+	}
 	
 	SDL_LockYUVOverlay(overlay);
 
 	if(buffers == NULL){
 		exit(EXIT_FAILURE);
 	}
+
 //	overlay->pixels = buffers[0].start;
 
 	SDL_UnlockYUVOverlay(overlay);
