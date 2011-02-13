@@ -9,8 +9,10 @@
 #include "audio_record.h"
 #include "io_tools.h"
 
+
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
+
 
 void usage()
 {
@@ -36,6 +38,8 @@ int main(int argc, char*argv[])
     signal( SIGINT,&onExit);
 
     printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
+
+	buffers = NULL;
 
     video_record_init();
     video_play_init();

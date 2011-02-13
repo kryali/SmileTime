@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "SDL/SDL.h"
 
+#include "video_record.h"
+
 #define SDL_YV12_OVERLAY  0x32315659  /* Planar mode: Y + V + U */
 #define SDL_IYUV_OVERLAY  0x56555949  /* Planar mode: Y + U + V */
 #define SDL_YUY2_OVERLAY  0x32595559  /* Packed mode: Y0+U0+Y1+V0 */
@@ -47,6 +49,15 @@ int sdl_init(){
 
 
 	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUYV_OVERLAY, screen);
+	
+	SDL_LockYUVOverlay(overlay);
+
+	if(buffers == NULL){
+		exit(EXIT_FAILURE);
+	}
+//	overlay->pixels = buffers[0].start;
+
+	SDL_UnlockYUVOverlay(overlay);
 
 	//Load the images
 

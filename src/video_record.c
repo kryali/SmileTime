@@ -41,13 +41,22 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
-
+/*
 struct buffer {
 	void * start;
 	size_t length;
 };
 
 struct buffer * buffers = NULL;
+struct buffer {
+    void * start;
+    size_t length;
+};
+struct buffer * buffers = NULL;
+*/
+//buffers = NULL;
+
+
 
 void print_default_crop(){
 	// Get information about the video cropping and scaling abilities

@@ -1,3 +1,13 @@
+#ifndef VIDEO_RECORDER_H
+#define VIDEO_RECORDER_H
+
+struct buffer {
+    void * start;
+    int length;
+};
+
+struct buffer * buffers;
+
 void video_record_init();
 void video_frame_copy();
 void video_frame_compress();
@@ -7,3 +17,5 @@ void mmap_init();
 void print_default_crop();
 void print_input_info();
 void set_format();
+
+#endif
