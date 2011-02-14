@@ -134,18 +134,11 @@ void encode_frame(const char *filename)
 {
    AVCodec *codec;
    AVCodecContext *c= NULL;
-   int i, out_size, size, x, y, outbuf_size, inbuf_size;
+   int i, enc_size, size, x, outbuf_size, inbuf_size;
    FILE *f;
-   AVFrame *picture;
-   uint8_t *outbuf, *picture_buf, *inbuf;
-   x = 0;
-   y = 0;
+   uint8_t *outbuf, *inbuf;
 
-   AVFrame *picturePtr, *srcFrame, *dstFrame; 
-
-   int iPixelCount, iPictureSize;
-   int wtf[1];
-   wtf[0] = 640;
+   AVFrame *srcFrame, *dstFrame; 
 
    static struct SwsContext *img_convert_ctx;
 
@@ -159,25 +152,24 @@ void encode_frame(const char *filename)
    }
 
    c = avcodec_alloc_context();
-   picture = avcodec_alloc_frame();
 
-   /* put sample parameters */
+   // put sample parameters
    c->bit_rate = 400000;
-   /* resolution must be a multiple of two */
+   // resolution must be a multiple of two
    c->width = 640;
    c->height = 480;
-   /* frames per second */
+   // frames per second
    c->time_base= (AVRational){1,25};
-   c->gop_size = 10; /* emit one intra frame every ten frames */
+   c->gop_size = 10; // emit one intra frame every ten frames
    c->max_b_frames=1;
    c->pix_fmt = PIX_FMT_YUV420P;
 
-    // h264 parameters
-    c->me_range = 16;
-    c->max_qdiff = 4;
-    c->qmin = 10;
-    c->qmax = 51;
-    c->qcompress = 0.6; 
+   // h264 parameters
+   c->me_range = 16;
+   c->max_qdiff = 4;
+   c->qmin = 10;
+   c->qmax = 51;
+   c->qcompress = 0.6; 
 
    // open the codec
    if (avcodec_open(c, codec) < 0) {
@@ -191,110 +183,33 @@ void encode_frame(const char *filename)
        exit(1);
    }
 
-   // alloc image and output buffer
-   /*outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
-   picture_buf = av_malloc(outbuf_size);
-   memcpy( picture_buf, buffers[0].start, buffers[0].length );
-
-   avpicture_fill((AVPicture *)picture, picture_buf, PIX_FMT_YUYV422, c->width, c->height);
-
-   for(i=0;i<25;i++) {
-     out_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
-     printf("encoding frame %3d (size=%5d)\n", i, out_size);
-     fwrite(outbuf, 1, out_size, f);
-   }*/
-
-   //outbuf_size = 100000;
-   //outbuf_size = buffers[0].length;
-
-
-   /*iPictureSize = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
-   picture_buf = av_malloc(iPictureSize); // size for YUV 420
-   */
-   iPixelCount = c->width * c->height;
-   size = c->width * c->height;
-
-   //printf("avpicturegetsize: %d, manual: %d, buffers[0].length: %d, buffers[1].length: %d", picture_buf, size*3/2, buffers[0].length, buffers[1].length );
-   //picture_buf = malloc((size * 3) / 2); // size for YUV 420
-
    srcFrame = avcodec_alloc_frame(); 
    dstFrame = avcodec_alloc_frame(); 
 
    outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
    outbuf = av_malloc(outbuf_size);
-   x = avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
-   printf("avpicture_fill dst returns: %d\n", x);
-   printf("dst->linesize[0]: %d\n", dstFrame->linesize[0]);
-
-   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
-   inbuf = av_malloc(inbuf_size);
-   x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, c->width, c->height);
-   printf("avpicture_fill src returns: %d\n", x);
-   printf("src->linesize[0]: %d\n", srcFrame->linesize[0]);
-
-    img_convert_ctx = sws_getContext(c->width, c->height, 
-                      PIX_FMT_YUYV422, 
-                      c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
-                      NULL, NULL, NULL);
-
-    sws_scale(img_convert_ctx, srcFrame->data, 
-          srcFrame->linesize, 0, 
-          c->height, 
-          dstFrame->data, dstFrame->linesize);
-
-   /*picture->linesize[0] = c->width;
-   picture->linesize[1] = c->width/2;
-   picture->linesize[2] = c->width/2; 
-   */
+   avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
 
    for(i=0;i<25;i++) {
-     /*x = avpicture_fill((AVPicture *)srcFrame, buffers[i].start, PIX_FMT_YUYV422, c->width, c->height);
 
-      printf("avpicture_fill returns %d\n", x);
-      printf("srcFrame->linesize[0] %d\n", srcFrame->linesize[0]);
-    
-    img_convert_ctx = sws_getContext(c->width, c->height, 
+     inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
+     inbuf = av_malloc(inbuf_size);
+     x = avpicture_fill((AVPicture *)srcFrame, buffers[i].start, PIX_FMT_YUYV422, c->width, c->height);
+
+     img_convert_ctx = sws_getContext(c->width, c->height, 
                       PIX_FMT_YUYV422, 
                       c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
                       NULL, NULL, NULL);
 
-      printf("after img_convert\n");
+     sws_scale(img_convert_ctx, srcFrame->data, 
+           srcFrame->linesize, 0, 
+           c->height, 
+           dstFrame->data, dstFrame->linesize);
+     av_free(inbuf);
 
-    sws_scale(img_convert_ctx, srcFrame->data, 
-          srcFrame->linesize, 0, 
-          c->height, 
-          dstFrame->data, dstFrame->linesize);
-
-        printf("sws_scale returns %d\n", x);
-        printf("dstFrame->linesize[0]: %d\n", dstFrame->linesize[0] );
-        */
-
-     // Convert YUYV422 to YUV420
-     /*for(x=0; x<iPixelCount; x++) // Copy Y values to the front
-     {
-       //picture->data[0][x] = *(buffers[i].start+x%2);
-       memcpy( picture_buf+x, buffers[i].start+x*2, 1 );
-     }
-     for(x=0; x<iPixelCount/4; x++) // Copy U values
-     {
-       //picture->data[1][iPixelCount+x] = *(buffers[i].start+1+x%4);
-       memcpy( picture_buf+size+x, buffers[i].start+1+x*4, 1 );
-     }
-     for(x=0; x<iPixelCount/4; x++) // Copy V values
-     {
-       //picture->data[2][iPixelCount+iPixelCount/4+x] = *(buffers[i].start+3+x%4);
-       memcpy( picture_buf+size*5/4+x, buffers[i].start+3+x*4, 1 );
-     }
-     */
-
-     //avpicture_fill((AVPicture *)picture, picture_buf, PIX_FMT_YUV420P, c->width, c->height);
-     //picture = dstFrame;
-
-     //   printf("picture = dstFrame\n" );
-
-     out_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
-     printf("encoding frame %3d (size=%5d)\n", i, out_size);
-     fwrite(outbuf, 1, out_size, f);
+     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
+     printf("encoding frame %3d (size=%5d)\n", i, enc_size);
+     fwrite(outbuf, 1, enc_size, f);
    }
 
    // encode 1 second of video
@@ -317,22 +232,22 @@ void encode_frame(const char *filename)
        }
 
        // encode the image
-       out_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
+       enc_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
        printf("encoding frame %3d (size=%5d)\n", i, out_size);
        fwrite(outbuf, 1, out_size, f);
    }
    */
 
    // get the delayed frames
-   for(; out_size; i++) {
+   for(; enc_size; i++) {
        fflush(stdout);
 
-       out_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
-       printf("write frame %3d (size=%5d)\n", i, out_size);
-       fwrite(outbuf, 1, out_size, f);
+       enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
+       printf("write frame %3d (size=%5d)\n", i, enc_size);
+       fwrite(outbuf, 1, enc_size, f);
    }
 
-   /* add sequence end code to have a real mpeg file */
+   // add sequence end code to have a real mpeg file
    /*outbuf[0] = 0x00;
    outbuf[1] = 0x00;
    outbuf[2] = 0x01;
@@ -341,14 +256,10 @@ void encode_frame(const char *filename)
    */
 
    fclose(f);
-   //free(picture_buf);
-   //free(outbuf);
-
    av_free(outbuf);
 
    avcodec_close(c);
    av_free(c);
-   av_free(picture);
    printf("\n");
 }
 
