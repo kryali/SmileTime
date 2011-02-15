@@ -214,34 +214,54 @@ void encode_frame(const char *filename, int index)
    srcFrame = avcodec_alloc_frame(); 
    dstFrame = avcodec_alloc_frame(); 
 
+   // Create AVFrame for YUV420 frame
    outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
    outbuf = av_malloc(outbuf_size);
    avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
 
-     inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
-     inbuf = av_malloc(inbuf_size);
-     x = avpicture_fill((AVPicture *)srcFrame, buffers[index].start, PIX_FMT_YUYV422, c->width, c->height);
+   // Create AVFrame for YUYV422 frame
+   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
+   inbuf = av_malloc(inbuf_size);
+   x = avpicture_fill((AVPicture *)srcFrame, buffers[index].start, PIX_FMT_YUYV422, c->width, c->height);
 
-     img_convert_ctx = sws_getContext(c->width, c->height, 
-                      PIX_FMT_YUYV422, 
-                      c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
-                      NULL, NULL, NULL);
+   // Make the conversion context
+   img_convert_ctx = sws_getContext(c->width, c->height, 
+                    PIX_FMT_YUYV422, 
+                    c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
+                    NULL, NULL, NULL);
 
-     sws_scale(img_convert_ctx, srcFrame->data, 
-           srcFrame->linesize, 0, 
-           c->height, 
-           dstFrame->data, dstFrame->linesize);
+   // Convert the image to YUV420
+   sws_scale(img_convert_ctx, srcFrame->data, 
+         srcFrame->linesize, 0, 
+         c->height, 
+         dstFrame->data, dstFrame->linesize);
 
+   // Encode the frame
    int foo = 0;
    do { 
+     // Why so many empty encodes at the beginning?
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
      printf("encoding frame %3d (size=%5d)\n", i, enc_size);
-     if( enc_size > 0 )
-     {
-       fwrite(outbuf, 1, enc_size, f);
-     }
+     fwrite(outbuf, 1, enc_size, f);
    } while ( enc_size == 0 );
+
+   // Get the delayed frames
+   for(; enc_size; i++) {
+     // Why is this necessary?
+     fflush(stdout);
+     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
+     printf("write frame %3d (size=%5d)\n", i, enc_size);
+     if( enc_size ) fwrite(outbuf, 1, enc_size, f);
+   }
+
+   // Free everything
+   fclose(f);
+   av_free(outbuf);
    av_free(inbuf);
+
+   avcodec_close(c);
+   av_free(c);
+   printf("\n");
 
    // encode 1 second of video
    /*for(i=0;i<25;i++) {
@@ -269,15 +289,6 @@ void encode_frame(const char *filename, int index)
    }
    */
 
-   // get the delayed frames
-   for(; enc_size; i++) {
-       fflush(stdout);
-
-       enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
-       printf("write frame %3d (size=%5d)\n", i, enc_size);
-       if( enc_size ) fwrite(outbuf, 1, enc_size, f);
-   }
-
    // add sequence end code to have a real mpeg file
    /*outbuf[0] = 0x00;
    outbuf[1] = 0x00;
@@ -286,12 +297,6 @@ void encode_frame(const char *filename, int index)
    fwrite(outbuf, 1, 4, f);
    */
 
-   fclose(f);
-   av_free(outbuf);
-
-   avcodec_close(c);
-   av_free(c);
-   printf("\n");
 }
 
 void read_frame(){
