@@ -16,8 +16,10 @@
 #include "audio_record.h"
 #include "io_tools.h"
 
+
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
+char* filename, fbuf;
 
 void usage()
 {
@@ -29,32 +31,41 @@ void usage()
 void onExit()
 {
     printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
-    video_close();
     stopRecording = 1;
+    video_close();
+    sdl_quit();
 }
 
 int main(int argc, char*argv[])
 {
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
-        //usage();
-        //return 0;
+      usage();
+      return 0;
     }
+
     signal( SIGINT,&onExit);
 
-    printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
+    printf("[MAIN] I am going to record both video and audio data to the file: %s\n", filename);
 
     avcodec_init();
     av_register_all();
+    buffers = NULL;
 
     video_record_init();
     video_play_init();
-    audio_record_init();
-/*
+//    audio_record_init();
+
+	  int bufferIndex = 0;
+    int i;
+    i = 0;
     while(stopRecording == 0)
     {
-        video_frame_copy();
-        video_frame_display();
+        bufferIndex = video_frame_copy();
+        encode_frame(argv[1], 0);
+        video_frame_display(bufferIndex);
+		//usleep(40000);
+/*
         video_frame_compress();
         audio_segment_copy();
         audio_segment_compress();
@@ -64,9 +75,10 @@ int main(int argc, char*argv[])
 
         printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
         usleep(1000000);
-    }
 */
+    }
 
+    free(filename);
     printf("[MAIN] Quit recorder\n");
     return 0;
 }

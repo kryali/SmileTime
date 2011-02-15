@@ -22,13 +22,24 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
+#define BUFFERCOUNT 1
+
 #ifndef V4L2_PIX_FMT_PJPG
 #define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
+#endif
+
+#ifndef V4L2_PIX_FMT_RGB
+#define V4L2_PIX_FMT_RGB v4l2_fourcc('G', 'B', 'R', 'G')
 #endif
 
 #ifndef V4L2_PIX_FMT_MJPG
 #define V4L2_PIX_FMT_MJPG v4l2_fourcc('M', 'J', 'P', 'G')
 #endif
+
+#ifndef V4L2_PIX_FMT_JPEG
+#define V4L2_PIX_FMT_JPEG v4l2_fourcc('J', 'P', 'E', 'G')
+#endif
+
 
 
 //SOURCES:
@@ -40,12 +51,22 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
 
+/*
 struct buffer {
 	void * start;
 	size_t length;
 };
 
 struct buffer * buffers = NULL;
+struct buffer {
+    void * start;
+    size_t length;
+};
+struct buffer * buffers = NULL;
+*/
+//buffers = NULL;
+
+
 
 void print_default_crop(){
 	// Get information about the video cropping and scaling abilities
@@ -59,13 +80,17 @@ void print_default_crop(){
 	defaultRect = crop.bounds;
 	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
 
-	struct v4l2_fmtdesc fmtdesc;
-	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
-		printf("Format query failed\n");
-		perror("ioctl");
+	int i = 0;
+	for(; i < 5; i++){
+		struct v4l2_fmtdesc fmtdesc;
+		fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		fmtdesc.index = 1;
+		if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
+			printf("Format query failed\n");
+			perror("ioctl");
+		}
+		printf("Format: %s\n", fmtdesc.description);
 	}
-	printf("Format: %s\n", fmtdesc.description);
 }
 
 void print_input_info(){
@@ -97,15 +122,19 @@ void set_format(){
 	format.fmt.pix.width = 640;
 	format.fmt.pix.height = 480;
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
+//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
-		printf("Format not supported\n");
-		perror("ioctl");
+		perror("VIDIOC_S_FMT");
+		exit( EXIT_FAILURE );
 	}
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
+	if(!(format.fmt.pix.pixelformat & V4L2_PIX_FMT_MJPG)){
+		printf("Error: MJPG compressions wasn't set\n");
+	}
 }
 
 //This function initialize the camera device and V4L2 interface
@@ -124,17 +153,16 @@ void video_record_init(){
 
 	mmap_init();	
 
-	read_frame();
     //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 
-  encode_frame("/home/mark/Desktop/out.mkv");
+  //encode_frame("/home/mark/Desktop/out.mkv");
 }
 
-void encode_frame(const char *filename)
+void encode_frame(const char *filename, int index)
 {
    AVCodec *codec;
    AVCodecContext *c= NULL;
-   int i, enc_size, size, x, outbuf_size, inbuf_size;
+   int i, enc_size, x, outbuf_size, inbuf_size;
    FILE *f;
    uint8_t *outbuf, *inbuf;
 
@@ -177,7 +205,7 @@ void encode_frame(const char *filename)
        exit(1);
    }
 
-   f = fopen(filename, "wb");
+   f = fopen(filename, "ab");
    if (!f) {
        fprintf(stderr, "could not open %s\n", filename);
        exit(1);
@@ -190,10 +218,9 @@ void encode_frame(const char *filename)
    outbuf = av_malloc(outbuf_size);
    avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
 
-   for(i=0;i<25;i++) {
      inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
      inbuf = av_malloc(inbuf_size);
-     x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, c->width, c->height);
+     x = avpicture_fill((AVPicture *)srcFrame, buffers[index].start, PIX_FMT_YUYV422, c->width, c->height);
 
      img_convert_ctx = sws_getContext(c->width, c->height, 
                       PIX_FMT_YUYV422, 
@@ -204,12 +231,17 @@ void encode_frame(const char *filename)
            srcFrame->linesize, 0, 
            c->height, 
            dstFrame->data, dstFrame->linesize);
-     av_free(inbuf);
 
+   int foo = 0;
+   do { 
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
      printf("encoding frame %3d (size=%5d)\n", i, enc_size);
-     fwrite(outbuf, 1, enc_size, f);
-   }
+     if( enc_size > 0 )
+     {
+       fwrite(outbuf, 1, enc_size, f);
+     }
+   } while ( enc_size == 0 );
+   av_free(inbuf);
 
    // encode 1 second of video
    /*for(i=0;i<25;i++) {
@@ -243,7 +275,7 @@ void encode_frame(const char *filename)
 
        enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
        printf("write frame %3d (size=%5d)\n", i, enc_size);
-       fwrite(outbuf, 1, enc_size, f);
+       if( enc_size ) fwrite(outbuf, 1, enc_size, f);
    }
 
    // add sequence end code to have a real mpeg file
@@ -296,7 +328,7 @@ void mmap_init(){
 	// - Find the number of support buffers
 	struct v4l2_requestbuffers reqbuf;
 	reqbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	reqbuf.count = 25;
+	reqbuf.count = BUFFERCOUNT;
 	reqbuf.memory = V4L2_MEMORY_MMAP;
 	if (ioctl (camera_fd, VIDIOC_REQBUFS, &reqbuf) == -1){
 		perror("ioctl");
@@ -345,13 +377,33 @@ void mmap_init(){
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
-void video_frame_copy(){
+int video_frame_copy(){
 
+	// DEQUEUE frame from buffer
+	struct v4l2_buffer buf;
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
+		perror("VIDIOC_DQBUF");
+	}
+	
+	printf("Read buffer index:%d\n", buf.index);
+
+	// ENQUEUE frame into buffer
+	struct v4l2_buffer bufQ;
+	bufQ.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	bufQ.memory = V4L2_MEMORY_MMAP;
+	bufQ.index = buf.index;
+	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
+		perror("VIDIOC_QBUF");
+	}
+	return buf.index;
 }
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void video_frame_compress(){
-	
+void video_frame_compress(char* filename, int index){
+  printf("%s is da filename", filename);
+	encode_frame(filename, index);
 }
 
 //Closes the camera and frees all memory
@@ -390,3 +442,4 @@ void print_Camera_Info(){
 		printf("No streaming capabilities!\n");
 	}
 }
+

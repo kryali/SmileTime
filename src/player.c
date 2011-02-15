@@ -49,7 +49,7 @@ int main(int argc, char*argv[])
         video_frame_decompress();
         printf("[MAIN] Synchronize your video frame play to the audio play.\n");
         usleep(1000000);
-        video_frame_display();
+        //video_frame_display();
 
         frames_to_play --;
 
