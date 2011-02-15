@@ -153,9 +153,7 @@ void video_record_init(){
 
 	mmap_init();	
 
-    //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
-
-  //encode_frame("/home/mark/Desktop/out.mkv");
+  //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
 }
 
 void encode_frame(const char *filename, int index)
