@@ -38,7 +38,7 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 */
 
 int camera_fd = -1;
-char* camera_name = "/dev/video1";
+char* camera_name = "/dev/video0";
 
 struct buffer {
 	void * start;
@@ -191,10 +191,9 @@ void encode_frame(const char *filename)
    avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
 
    for(i=0;i<25;i++) {
-
      inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
      inbuf = av_malloc(inbuf_size);
-     x = avpicture_fill((AVPicture *)srcFrame, buffers[i].start, PIX_FMT_YUYV422, c->width, c->height);
+     x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, c->width, c->height);
 
      img_convert_ctx = sws_getContext(c->width, c->height, 
                       PIX_FMT_YUYV422, 
