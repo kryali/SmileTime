@@ -34,6 +34,7 @@ void onExit()
     stopRecording = 1;
     video_close();
     sdl_quit();
+	audio_exit();
 }
 
 int main(int argc, char*argv[])
@@ -54,9 +55,10 @@ int main(int argc, char*argv[])
 
     video_record_init();
     video_play_init();
-//    audio_record_init();
+    audio_record_init();
+	audio_segment_copy();
 
-	  int bufferIndex = 0;
+	int bufferIndex = 0;
     int i;
     i = 0;
     while(stopRecording == 0)

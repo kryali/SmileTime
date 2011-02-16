@@ -168,7 +168,7 @@ void encode_frame(const char *filename, int index)
 
    static struct SwsContext *img_convert_ctx;
 
-   printf("Video encoding\n");
+//   printf("Video encoding\n");
 
    /* find the h264 video encoder */
    codec = avcodec_find_encoder(CODEC_ID_H264);
@@ -239,7 +239,7 @@ void encode_frame(const char *filename, int index)
    do { 
      // Why so many empty encodes at the beginning?
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
-     printf("encoding frame %3d (size=%5d)\n", i, enc_size);
+ //    printf("encoding frame %3d (size=%5d)\n", i, enc_size);
      fwrite(outbuf, 1, enc_size, f);
    } while ( enc_size == 0 );
 
@@ -248,7 +248,7 @@ void encode_frame(const char *filename, int index)
      // Why is this necessary?
      fflush(stdout);
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
-     printf("write frame %3d (size=%5d)\n", i, enc_size);
+//     printf("write frame %3d (size=%5d)\n", i, enc_size);
      if( enc_size ) fwrite(outbuf, 1, enc_size, f);
    }
 
@@ -307,7 +307,7 @@ void read_frame(){
 		perror("VIDIOC_DQBUF");
 	}
 	
-	printf("Read buffer index:%d\n", buf.index);
+	//printf("Read buffer index:%d\n", buf.index);
 
 	// WRITE buffer to file
 	/*FILE * frame_fd = fopen( "1.jpg", "w+");
@@ -337,7 +337,7 @@ void mmap_init(){
 		perror("ioctl");
 		exit(EXIT_FAILURE);
 	}	
-	printf("Buffer count: %d\n", reqbuf.count);
+	//printf("Buffer count: %d\n", reqbuf.count);
 	
 	buffers = malloc( reqbuf.count * sizeof(*buffers));
 	int i =0;
@@ -352,7 +352,7 @@ void mmap_init(){
 			perror("VIDIOC_QUERYBUF");
 		}
 
-		printf("Index: %d, Buffer offset: %d\n", i, buf.m.offset);
+		//printf("Index: %d, Buffer offset: %d\n", i, buf.m.offset);
 		buffers[i].length = buf.length; 
 		buffers[i].start = mmap( NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, camera_fd, buf.m.offset);
 		if (buffers[i].start == MAP_FAILED){
@@ -390,7 +390,7 @@ int video_frame_copy(){
 		perror("VIDIOC_DQBUF");
 	}
 	
-	printf("Read buffer index:%d\n", buf.index);
+	//printf("Read buffer index:%d\n", buf.index);
 
 	// ENQUEUE frame into buffer
 	struct v4l2_buffer bufQ;
@@ -405,20 +405,20 @@ int video_frame_copy(){
 
 //This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
 void video_frame_compress(char* filename, int index){
-  printf("%s is da filename", filename);
+  //printf("%s is da filename", filename);
 	encode_frame(filename, index);
 }
 
 //Closes the camera and frees all memory
 void video_close(){
-	printf("Closing stream");
+	//printf("Closing stream");
 	int closed = close(camera_fd);
 	if(closed == 0){
-		printf("closed: %d\n", camera_fd);
+		//printf("closed: %d\n", camera_fd);
 		camera_fd = -1;
 	}
 	else{
-		printf("error closing: %d\n", camera_fd);
+		//printf("error closing: %d\n", camera_fd);
 	}
 }
 
