@@ -2,7 +2,7 @@ INSTALLROOT=$(PWD)
 
 CC=gcc -O0
 
-FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lvpx -lx264
+FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lx264 -lmp3lame
 
 SDLLIBS = $(shell sdl-config --libs) 
 SDLFLAGS = $(shell sdl-config --cflags)
@@ -10,7 +10,7 @@ SDLFLAGS = $(shell sdl-config --cflags)
 MATH_LIB=-lm 
 JPEG_LIB=-ljpeg
 
-CFLAGS = -O2 $(SDLFLAGS) -Wall -g  -lasound
+CFLAGS = -O2 $(SDLFLAGS) -Wall -g  -lasound -L/nmnt/work1/cs414/G6/x264/lib/ -I/nmnt/work1/cs414/G6/x264/include/
 
 REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o
