@@ -19,5 +19,8 @@ void print_input_info();
 void set_format();
 void read_frame();
 void encode_frame( const char *filename, int index);
-
+int pan_relative(int pan);
+int tilt_relative(int tilt);
+int panTilt_relative(int pan, int tilt);
+int panTilt_reset();
 #endif

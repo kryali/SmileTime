@@ -57,12 +57,15 @@ int main(int argc, char*argv[])
     video_play_init();
     audio_record_init();
 	audio_segment_copy();
-
+	//panTilt_reset();
+	//pan_relative(20);
+	//tilt_relative(150);
 	int bufferIndex = 0;
     int i;
     i = 0;
     while(stopRecording == 0)
     {
+	
         bufferIndex = video_frame_copy();
         encode_frame(argv[1], 0);
         video_frame_display(bufferIndex);
