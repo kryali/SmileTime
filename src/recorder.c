@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
@@ -20,6 +21,7 @@
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
 char* filename, fbuf;
+pthread_t threads;
 
 void usage()
 {
@@ -39,6 +41,7 @@ void onExit()
 
 int main(int argc, char*argv[])
 {
+    pthread_t video_encoding_thread;
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
       usage();
@@ -47,32 +50,32 @@ int main(int argc, char*argv[])
 
     signal( SIGINT,&onExit);
 
-    printf("[MAIN] I am going to record both video and audio data to the file: %s\n", filename);
+    printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
 
     avcodec_init();
     av_register_all();
     buffers = NULL;
 
-    video_record_init();
+    video_record_init(argv[1]);
     video_play_init();
     audio_record_init();
     audio_segment_copy();
     audio_segment_compress();
-    //panTilt_reset();
-    //pan_relative(20);
+
+    panTilt_reset();
+    pan_relative(20);
     tilt_relative(150);
     int bufferIndex = 0;
     int i;
     i = 0;
     while(stopRecording == 0)
     {
-  
         bufferIndex = video_frame_copy();
-        encode_frame(argv[1], 0);
+        pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
         video_frame_display(bufferIndex);
         //usleep(40000);
 /*
-        video_frame_compress();
+        //video_frame_compress();
         audio_segment_copy();
         audio_segment_compress();
 

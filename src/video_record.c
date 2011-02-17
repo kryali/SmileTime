@@ -65,6 +65,8 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
+char* filename;
+FILE* video_file;
 
 /*
 struct buffer {
@@ -153,8 +155,9 @@ void set_format(){
 }
 
 //This function initialize the camera device and V4L2 interface
-void video_record_init(){
-
+void video_record_init(char* f){
+  filename = f;
+  //printf("Filename init: %s", filename);
 	//open camera
 	camera_fd = open(camera_name, O_RDWR );
 	if(camera_fd == -1){
@@ -168,150 +171,14 @@ void video_record_init(){
 
 	mmap_init();	
 
+  video_file = fopen(filename, "wb");
+  if (!f) {
+      fprintf(stderr, "could not open %s\n", filename);
+      exit(1);
+  }
+
+
   //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
-}
-
-void encode_frame(const char *filename, int index)
-{
-   AVCodec *codec;
-   AVCodecContext *c= NULL;
-   int i, enc_size, x, outbuf_size, inbuf_size;
-   FILE *f;
-   uint8_t *outbuf, *inbuf;
-   i = 0;
-
-   AVFrame *srcFrame, *dstFrame; 
-
-   static struct SwsContext *img_convert_ctx;
-
-   // printf("Video encoding\n");
-
-   /* find the h264 video encoder */
-   codec = avcodec_find_encoder(CODEC_ID_H264);
-   if (!codec) {
-       fprintf(stderr, "codec not found\n");
-       exit(1);
-   }
-
-   c = avcodec_alloc_context();
-
-   // sample parameters
-   c->bit_rate = 400000;
-   c->width = 640;
-   c->height = 480;
-
-   // frames parameters
-   c->time_base= (AVRational){1,25};
-   c->gop_size = 10; // emit one intra frame every ten frames
-   c->max_b_frames=1;
-   c->pix_fmt = PIX_FMT_YUV420P;
-
-   // h264 parameters
-   c->me_range = 16;
-   c->max_qdiff = 4;
-   c->qmin = 10;
-   c->qmax = 51;
-   c->qcompress = 0.6; 
-
-   // open the codec
-   if (avcodec_open(c, codec) < 0) {
-       fprintf(stderr, "could not open codec\n");
-       exit(1);
-   }
-
-   f = fopen(filename, "ab");
-   if (!f) {
-       fprintf(stderr, "could not open %s\n", filename);
-       exit(1);
-   }
-
-   // Allocate space for the frames
-   srcFrame = avcodec_alloc_frame(); 
-   dstFrame = avcodec_alloc_frame(); 
-
-   // Create AVFrame for YUV420 frame
-   outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
-   outbuf = av_malloc(outbuf_size);
-   avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
-
-   // Create AVFrame for YUYV422 frame
-   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
-   inbuf = av_malloc(inbuf_size);
-   x = avpicture_fill((AVPicture *)srcFrame, buffers[index].start, PIX_FMT_YUYV422, c->width, c->height);
-
-   // Make the conversion context
-   img_convert_ctx = sws_getContext(c->width, c->height, 
-                    PIX_FMT_YUYV422, 
-                    c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
-                    NULL, NULL, NULL);
-
-   // Convert the image to YUV420
-   sws_scale(img_convert_ctx, srcFrame->data, 
-         srcFrame->linesize, 0, 
-         c->height, 
-         dstFrame->data, dstFrame->linesize);
-
-   // Encode the frame
-   //int foo = 0;
-   do { 
-     // Why so many empty encodes at the beginning?
-     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
-      //    printf("encoding frame %3d (size=%5d)\n", i, enc_size);
-     fwrite(outbuf, 1, enc_size, f);
-   } while ( enc_size == 0 );
-
-   // Get the delayed frames
-   /*for(; enc_size; i++) {
-     // Why is this necessary?
-     fflush(stdout);
-     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
-//     printf("write frame %3d (size=%5d)\n", i, enc_size);
-     if( enc_size ) fwrite(outbuf, 1, enc_size, f);
-   }*/
-
-   // Free everything
-   fclose(f);
-   av_free(outbuf);
-   av_free(inbuf);
-
-   avcodec_close(c);
-   av_free(c);
-   printf("\n");
-
-   // encode 1 second of video
-   /*for(i=0;i<25;i++) {
-       fflush(stdout);
-       // prepare a dummy image
-       // Y
-       for(y=0;y<c->height;y++) {
-           for(x=0;x<c->width;x++) {
-               picture->data[0][y * picture->linesize[0] + x] = x + y + i * 3;
-           }
-       }
-
-       // Cb and Cr
-       for(y=0;y<c->height/2;y++) {
-           for(x=0;x<c->width/2;x++) {
-               picture->data[1][y * picture->linesize[1] + x] = 128 + y + i * 2;
-               picture->data[2][y * picture->linesize[2] + x] = 64 + x + i * 5;
-           }
-       }
-
-       // encode the image
-       enc_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
-       printf("encoding frame %3d (size=%5d)\n", i, out_size);
-       fwrite(outbuf, 1, out_size, f);
-   }
-   */
-
-   // add sequence end code to have a real mpeg file
-   /*outbuf[0] = 0x00;
-   outbuf[1] = 0x00;
-   outbuf[2] = 0x01;
-   outbuf[3] = 0xb7;
-   fwrite(outbuf, 1, 4, f);
-   */
-
 }
 
 void read_frame(){
@@ -406,8 +273,6 @@ int video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
 		perror("VIDIOC_DQBUF");
 	}
-	
-	//printf("Read buffer index:%d\n", buf.index);
 
 	// ENQUEUE frame into buffer
 	struct v4l2_buffer bufQ;
@@ -420,23 +285,153 @@ int video_frame_copy(){
 	return buf.index;
 }
 
-//This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void video_frame_compress(char* filename, int index){
-  //printf("%s is da filename", filename);
-	encode_frame(filename, index);
+// This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
+void *video_frame_compress(int index){
+
+   int i, enc_size, x, outbuf_size, inbuf_size;
+   FILE *f;
+   uint8_t *outbuf, *inbuf;
+
+   AVCodec *codec;
+   AVCodecContext *c= NULL;
+
+   i = 0;
+
+   AVFrame *srcFrame, *dstFrame; 
+
+   static struct SwsContext *img_convert_ctx;
+
+   // printf("Video encoding\n");
+
+   // find the h264 video encoder
+   codec = avcodec_find_encoder(CODEC_ID_H264);
+   if (!codec) {
+       fprintf(stderr, "codec not found\n");
+       exit(1);
+   }
+
+   c = avcodec_alloc_context();
+
+   // sample parameters
+   c->bit_rate = 400000;
+   c->width = 640;
+   c->height = 480;
+
+   // frames parameters
+   c->time_base= (AVRational){1,25};
+   c->gop_size = 10; // emit one intra frame every ten frames
+   c->max_b_frames=1;
+   c->pix_fmt = PIX_FMT_YUV420P;
+
+   // h264 parameters
+   c->me_range = 16;
+   c->max_qdiff = 4;
+   c->qmin = 10;
+   c->qmax = 51;
+   c->qcompress = 0.6; 
+
+   // open the codec
+   if (avcodec_open(c, codec) < 0) {
+       fprintf(stderr, "could not open codec\n");
+       exit(1);
+   }
+
+   // Allocate space for the frames
+   srcFrame = avcodec_alloc_frame(); 
+   dstFrame = avcodec_alloc_frame(); 
+
+   // Create AVFrame for YUV420 frame
+   outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, c->width, c->height);
+   outbuf = av_malloc(outbuf_size);
+   avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, c->width, c->height);
+
+   // Create AVFrame for YUYV422 frame
+   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, c->width, c->height);
+   inbuf = av_malloc(inbuf_size);
+   x = avpicture_fill((AVPicture *)srcFrame, buffers[index].start, PIX_FMT_YUYV422, c->width, c->height);
+
+   // Make the conversion context
+   img_convert_ctx = sws_getContext(c->width, c->height, 
+                    PIX_FMT_YUYV422, 
+                    c->width, c->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
+                    NULL, NULL, NULL);
+
+   // Convert the image to YUV420
+   sws_scale(img_convert_ctx, srcFrame->data, 
+         srcFrame->linesize, 0, 
+         c->height, 
+         dstFrame->data, dstFrame->linesize);
+
+   // Encode the frame
+   do { 
+     // Why so many empty encodes at the beginning?
+     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
+     // printf("encoding frame %3d (size=%5d)\n", i, enc_size);
+     fwrite(outbuf, 1, enc_size, video_file);
+   } while ( enc_size == 0 );
+
+   // Get the delayed frames
+   //for(; enc_size; i++) {
+   for(; i<=5; i++) {
+     // Why is this necessary?
+     fflush(stdout);
+     enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
+     // printf("write frame %3d (size=%5d)\n", i, enc_size);
+     if( enc_size ) fwrite(outbuf, 1, enc_size, video_file);
+   }
+
+   av_free(outbuf);
+   av_free(inbuf);
+
+   avcodec_close(c);
+   av_free(c);
+   printf("\n");
+
+   // encode 1 second of video
+   /*for(i=0;i<25;i++) {
+       fflush(stdout);
+       // prepare a dummy image
+       // Y
+       for(y=0;y<c->height;y++) {
+           for(x=0;x<c->width;x++) {
+               picture->data[0][y * picture->linesize[0] + x] = x + y + i * 3;
+           }
+       }
+
+       // Cb and Cr
+       for(y=0;y<c->height/2;y++) {
+           for(x=0;x<c->width/2;x++) {
+               picture->data[1][y * picture->linesize[1] + x] = 128 + y + i * 2;
+               picture->data[2][y * picture->linesize[2] + x] = 64 + x + i * 5;
+           }
+       }
+
+       // encode the image
+       enc_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
+       printf("encoding frame %3d (size=%5d)\n", i, out_size);
+       fwrite(outbuf, 1, out_size, f);
+   }
+   */
+
+   // add sequence end code to have a real mpeg file
+   /*outbuf[0] = 0x00;
+   outbuf[1] = 0x00;
+   outbuf[2] = 0x01;
+   outbuf[3] = 0xb7;
+   fwrite(outbuf, 1, 4, f);
+   */
+   pthread_exit(NULL);
 }
 
 //Closes the camera and frees all memory
 void video_close(){
 	//printf("Closing stream");
+  fclose(video_file);
+
+  // Free everything
 	int closed = close(camera_fd);
-	if(closed == 0){
-		//printf("closed: %d\n", camera_fd);
+	if(closed == 0)
 		camera_fd = -1;
-	}
-	else{
-		//printf("error closing: %d\n", camera_fd);
-	}
 }
 
 //find capabilities of camera and print them out
@@ -466,74 +461,76 @@ void print_Camera_Info(){
 //http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
 int pan_relative(int pan)
 {
-        struct v4l2_ext_control xctrls;
-        struct v4l2_ext_controls ctrls;
-        xctrls.id = V4L2_CID_PAN_RELATIVE;
-        xctrls.value = pan;
-        ctrls.count = 1;
-        ctrls.controls = &xctrls;
-	if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-	{
-                perror("VIDIOC_S_EXT_CTRLS - Pan error. Are the extended controls available?\n");
-		return -1;
-	} else {
-            printf("PAN Success");
-        }
-	return 0;
+    struct v4l2_ext_control xctrls;
+    struct v4l2_ext_controls ctrls;
+    xctrls.id = V4L2_CID_PAN_RELATIVE;
+    xctrls.value = pan;
+    ctrls.count = 1;
+    ctrls.controls = &xctrls;
+    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 ) {
+        perror("VIDIOC_S_EXT_CTRLS - Pan error. Are the extended controls available?\n");
+        return -1;
+    } else {
+        printf("PAN Success");
+    }
+    return 0;
 }
 
 int tilt_relative(int tilt)
 {
-        struct v4l2_ext_control xctrls;
-        struct v4l2_ext_controls ctrls;
-        xctrls.id = V4L2_CID_TILT_RELATIVE;
-        xctrls.value = tilt;
-        ctrls.count = 1;
-        ctrls.controls = &xctrls;
-	if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-	{
-                perror("VIDIOC_S_EXT_CTRLS - Tilt error. Are the extended controls available?\n");
-		return -1;
-	} else {
-            printf("TILT Success");
-        }
-	return 0;
+    struct v4l2_ext_control xctrls;
+    struct v4l2_ext_controls ctrls;
+    xctrls.id = V4L2_CID_TILT_RELATIVE;
+    xctrls.value = tilt;
+    ctrls.count = 1;
+    ctrls.controls = &xctrls;
+    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
+    {
+        perror("VIDIOC_S_EXT_CTRLS - Tilt error. Are the extended controls available?\n");
+        return -1;
+    } else {
+        printf("TILT Success");
+    }
+
+    return 0;
 }
 
 int panTilt_relative(int pan, int tilt)
 {
-        struct v4l2_ext_control xctrls[2];
-        struct v4l2_ext_controls ctrls;
-        xctrls[0].id = V4L2_CID_PAN_RELATIVE;
-        xctrls[0].value = pan;
-        xctrls[1].id = V4L2_CID_TILT_RELATIVE;
-        xctrls[1].value = tilt;
-        ctrls.count = 2;
-        ctrls.controls = xctrls;
-	if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-	{
-                perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
-		return -1;
-	} else {
-            printf("PAN/TILT Success");
-        }
-	return 0;
+    struct v4l2_ext_control xctrls[2];
+    struct v4l2_ext_controls ctrls;
+    xctrls[0].id = V4L2_CID_PAN_RELATIVE;
+    xctrls[0].value = pan;
+    xctrls[1].id = V4L2_CID_TILT_RELATIVE;
+    xctrls[1].value = tilt;
+    ctrls.count = 2;
+    ctrls.controls = xctrls;
+    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
+    {
+        perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
+        return -1;
+    } else {
+        printf("PAN/TILT Success");
+    }
+
+    return 0;
 }
 
 int panTilt_reset()
 {
-        struct v4l2_ext_control xctrls;
-        struct v4l2_ext_controls ctrls;
-        xctrls.id = V4L2_CID_PANTILT_RESET;
-        xctrls.value = 1;
-        ctrls.count = 1;
-        ctrls.controls = &xctrls;
-	if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-	{
-                perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
-		return -1;
-	} else {
-            printf("PAN/TILT reset Success");
-        }
-	return 0;
+    struct v4l2_ext_control xctrls;
+    struct v4l2_ext_controls ctrls;
+    xctrls.id = V4L2_CID_PANTILT_RESET;
+    xctrls.value = 1;
+    ctrls.count = 1;
+    ctrls.controls = &xctrls;
+    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
+    {
+        perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
+        return -1;
+    } else {
+        printf("PAN/TILT reset Success");
+    }
+	 
+    return 0;
 }
