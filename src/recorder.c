@@ -57,6 +57,7 @@ int main(int argc, char*argv[])
     video_play_init();
     audio_record_init();
 	audio_segment_copy();
+	audio_segment_compress();
 	//panTilt_reset();
 	//pan_relative(20);
 	tilt_relative(150);

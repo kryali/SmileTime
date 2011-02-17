@@ -15,193 +15,125 @@
 #include <linux/soundcard.h>
 #include <sys/ioctl.h>
 
-#define AUDIO_FORMAT SND_PCM_FORMAT_S16_LE
-
-// http://www.equalarea.com/paul/alsa-audio.html
 int microphone_fd = -1;
-char* microphone_name = "default";
-short * buf;
-
-// Microphone global vars
-snd_pcm_t *capture_handle;
-FILE *f;
+char *microphone_name = "/dev/dsp";
+short *buf;
+int buf_size;
 uint8_t *outbuf;
+int outbuf_size;
+
 AVCodec *codec;
 AVCodecContext *c = NULL;
 
-int frame_size = 16;
-int sample_rate = 8000;
-int length = 5;
+int channels = 1;
+int sample_bits = 16; //bits per sample
+int sample_rate = 44100; //samples per second
+int sample_size; //size of 1 sample in bytes
+int frame_size; //size of a frame in samples
 
 void audio_record_init()
 {
 	printf("[A_REC] This function initializes the audio device for recording\n");
+	// Open the microphone device
+	microphone_fd = open( microphone_name, O_RDWR );
+	if(microphone_fd == -1){
+		perror("Opening microphone");
+		exit(1);
+	}
+	// Set sampling parameters
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_BITS, &sample_bits ) == -1){
+		perror("Write bits failed");
+		exit(1);
+	}	
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_RATE, &sample_rate ) == -1){
+		perror("rate failed");
+		exit(1);
+	}
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_CHANNELS, &channels ) == -1){
+		perror("channels failed");
+		exit(1);
+	}
+	sample_size = channels * sample_bits/8; 
 
-	char * filename = "audio.mp3";
-    f = fopen(filename, "wb");
-    if (!f) {
-      fprintf(stderr, "could not open %s\n", filename);
-      exit(1);
-  }
+	// register all the codecs
+	avcodec_init();
+	avcodec_register_all();
 
-  // register all the codecs
-  avcodec_init();
-  avcodec_register_all();
+	// find the lame mp3 encoder
+	codec = avcodec_find_encoder(CODEC_ID_MP2);
+	if (!codec) {
+	fprintf(stderr, "codec not found\n");
+	exit(1);
+	}
+	
+	// Initialize the sample context
+	c = avcodec_alloc_context();	
+	c->sample_fmt = SAMPLE_FMT_S16;
+	c->sample_rate = sample_rate;
+	c->channels = 1;
+	//c->bit_rate = 64000;
 
-  AVCodec *codec;
+	// open the codec
+	if( avcodec_open(c, codec) < 0) {
+		fprintf(stderr, "could not open codec\n");
+		exit(1);
+  	}
+	frame_size = c->frame_size;
 
-  // find the encoder
-  codec = avcodec_find_encoder(CODEC_ID_MP3);
-  if (!codec) {
-    fprintf(stderr, "codec not found\n");
-    exit(1);
-  }
-  c = avcodec_alloc_context();
-
-  // put sample parameters
-  //c->bit_rate = 64000;
-  c->sample_fmt = SAMPLE_FMT_S16;
-  c->sample_rate = sample_rate;
-  c->channels = 1;
-
-  // open the codec
-  if( avcodec_open(c, codec) < 0) {
-      fprintf(stderr, "could not open codec\n");
-      exit(1);
-  }
-
-  int outbuf_size = 10000;
-  outbuf = malloc(outbuf_size);
+	//buf
+  	buf_size = frame_size * sample_size;
+	printf("buf size: %d\n", buf_size);
+	buf =  malloc(buf_size);
+	//outbuf
+	outbuf_size = 10000; // size?	
+	outbuf = malloc(outbuf_size);
 }
 
 void audio_segment_copy()
-{
-  int fd, status;
-	int err;
-  printf("[A_REC] This function copies the audio segment from sound driver\n");
-
-	// Grabbing size of bytes per frame!
-	//int frame_size = snd_pcm_format_width( SND_PCM_FORMAT_S16_LE );
-	frame_size = 16;
-	sample_rate = 8000;
-	length = 5;
-	
-	printf("Frame size is %d bytes\n", frame_size/8);
-  int buf_size = length * sample_rate * frame_size/8;
-	buf =  malloc(buf_size); // OMG WTF why does this need more memory?
-
-  // Open the microphone device
-  fd = open( "/dev/dsp", O_RDWR );
-	printf("reading from interface\n");
-
-  //if ((err = snd_pcm_readi (capture_handle, buf, 64)) != 64) {
-  // Set sampling parameters
-  if( ioctl( fd, SOUND_PCM_WRITE_BITS, &frame_size ) == -1){
-    perror("Write bits failed");
-    exit(1);
-  }
-	if( frame_size != 16)
-		printf("Sixteen bits weren't set");
-	
-	int bytes;
-  FILE* file = fopen( "/home/engr/hughes11/Desktop/raw-audio.wav", "wb" );
-  if( (bytes = read( fd, buf, buf_size )) != buf_size )
-    printf("Wrong number of bytes read: %d\n", bytes);
-  
-	// int i; for( i = 0; i < count; i++){
-		/*if ((err = snd_pcm_readi (capture_handle, buf, 128)) != 128) {
-			fprintf (stderr, "read from audio interface failed (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-        printf("buf is %i", buf  );
-      int bytes = 0;
-	    if( (bytes = read( fd, buf+i, 2 )) != 2 ){
-        printf("Bytes: %d\n", bytes);
-        perror("Wrong number of bytes");
-		}
-*/
-  //fwrite( buf, buf_size, 1, file );
-  //write( fd, buf, buf_size );
-  //write( buf, buf_size, 1, file );
-  audio_segment_compress();
-	fclose(file);
+{	
+	printf("[A_REC] This function copies the audio segment from sound driver\n");	
+	//int bytes;
+	//if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
+	//	printf("Wrong number of bytes read: %d\n", bytes);
+  	//FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.wav", "wb" );
+	//write( microphone_fd, buf, buf_size );//plays the audio back
+	//fwrite( buf, 1, buf_size, file );
+	//audio_segment_compress();
+	//fclose(file);
 }
 
 void audio_segment_compress()
 {
     printf("[A_REC] This function should compress the raw wav to MP3 or AAC\n");
 		/* must be called before using avcodec lib */
-    int frame_size, out_size, outbuf_size;
-    short *samples;
 
-    printf("Audio encoding\n");
+	//encode the audio from buf to outbuf
+	FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.mp2", "wb" );
 
-    avcodec_init();
+	int out_size, i, bytes;
+	out_size = 0;
 
-    /* register all the codecs */
-    avcodec_register_all();
-    AVCodec *codec;
-    AVCodecContext *c= NULL;
-    /* find the MP2 encoder */
-    codec = avcodec_find_encoder(CODEC_ID_MP3);
-    if (!codec) {
-        fprintf(stderr, "codec not found\n");
-        exit(1);
-    }
-    c= avcodec_alloc_context();
-    /* put sample parameters */
-    c->bit_rate = 64000;
-    c->sample_rate = sample_rate;
-    c->channels = 1;
-    //c->sample_rate = 44100;
-    //c->channels = 2;
-    c->sample_fmt = SAMPLE_FMT_S16;
+	for(i=0; i< 300; i++){
+		if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
+			printf("Wrong number of bytes read: %d\n", bytes);
+		out_size = avcodec_encode_audio(c, outbuf, outbuf_size, (buf));
+		printf("Encoded %d bytes\n", out_size);
+		if(out_size == 0)
+			fwrite( outbuf, 1, outbuf_size, file );
+		else
+			fwrite( outbuf, 1, out_size, file );
+	}
 
-    /* open it */
-    if (avcodec_open(c, codec) < 0) {
-        fprintf(stderr, "could not open codec\n");
-        exit(1);
-    }
-    /* the codec gives us the frame size, in samples */
-    frame_size = c->frame_size;
-//    samples = malloc(frame_size * 2 * c->channels);
-    outbuf_size = 10000;
-    outbuf = malloc(outbuf_size);
-
-    /* encode a single tone sound */
-/*
-    float t = 0;
-	int j = 0;
-	int i = 0;    
-float tincr = 2 * M_PI * 440.0 / c->sample_rate;
-    for(i=0;i<200;i++) {
-        for(j=0;j<frame_size;j++) {
-            samples[2*j] = (int)(sin(t) * 10000);
-            samples[2*j+1] = samples[2*j];
-            t += tincr;
-        }
-        //out_size = avcodec_encode_audio(c, outbuf, outbuf_size, samples);
-        out_size = avcodec_encode_audio(c, outbuf, outbuf_size, buf);
-        fwrite(outbuf, 1, out_size, f);
-    }
-
-	*/
-    out_size = avcodec_encode_audio(c, outbuf, sizeof(buf), buf);
-    printf("Encoded %d bytes\n", out_size);
-    fwrite(outbuf, 1, out_size, f);
+	fclose(file);
+	//fwrite(outbuf, 1, out_size, f);
 }
 
-void audio_exit(){
-
-  if( fclose(f) != 0)
-    perror("fclose");
-	
-  free(outbuf);	
-  free(buf);
-  avcodec_close(c);
-  av_free(c);
-
+//Frees all memory and closes codecs.
+void audio_exit()
+{
+	free(outbuf);	
+	free(buf);
+	avcodec_close(c);
+	av_free(c);
 	printf("closing interface");
-	//snd_pcm_close (capture_handle);
 }
