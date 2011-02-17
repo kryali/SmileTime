@@ -59,7 +59,7 @@ int main(int argc, char*argv[])
 	audio_segment_copy();
 	//panTilt_reset();
 	//pan_relative(20);
-	//tilt_relative(150);
+	tilt_relative(150);
 	int bufferIndex = 0;
     int i;
     i = 0;

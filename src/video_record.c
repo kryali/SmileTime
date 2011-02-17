@@ -258,13 +258,13 @@ void encode_frame(const char *filename, int index)
    } while ( enc_size == 0 );
 
    // Get the delayed frames
-   for(; enc_size; i++) {
+   /*for(; enc_size; i++) {
      // Why is this necessary?
      fflush(stdout);
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
 //     printf("write frame %3d (size=%5d)\n", i, enc_size);
      if( enc_size ) fwrite(outbuf, 1, enc_size, f);
-   }
+   }*/
 
    // Free everything
    fclose(f);
