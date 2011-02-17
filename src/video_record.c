@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
@@ -177,12 +178,13 @@ void encode_frame(const char *filename, int index)
    int i, enc_size, x, outbuf_size, inbuf_size;
    FILE *f;
    uint8_t *outbuf, *inbuf;
+   i = 0;
 
    AVFrame *srcFrame, *dstFrame; 
 
    static struct SwsContext *img_convert_ctx;
 
-//   printf("Video encoding\n");
+   // printf("Video encoding\n");
 
    /* find the h264 video encoder */
    codec = avcodec_find_encoder(CODEC_ID_H264);
@@ -193,12 +195,12 @@ void encode_frame(const char *filename, int index)
 
    c = avcodec_alloc_context();
 
-   // put sample parameters
+   // sample parameters
    c->bit_rate = 400000;
-   // resolution must be a multiple of two
    c->width = 640;
    c->height = 480;
-   // frames per second
+
+   // frames parameters
    c->time_base= (AVRational){1,25};
    c->gop_size = 10; // emit one intra frame every ten frames
    c->max_b_frames=1;
@@ -223,6 +225,7 @@ void encode_frame(const char *filename, int index)
        exit(1);
    }
 
+   // Allocate space for the frames
    srcFrame = avcodec_alloc_frame(); 
    dstFrame = avcodec_alloc_frame(); 
 
@@ -249,11 +252,11 @@ void encode_frame(const char *filename, int index)
          dstFrame->data, dstFrame->linesize);
 
    // Encode the frame
-   int foo = 0;
+   //int foo = 0;
    do { 
      // Why so many empty encodes at the beginning?
      enc_size = avcodec_encode_video(c, outbuf, outbuf_size, dstFrame);
- //    printf("encoding frame %3d (size=%5d)\n", i, enc_size);
+      //    printf("encoding frame %3d (size=%5d)\n", i, enc_size);
      fwrite(outbuf, 1, enc_size, f);
    } while ( enc_size == 0 );
 

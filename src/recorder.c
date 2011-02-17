@@ -34,7 +34,7 @@ void onExit()
     stopRecording = 1;
     video_close();
     sdl_quit();
-	audio_exit();
+    audio_exit();
 }
 
 int main(int argc, char*argv[])
@@ -56,21 +56,21 @@ int main(int argc, char*argv[])
     video_record_init();
     video_play_init();
     audio_record_init();
-	audio_segment_copy();
-	audio_segment_compress();
-	//panTilt_reset();
-	//pan_relative(20);
-	tilt_relative(150);
-	int bufferIndex = 0;
+    audio_segment_copy();
+    audio_segment_compress();
+    //panTilt_reset();
+    //pan_relative(20);
+    tilt_relative(150);
+    int bufferIndex = 0;
     int i;
     i = 0;
     while(stopRecording == 0)
     {
-	
+  
         bufferIndex = video_frame_copy();
         encode_frame(argv[1], 0);
         video_frame_display(bufferIndex);
-		//usleep(40000);
+        //usleep(40000);
 /*
         video_frame_compress();
         audio_segment_copy();
