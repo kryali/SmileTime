@@ -60,7 +60,7 @@ void audio_record_init()
 	avcodec_register_all();
 
 	// find the lame mp3 encoder
-	codec = avcodec_find_encoder(CODEC_ID_MP2);
+	codec = avcodec_find_encoder(CODEC_ID_MP3);
 	if (!codec) {
 	fprintf(stderr, "codec not found\n");
 	exit(1);
