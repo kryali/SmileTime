@@ -68,7 +68,7 @@ int main(int argc, char*argv[])
 	fmt->video_codec = CODEC_ID_H264;
 	fmt->audio_codec = CODEC_ID_MP3;
 
-	/* allocate the output media context */
+	// allocate the output media context
 	oc = avformat_alloc_context();
 	if (!oc) {
 		fprintf(stderr, "Memory error\n");
@@ -77,13 +77,20 @@ int main(int argc, char*argv[])
 	oc->oformat = fmt;
 	snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
 
-	/* set the output parameters (must be done even if no parameters). */
+	// set the output parameters (must be done even if no parameters).
 	if (av_set_parameters(oc, NULL) < 0) {
 		fprintf(stderr, "Invalid output format parameters\n");
 		exit(1);
 	}
 
 	dump_format(oc, 0, filename, 1);
+	// open the output file
+	if (!(fmt->flags & AVFMT_NOFILE)) {
+		if (url_fopen(&oc->pb, filename, URL_WRONLY) < 0) {
+			fprintf(stderr, "Could not open '%s'\n", filename);
+			exit(1);
+		}
+	}
 	
 	video_record_init(fmt, oc);
 	video_play_init();
@@ -91,16 +98,24 @@ int main(int argc, char*argv[])
 	
 	av_write_header(oc);
 	while(stopRecording == 0)
-	{//pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
-		video_frame_copy();        
-		video_frame_compress();        
+	{
+		printf("vid frame copy\n");
+		video_frame_copy();
+		     	printf("vid frame compress\n");
+		video_frame_compress();  
+			printf("vid frame display\n");      
 		video_frame_display();
 		
+			printf("aud seg copy\n");		
 		audio_segment_copy();
+		
+			printf("aud seg compress\n");
 		audio_segment_compress();
 		
+			printf("vid frame write\n");
 		video_frame_write();
-		audio_segment_write();
+			printf("aud seg write\n");
+		//audio_segment_write();
 		printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
 	}
 	av_write_trailer(oc);

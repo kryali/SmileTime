@@ -100,18 +100,15 @@ void add_audio_stream(enum CodecID codec_id)
 		fprintf(stderr, "Could not alloc stream\n");
 		exit(1);
 	}
+	audio_context = audio_st->codec;	
 
-	audio_context = audio_st->codec;
 	audio_context->codec_id = codec_id;
 	audio_context->codec_type = AVMEDIA_TYPE_AUDIO;
-
-	// Initialize the sample context
-	audio_context = avcodec_alloc_context();	
 	audio_context->sample_fmt = SAMPLE_FMT_S16;
 	audio_context->sample_rate = sample_rate;
-	audio_context->channels = 1;
+	audio_context->channels = channels;
 	//audio_context->bit_rate = 64000;
-
+	
 	// some formats want stream headers to be separate
 	if(output_context->oformat->flags & AVFMT_GLOBALHEADER)
 		audio_context->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -119,8 +116,6 @@ void add_audio_stream(enum CodecID codec_id)
 
 void open_audio()
 {
-	printf("audio codec1: %d\n", CODEC_ID_MP3);
-	printf("audio codec2: %d\n", audio_context->codec_id);
 	/* find the audio encoder */
 	audio_codec = avcodec_find_encoder(audio_context->codec_id);
 	if (!audio_codec) {

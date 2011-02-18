@@ -96,7 +96,7 @@ void video_frame_compress(){
  		video_pkt.data= video_outbuf;
 		video_pkt.size= enc_size;
 	}
-	av_free(yuyv422_frame->data[0]);
+	//av_free(yuyv422_frame->data[0]);
 	av_free(yuyv422_frame);
 }
 
@@ -141,7 +141,7 @@ void add_video_stream(enum CodecID codec_id)
 	// timing
 	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE};
 	// frame type limits
-	video_context->gop_size = 12; /* emit one intra frame every twelve frames at most */
+	video_context->gop_size = 12; // emit one intra frame every twelve frames at most
 	video_context->max_b_frames=2;
 	// pix format
 	video_context->pix_fmt = STREAM_PIX_FMT;
@@ -264,8 +264,6 @@ void mmap_init(){
 	if( ioctl(camera_fd, VIDIOC_STREAMON, &type) == -1){
 		perror("VIDIOC_STREAMON");
 	}
-	
-
 }
 
 //find capabilities of camera and print them out
@@ -285,7 +283,7 @@ void print_Camera_Info(){
 		printf("No video capture capabilities!\n");
 	}
 	if( !(cap.capabilities & V4L2_CAP_READWRITE) ){
-		printf("No read/write capabilities!\n");
+		printf("No read/write capabilities! (this is okay, we don't use it.)\n");
 	}
 	if( !(cap.capabilities & V4L2_CAP_STREAMING) ){
 		printf("No streaming capabilities!\n");
