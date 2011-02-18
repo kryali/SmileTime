@@ -6,7 +6,8 @@ http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
 #define STREAM_FRAME_RATE 25 //frames per second
-#define STREAM_PIX_FMT PIX_FMT_YUV420P //YUV420 pixel format
+#define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
+#define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
 #define VIDEO_WIDTH 640;
 #define VIDEO_HEIGHT 480;
 
@@ -16,22 +17,31 @@ int enc_size;
 
 AVStream *video_st;
 AVFormatContext *output_context;
+AVPacket video_pkt;
 
-AVFrame *picture, *tmp_picture;
+AVFrame *yuv420_frame, *yuyv422_frame;
 uint8_t *video_outbuf;
 int frame_count, video_outbuf_size;
 
 //This function initialize the camera device and V4L2 interface
-void video_record_init(AVFormatContext *oc){
+void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc){
 	video_st = NULL;
 	output_context = oc;
+	
+	if (fmt->video_codec != CODEC_ID_NONE) {
+		add_video_stream(fmt->video_codec);
+	}
+	if (video_st) {
+		open_video();
+	}
+	
 	//open camera
 	camera_fd = open(camera_name, O_RDWR );
 	if(camera_fd == -1){
 		printf("error opening camera %s\n", camera_name);
 		return;
 	}
-         
+	buffers = NULL;
 	print_Camera_Info();
 	set_format();	
 	mmap_init();	
@@ -61,80 +71,56 @@ void video_frame_copy(){
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
 void video_frame_compress(){
-   int i, x;
-   i = 0;
    static struct SwsContext *img_convert_ctx;
-   
-   uint8_t *outbuf, *inbuf;
-	int outbuf_size, inbuf_size;
-   outbuf_size = avpicture_get_size(STREAM_PIX_FMT, video_context->width, video_context->height);
-   outbuf = av_malloc(outbuf_size);
-   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, video_context->width, video_context->height);
-   inbuf = av_malloc(inbuf_size);
-   
-   AVFrame *srcFrame, *dstFrame; 
-   // Allocate space for the frames
-   srcFrame = avcodec_alloc_frame(); 
-   dstFrame = avcodec_alloc_frame(); 
-
-   // Create AVFrame for YUV420 frame
-   avpicture_fill((AVPicture *)dstFrame, outbuf, STREAM_PIX_FMT, video_context->width, video_context->height);
-
-   // Create AVFrame for YUYV422 frame
-   x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, video_context->width, video_context->height);
-
+	yuyv422_frame = alloc_frame(buffers[0].start, CAMERA_PIX_FMT, video_context->width, video_context->height);
    // Make the conversion context
-   img_convert_ctx = sws_getContext(video_context->width, video_context->height, 
-                    PIX_FMT_YUYV422, 
-                    video_context->width, video_context->height, STREAM_PIX_FMT, SWS_BICUBIC, 
-                    NULL, NULL, NULL);
+   img_convert_ctx = sws_getContext(
+   	video_context->width, video_context->height, CAMERA_PIX_FMT, 
+		video_context->width, video_context->height, STREAM_PIX_FMT,
+		SWS_BICUBIC, NULL, NULL, NULL);
    
-   sws_scale(img_convert_ctx, srcFrame->data, 
-         srcFrame->linesize, 0, 
-         video_context->height, 
-         dstFrame->data, dstFrame->linesize);
+   sws_scale(img_convert_ctx, 
+   	yuyv422_frame->data, yuyv422_frame->linesize, 
+		0, video_context->height, 
+		yuv420_frame->data, yuv420_frame->linesize);
 
-   // Encode the frame
-   do { 
-     // Why so many empty encodes at the beginning?
-     enc_size = avcodec_encode_video(video_context, outbuf, outbuf_size, dstFrame);
-     // printf("encoding frame %3d (size=%5d)\n", i, enc_size);
-     //fwrite(outbuf, 1, enc_size, video_file);
-   } while ( enc_size == 0 );
-
-   /*// Get the delayed frames
-   //for(; enc_size; i++) {
-   for(; i<=5; i++) {
-     // Why is this necessary?
-     fflush(stdout);
-     enc_size = avcodec_encode_video(video_context, outbuf, outbuf_size, NULL);
-     // printf("write frame %3d (size=%5d)\n", i, enc_size);
-     if( enc_size ) fwrite(outbuf, 1, enc_size, video_file);
-   }*/
-   av_free(outbuf);
-   av_free(inbuf);
+	// Encode the frame
+	enc_size = avcodec_encode_video(video_context, video_outbuf, video_outbuf_size, yuv420_frame);
+	if (enc_size > 0) {
+		av_init_packet(&video_pkt);
+		if (video_context->coded_frame->pts != AV_NOPTS_VALUE)
+			video_pkt.pts= av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
+		if(video_context->coded_frame->key_frame)
+			video_pkt.flags |= AV_PKT_FLAG_KEY;
+		video_pkt.stream_index= video_st->index;
+ 		video_pkt.data= video_outbuf;
+		video_pkt.size= enc_size;
+	}
+	av_free(yuyv422_frame->data[0]);
+	av_free(yuyv422_frame);
 }
 
 void video_frame_write()
 {
-
+	// write the compressed frame in the media file
+	if (av_interleaved_write_frame(output_context, &video_pkt) != 0) {
+		fprintf(stderr, "Error while writing video frame\n");
+		//exit(1);
+	}
 }
 
 //Closes the camera and frees all memory
 void video_close(){
+
+	av_free(yuv420_frame->data[0]);
+	av_free(yuv420_frame);
+	av_free(video_outbuf);
    avcodec_close(video_context);
    av_free(video_context);
 	int closed = close(camera_fd);
 	if(closed == 0)
 		camera_fd = -1;
 }
-
-   // frames parameters
-   video_context->gop_size = 10; // emit one intra frame every ten frames
-
-   video_context->pix_fmt = ;
-
-
    
 void add_video_stream(enum CodecID codec_id)
 {
@@ -170,18 +156,38 @@ void add_video_stream(enum CodecID codec_id)
 		video_context->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
 
+AVFrame *alloc_frame(uint8_t *frame_buf, enum PixelFormat pix_fmt, int width, int height)
+{
+	AVFrame *frame;
+	int size;
+
+	frame = avcodec_alloc_frame();
+	if (!frame)
+		return NULL;
+	if(frame_buf == NULL) {
+		size = avpicture_get_size(pix_fmt, width, height);
+		frame_buf = av_malloc(size);
+	}
+	if (!frame_buf) {
+		av_free(frame);
+		return NULL;
+	}
+	avpicture_fill((AVPicture *)frame, frame_buf, pix_fmt, width, height);
+	return frame;
+}
+
 void open_video()
 {
     /* find the video encoder */
-    video_codec = avcodec_find_encoder(c->codec_id);
+    video_codec = avcodec_find_encoder(video_context->codec_id);
     if (!video_codec) {
-        fprintf(stderr, "video_codec not found\n");
+        fprintf(stderr, "video codec not found\n");
         exit(1);
     }
 
     /* open the codec */
-    if (avcodec_open(c, video_codec) < 0) {
-        fprintf(stderr, "could not open video_codec\n");
+    if (avcodec_open(video_context, video_codec) < 0) {
+        fprintf(stderr, "could not open video codec\n");
         exit(1);
     }
 
@@ -198,22 +204,10 @@ void open_video()
     }
 
     /* allocate the encoded raw picture */
-    picture = alloc_picture(c->pix_fmt, c->width, c->height);
-    if (!picture) {
-        fprintf(stderr, "Could not allocate picture\n");
+    yuv420_frame = alloc_frame(NULL, video_context->pix_fmt, video_context->width, video_context->height);
+    if (!yuv420_frame) {
+        fprintf(stderr, "Could not allocate yuv420_frame\n");
         exit(1);
-    }
-
-    /* if the output format is not YUV420P, then a temporary YUV420P
-       picture is needed too. It is then converted to the required
-       output format */
-    tmp_picture = NULL;
-    if (c->pix_fmt != PIX_FMT_YUV420P) {
-        tmp_picture = alloc_picture(PIX_FMT_YUV420P, c->width, c->height);
-        if (!tmp_picture) {
-            fprintf(stderr, "Could not allocate temporary picture\n");
-            exit(1);
-        }
     }
 }
 

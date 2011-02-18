@@ -50,7 +50,6 @@ int main(int argc, char*argv[])
 	
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
-	AVStream *video_st;
 	double audio_pts, video_pts;
 	int i = 0;
     
@@ -58,51 +57,35 @@ int main(int argc, char*argv[])
 	av_register_all();
 	
 	fmt = av_guess_format(NULL, filename, NULL);
-    	if (!fmt) {
-    	    printf("Could not deduce output format from file extension: using mkv.\n");
-    	    fmt = av_guess_format(".mkv", NULL, NULL);
-    	}
-    	if (!fmt) {
-    	    fprintf(stderr, "Could not find suitable output format\n");
-    	    exit(1);
-    	}
+	if (!fmt) {
+		printf("Could not deduce output format from file extension: using mkv.\n");
+		fmt = av_guess_format(".mkv", NULL, NULL);
+	}
+	if (!fmt) {
+		fprintf(stderr, "Could not find suitable output format\n");
+		exit(1);
+	}
 	fmt->video_codec = CODEC_ID_H264;
 	fmt->audio_codec = CODEC_ID_MP3;
 
-   	/* allocate the output media context */
-    	oc = avformat_alloc_context();
-    	if (!oc) {
-    	    fprintf(stderr, "Memory error\n");
-    	    exit(1);
-    	}
-    	oc->oformat = fmt;
-    	snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
+	/* allocate the output media context */
+	oc = avformat_alloc_context();
+	if (!oc) {
+		fprintf(stderr, "Memory error\n");
+		exit(1);
+	}
+	oc->oformat = fmt;
+	snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
 
-	/* add the audio and video streams using the default format codecs
-	and initialize the codecs */
-    	video_st = NULL;    	
-    	if (fmt->video_codec != CODEC_ID_NONE) {
-    	    //video_st = add_video_stream(oc, fmt->video_codec);
-    	}
+	/* set the output parameters (must be done even if no parameters). */
+	if (av_set_parameters(oc, NULL) < 0) {
+		fprintf(stderr, "Invalid output format parameters\n");
+		exit(1);
+	}
 
-    	/* set the output parameters (must be done even if no parameters). */
-    	if (av_set_parameters(oc, NULL) < 0) {
-      		fprintf(stderr, "Invalid output format parameters\n");
-     		exit(1);
-    	}
-
-    dump_format(oc, 0, filename, 1);
-
-    /* now that all the parameters are set, we can open the audio and
-       video codecs and allocate the necessary encode buffers */
-    if (video_st)
-        open_video(oc);
-   
-    printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
-    buffers = NULL;
-
+	dump_format(oc, 0, filename, 1);
 	
-	video_record_init();
+	video_record_init(fmt, oc);
 	video_play_init();
 	audio_record_init(fmt, oc);
 	

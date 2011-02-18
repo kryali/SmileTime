@@ -80,7 +80,7 @@ void audio_segment_write()
 	/* write the compressed frame in the media file */
 	if (av_interleaved_write_frame(output_context, &audio_pkt) != 0) {
 		fprintf(stderr, "Error while writing audio frame\n");
-		exit(1);
+		//exit(1);
 	}
 }
 
@@ -119,16 +119,18 @@ void add_audio_stream(enum CodecID codec_id)
 
 void open_audio()
 {
+	printf("audio codec1: %d\n", CODEC_ID_MP3);
+	printf("audio codec2: %d\n", audio_context->codec_id);
 	/* find the audio encoder */
 	audio_codec = avcodec_find_encoder(audio_context->codec_id);
 	if (!audio_codec) {
-		fprintf(stderr, "codec not found\n");
+		fprintf(stderr, "audio codec not found\n");
 		exit(1);
 	}
 
 	/* open it */
 	if (avcodec_open(audio_context, audio_codec) < 0) {
-		fprintf(stderr, "could not open codec\n");
+		fprintf(stderr, "could not open audio codec\n");
 		exit(1);
 	}
     

@@ -41,19 +41,24 @@
 #define V4L2_PIX_FMT_JPEG v4l2_fourcc('J', 'P', 'E', 'G')
 #endif
 
-#ifndef V4L2_CID_PAN_RELATIVE 
-//#define V4L2 _CID_PAN_RELATIVE (V4L2 _CID_PRIVATE_BASE+7) 
-#define V4L2_CID_PAN_RELATIVE 0x009A0904 
+#ifndef V4L2_CID_PAN_RELATIVE
+#define V4L2_CID_PAN_RELATIVE 0x009A0904
 #endif
 
-#ifndef V4L2_CID_TILT_RELATIVE 
-//#define V4L2 _CID_TILT_RELATIVE (V4L2 _CID_PRIVATE_BASE+8) 
-#define V4L2_CID_TILT_RELATIVE 0x009A0905 
+#ifndef V4L2_CID_TILT_RELATIVE
+#define V4L2_CID_TILT_RELATIVE 0x009A0905
 #endif
 
-#ifndef V4L2_CID_PANTILT_RESET 
-//#define V4L2 _CID_PANTILT_RESET (V4L2 _CID_PRIVATE_BASE+9) 
-#define V4L2_CID_PANTILT_RESET 0x0A046D03 
+#ifndef V4L2_CID_PANTILT_RESET
+#define V4L2_CID_PANTILT_RESET 0x0A046D03
+#endif
+
+#ifndef V4L2_CID_PAN_RESET
+#define V4L2_CID_PAN_RESET 0x009A0906
+#endif
+
+#ifndef V4L2_CID_TILT_RESET
+#define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
 #ifndef VIDEO_RECORDER_H
@@ -74,12 +79,13 @@ struct buffer {
 struct buffer * buffers;
 
 
-void video_record_init();
+void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 void video_frame_copy();
 void video_frame_compress();
 void video_frame_write();
 void video_close();
 void add_video_stream(enum CodecID codec_id);
+AVFrame *alloc_frame(uint8_t *frame_buf, enum PixelFormat pix_fmt, int width, int height);
 void open_video();
 void print_Camera_Info();
 void mmap_init();
