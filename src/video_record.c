@@ -5,7 +5,7 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
-#define STREAM_FRAME_RATE 7 //frames per second
+#define STREAM_FRAME_RATE 24 //frames per second
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
 #define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
 #define VIDEO_WIDTH 640;
@@ -357,18 +357,32 @@ void set_format(){
 //http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
 int pan_relative(int pan)
 {
+
+	struct v4l2_queryctrl qctrl;
+
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	while (0 == ioctl (camera_fd, VIDIOC_QUERYCTRL, &qctrl)) {
+			/* ... */
+			qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+
+	if(! (qctrl.id & V4L2_CID_PAN_RELATIVE)  ){
+		printf("Pan doesn't work!\n");
+	} else{
+		printf("Pan is enabled\n");
+	}
+
     struct v4l2_ext_control xctrls;
     struct v4l2_ext_controls ctrls;
     xctrls.id = V4L2_CID_PAN_RELATIVE;
     xctrls.value = pan;
     ctrls.count = 1;
     ctrls.controls = &xctrls;
-    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 ) {
-        perror("VIDIOC_S_EXT_CTRLS - Pan error. Are the extended controls available?\n");
-        return -1;
-    } else {
-        printf("PAN Success");
-    }
+	int r = 0;
+	do r = ioctl (camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls);
+			while (-1 == r && EINTR == errno);
+
+
     return 0;
 }
 
@@ -385,7 +399,7 @@ int tilt_relative(int tilt)
         perror("VIDIOC_S_EXT_CTRLS - Tilt error. Are the extended controls available?\n");
         return -1;
     } else {
-        printf("TILT Success");
+        printf("TILT Success\n");
     }
 
     return 0;
@@ -406,7 +420,7 @@ int panTilt_relative(int pan, int tilt)
         perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
         return -1;
     } else {
-        printf("PAN/TILT Success");
+        printf("PAN/TILT Success\n");
     }
 
     return 0;
@@ -425,7 +439,7 @@ int panTilt_reset()
         perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
         return -1;
     } else {
-        printf("PAN/TILT reset Success");
+        printf("PAN/TILT reset Success\n");
     }
 	 
     return 0;
