@@ -48,7 +48,7 @@ int sdl_init(){
 	SDL_WM_SetCaption( "Logitech View", NULL );
 
 
-	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
+	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YV12_OVERLAY, screen);
 	if(overlay == NULL){
 		printf("Failed to create Overlay\n");
 		exit(EXIT_FAILURE);

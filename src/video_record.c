@@ -139,13 +139,15 @@ void set_format(){
 	format.fmt.pix.width = 640;
 	format.fmt.pix.height = 480;
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
-//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+  //format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 
+  // Send format options to the camera
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		perror("VIDIOC_S_FMT");
 		exit( EXIT_FAILURE );
 	}
+
 	struct v4l2_pix_format pix_format;
 	pix_format = format.fmt.pix;
 	printf("Image Width: %d\n",pix_format.width);
