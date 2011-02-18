@@ -7,6 +7,7 @@
 #include "video_play.h"
 #include "audio_play.h"
 #include "io_tools.h"
+#include "SDL/SDL.h"
 
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
@@ -62,7 +63,7 @@ int main(int argc, char*argv[])
   AVCodecContext *pCodecCtx;
 
   // Find the first video stream
-  videoStream = -1;
+  int videoStream = -1;
   for( i=0; i<pFormatCtx->nb_streams; i++ )
     if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO ) {
       videoStream = i;
@@ -92,66 +93,73 @@ int main(int argc, char*argv[])
   // Allocate video frame
   pFrame = avcodec_alloc_frame();
 
+  //video_play_init();
+  //audio_play_init();
 
-int frameFinished;
-AVPacket packet;
-i=0;
+  SDL_Surface *screen;
 
-while(av_read_frame(pFormatCtx, &packet)>=0) {
-// Is this a packet from the video stream?
-if(packet.stream_index==videoStream) {
-// Decode video frame
-  avcodec_decode_video(pCodecCtx, pFrame, &frameFinished,
-                       packet.data, packet.size);
-  
-  // Did we get a video frame?
-  if(frameFinished) {
-  // Convert the image from its native format to RGB
-      img_convert((AVPicture *)pFrameRGB, PIX_FMT_RGB24, 
-          (AVPicture*)pFrame, pCodecCtx->pix_fmt, 
-    pCodecCtx->width, pCodecCtx->height);
-
-      // Save the frame to disk
-      if(++i<=5)
-        SaveFrame(pFrameRGB, pCodecCtx->width, 
-                  pCodecCtx->height, i);
+  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+    fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+    exit(1);
   }
-}
+
+
+  screen = SDL_SetVideoMode(pCodecCtx->width, pCodecCtx->height, 0, 0);
+  if(!screen) {
+    fprintf(stderr, "SDL: could not set video mode - exiting\n");
+    exit(1);
+  }
+
+  SDL_Overlay     *bmp;
+  bmp = SDL_CreateYUVOverlay(pCodecCtx->width, pCodecCtx->height,
+                             SDL_YV12_OVERLAY, screen);
+  int frameFinished;
+  AVPacket packet;
+  static struct SwsContext *img_convert_ctx;
   
-// Free the packet that was allocated by av_read_frame
-av_free_packet(&packet);
-}
 
-  video_play_init();
-  audio_play_init();
-
-  while(frames_to_play > 0)
+  //while(frames_to_play > 0)
+  while( av_read_frame(pFormatCtx, &packet) >= 0 )
   {
-
-
-    av_read_frame(pFormatCtx, &packet)>=0
-
-
-
     // Is this a packet from the video stream?
-    if(packet.stream_index==videoStream) {
+    if( packet.stream_index == videoStream ) {
       // Decode video frame
-      avcodec_decode_video(pCodecCtx, pFrame, &frameFinished,
-                           packet.data, packet.size);
-      
-      // Did we get a video frame?
-      if(frameFinished) {
-        // Convert the image from its native format to RGB
-        img_convert((AVPicture *)pFrameRGB, PIX_FMT_RGB24, 
-              (AVPicture*)pFrame, pCodecCtx->pix_fmt, 
-              pCodecCtx->width, pCodecCtx->height);
+      avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
+                           &packet);
+      SDL_Rect rect;
 
-        // Save the frame to disk
-        if(++i<=5)
-          SaveFrame(pFrameRGB, pCodecCtx->width, 
-                    pCodecCtx->height, i);
-      }
-    
+      if(frameFinished) {
+        SDL_LockYUVOverlay(bmp);
+
+        AVPicture pict;
+        pict.data[0] = bmp->pixels[0];
+        pict.data[1] = bmp->pixels[2];
+        pict.data[2] = bmp->pixels[1];
+
+        pict.linesize[0] = bmp->pitches[0];
+        pict.linesize[1] = bmp->pitches[2];
+        pict.linesize[2] = bmp->pitches[1];
+
+        // Convert the image into YUV format that SDL uses
+        img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, 
+                        PIX_FMT_YUV420P, 
+                        pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
+                        NULL, NULL, NULL);
+
+        sws_scale(img_convert_ctx, pFrame->data, 
+               pFrame->linesize, 0, 
+               pCodecCtx->height, 
+               pict.data, pict.linesize);
+         
+        // Display the video
+        SDL_UnlockYUVOverlay(bmp);
+        rect.x = 0;
+        rect.y = 0;
+        rect.w = pCodecCtx->width;
+        rect.h = pCodecCtx->height;
+        SDL_DisplayYUVOverlay(bmp, &rect);
+      }   
+    }
     /*audio_read();
     video_read();
 
@@ -161,11 +169,21 @@ av_free_packet(&packet);
     */
 
     printf("[MAIN] Synchronize your video frame play to the audio play.\n");
-    usleep(1000000);
+    //usleep(1000000);
     //video_frame_display();
 
-    frames_to_play --;
+    //frames_to_play --;
   }
+
+  // Free the YUV frame
+  av_free(pFrame);
+
+  // Close the codec
+  avcodec_close(pCodecCtx);
+
+  // Close the video file
+  av_close_input_file(pFormatCtx);
+
 
   printf("Playback Frame Rate: *** fps\n");
   printf("[MAIN] Quit player\n");
