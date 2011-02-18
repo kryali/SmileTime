@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "video_record.h"
+#include "audio_record.h"
 
 void video_save()
 {

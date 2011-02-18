@@ -15,13 +15,20 @@
 #include "video_record.h"
 #include "video_play.h"
 #include "audio_record.h"
+#include "audio_play.h"
 #include "io_tools.h"
 
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
-char* filename, fbuf;
 pthread_t threads;
+FILE* output;
+
+AVOutputFormat *fmt;
+AVFormatContext *oc;
+AVStream *audio_st, *video_st;
+double audio_pts, video_pts;
+int i;
 
 void usage()
 {
@@ -37,6 +44,7 @@ void onExit()
     video_close();
     sdl_quit();
     audio_exit();
+    free(output);
 }
 
 int main(int argc, char*argv[])
@@ -44,51 +52,100 @@ int main(int argc, char*argv[])
     //pthread_t video_encoding_thread;
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
-      usage();
+      usage(argv[1]);
       return 0;
-    }
-
+    } 
     signal( SIGINT,&onExit);
+	avcodec_init();
+	av_register_all();
+	output = fopen(argv[1], "wb");
+	if (!output) {
+		fprintf(stderr, "could not open %s\n", argv[1]);
+		exit(1);
+	}
 
+	//not sure if this will work, we want mkv with h264 video and mp3 audio.
+	fmt = av_guess_format(NULL, argv[1], NULL);
+    	if (!fmt) {
+    	    printf("Could not deduce output format from file extension: using mkv.\n");
+    	    fmt = av_guess_format("mkv", NULL, NULL);
+    	}
+    	if (!fmt) {
+    	    fprintf(stderr, "Could not find suitable output format\n");
+    	    exit(1);
+    	}
+	fmt->video_codec = CODEC_ID_H264;
+	fmt->audio_codec = CODEC_ID_MP3;
+
+   	/* allocate the output media context */
+    	oc = avformat_alloc_context();
+    	if (!oc) {
+    	    fprintf(stderr, "Memory error\n");
+    	    exit(1);
+    	}
+    	oc->oformat = fmt;
+    	snprintf(oc->filename, sizeof(oc->filename), "%s", argv[1]);
+
+	/* add the audio and video streams using the default format codecs
+	and initialize the codecs */
+    	video_st = NULL;
+    	audio_st = NULL;
+    	if (fmt->video_codec != CODEC_ID_NONE) {
+    	    //video_st = add_video_stream(oc, fmt->video_codec);
+    	}
+    	if (fmt->audio_codec != CODEC_ID_NONE) {
+    	    //audio_st = add_audio_stream(oc, fmt->audio_codec);
+    	}
+
+    	/* set the output parameters (must be done even if no parameters). */
+    	if (av_set_parameters(oc, NULL) < 0) {
+      		fprintf(stderr, "Invalid output format parameters\n");
+     		exit(1);
+    	}
+
+   
     printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
-
-    avcodec_init();
-    av_register_all();
     buffers = NULL;
 
-    video_record_init(argv[1]);
-    video_play_init();
+    		printf("Checkpoitn A\n");
+    video_record_init();
+    
+    		printf("Checkpoitn B\n");
+    		video_play_init();
+    		printf("Checkpoitn C\n");
     audio_record_init();
-    audio_segment_copy();
-    audio_segment_compress();
+    		printf("Checkpoitn D\n");
+    //audio_segment_copy();
+    //audio_segment_compress();
 
-    panTilt_reset();
-    pan_relative(20);
-    tilt_relative(150);
     int bufferIndex = 0;
     int i;
     i = 0;
     while(stopRecording == 0)
     {
-        bufferIndex = video_frame_copy();
+    		printf("Checkpoitn 1\n");
+        video_frame_copy();
+    		printf("Checkpoitn 2\n");
         //pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
-        video_frame_compress(0);
-        video_frame_display(bufferIndex);
-        //usleep(40000);
-/*
-        //video_frame_compress();
-        audio_segment_copy();
+        video_frame_compress();
+        
+    		printf("Checkpoitn 3\n");
+        video_frame_display();
+
+    		printf("Checkpoitn 4\n");
+    		audio_segment_copy();
+        
+    		printf("Checkpoitn 5\n");
         audio_segment_compress();
 
         video_save();
         audio_save();
 
         printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
-        usleep(1000000);
-*/
+        //usleep(1000000);
+
     }
 
-    free(filename);
     printf("[MAIN] Quit recorder\n");
     return 0;
 }

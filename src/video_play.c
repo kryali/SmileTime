@@ -89,7 +89,7 @@ void print_overlay_info(){
 	printf("Format: 0x%x\n", overlay->format);
 }
 
-void video_frame_display(int index)
+void video_frame_display()
 {
   //printf("[V_PLAY] This function displays the video frame on the screen\n");
 	SDL_LockYUVOverlay(overlay);
@@ -98,7 +98,7 @@ void video_frame_display(int index)
 		exit(EXIT_FAILURE);
 	}
 
-	overlay->pixels[index] = buffers[index].start;
+	overlay->pixels[0] = buffers[0].start;
 
 	SDL_UnlockYUVOverlay(overlay);
 
