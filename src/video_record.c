@@ -5,7 +5,7 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
-#define STREAM_FRAME_RATE 25 //frames per second
+#define STREAM_FRAME_RATE 7 //frames per second
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
 #define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
 #define VIDEO_WIDTH 640;
@@ -15,7 +15,6 @@ int camera_fd = -1;
 char* camera_name = "/dev/video0";
 int enc_size;
 
-AVStream *video_st;
 AVFormatContext *output_context;
 AVPacket video_pkt;
 

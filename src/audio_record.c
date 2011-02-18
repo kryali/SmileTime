@@ -10,7 +10,6 @@ uint8_t *audio_outbuf;
 int audio_outbuf_size;
 
 AVPacket audio_pkt;
-AVStream *audio_st;
 AVFormatContext *output_context;
 
 int channels = 1;

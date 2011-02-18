@@ -50,7 +50,6 @@ int main(int argc, char*argv[])
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
 	double audio_pts, video_pts;
-	int i = 0;
     
 	avcodec_init();
 	av_register_all();
@@ -98,24 +97,32 @@ int main(int argc, char*argv[])
 	av_write_header(oc);
 	while(stopRecording == 0)
 	{
-		printf("vid frame copy\n");
+		pan_relative(50);
 		video_frame_copy();
-		     	printf("vid frame compress\n");
 		video_frame_compress();  
-			printf("vid frame display\n");      
 		video_frame_display();
-		
-			printf("aud seg copy\n");		
 		audio_segment_copy();
-		
-			printf("aud seg compress\n");
 		audio_segment_compress();
 		
-			printf("vid frame write\n");
-		video_frame_write();
-			printf("aud seg write\n");
+		/*if (audio_st)
+			audio_pts = (double)audio_st->pts.val * audio_st->time_base.num / audio_st->time_base.den;
+		else
+			audio_pts = 0.0;
+	
+		if (video_st)
+			video_pts = (double)video_st->pts.val * video_st->time_base.num / video_st->time_base.den;
+		else
+			video_pts = 0.0;
+
+		//write interleaved audio and video frames
+		if (!video_st || (video_st && audio_st && audio_pts < video_pts)) {
+			audio_segment_write();
+		} else {
+			video_frame_write();
+		}*/
 		audio_segment_write();
-		printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
+		video_frame_write();
+
 	}
 	av_write_trailer(oc);
 	sdl_quit();

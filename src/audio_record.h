@@ -18,6 +18,7 @@
 
 AVCodec *audio_codec;
 AVCodecContext *audio_context;
+AVStream *audio_st;
 
 void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 void audio_segment_copy();

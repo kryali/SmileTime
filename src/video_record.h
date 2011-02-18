@@ -65,11 +65,9 @@
 #define VIDEO_RECORDER_H
 
 
-
-
 AVCodec *video_codec;
 AVCodecContext *video_context;
-
+AVStream *video_st;
 
 struct buffer {
     void * start;
