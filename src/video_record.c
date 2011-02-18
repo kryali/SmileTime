@@ -8,8 +8,6 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
-uint8_t *outbuf, *inbuf;
-int outbuf_size, inbuf_size;
 int enc_size;
 
 //This function initialize the camera device and V4L2 interface
@@ -53,12 +51,7 @@ void video_record_init(){
        fprintf(stderr, "could not open video_codec\n");
        exit(1);
    }
-   
-   outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, video_context->width, video_context->height);
-   outbuf = av_malloc(outbuf_size);
-   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, video_context->width, video_context->height);
-   inbuf = av_malloc(inbuf_size);
-   
+      
 	print_Camera_Info();
 	set_format();	
 	mmap_init();	
@@ -88,23 +81,25 @@ void video_frame_copy(){
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
 void video_frame_compress(){
-	printf("TROL\n");
    int i, x;
    i = 0;
-
-   AVFrame *srcFrame, *dstFrame; 
-
    static struct SwsContext *img_convert_ctx;
-
+   
+   uint8_t *outbuf, *inbuf;
+	int outbuf_size, inbuf_size;
+   outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, video_context->width, video_context->height);
+   outbuf = av_malloc(outbuf_size);
+   inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, video_context->width, video_context->height);
+   inbuf = av_malloc(inbuf_size);
+   
+   AVFrame *srcFrame, *dstFrame; 
    // Allocate space for the frames
    srcFrame = avcodec_alloc_frame(); 
    dstFrame = avcodec_alloc_frame(); 
-	printf("TROL2\n");
 
    // Create AVFrame for YUV420 frame
    avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, video_context->width, video_context->height);
 
-	printf("TRO5\n");
    // Create AVFrame for YUYV422 frame
    x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, video_context->width, video_context->height);
 
@@ -113,24 +108,12 @@ void video_frame_compress(){
                     PIX_FMT_YUYV422, 
                     video_context->width, video_context->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
                     NULL, NULL, NULL);
-
-	printf("TROL9\n");
-   // Convert the image to YUV420
-   if(srcFrame->data == NULL){
-   	printf("srcFrame is null");
-   	exit(1);
-	}printf("TROL19\n");	
-   if(dstFrame->data == NULL){
-   	printf("dstFrame is null");
-   	exit(1);
-	}	printf("TROL29\n");
    
    sws_scale(img_convert_ctx, srcFrame->data, 
          srcFrame->linesize, 0, 
          video_context->height, 
          dstFrame->data, dstFrame->linesize);
 
-	printf("TROL15\n");
    // Encode the frame
    do { 
      // Why so many empty encodes at the beginning?
@@ -148,12 +131,12 @@ void video_frame_compress(){
      // printf("write frame %3d (size=%5d)\n", i, enc_size);
      if( enc_size ) fwrite(outbuf, 1, enc_size, video_file);
    }*/
+   av_free(outbuf);
+   av_free(inbuf);
 }
 
 //Closes the camera and frees all memory
 void video_close(){
-	av_free(outbuf);
-   av_free(inbuf);
    avcodec_close(video_context);
    av_free(video_context);
 	int closed = close(camera_fd);

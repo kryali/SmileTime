@@ -2,16 +2,17 @@
 
 int microphone_fd = -1;
 char *microphone_name = "/dev/dsp";
-short *buf;
-int buf_size;
-uint8_t *outbuf;
-int outbuf_size;
+short *audio_buf;
+int audio_buf_size;
+uint8_t *audio_outbuf;
+int audio_outbuf_size;
+AVPacket audio_pkt;
 
 int channels = 1;
 int sample_bits = 16; //bits per sample
 int sample_rate = 44100; //samples per second
 int sample_size; //size of a sample in bytes
-int frame_size; //number of samples per frame
+int audio_input_frame_size; //number of samples per frame
 
 void audio_record_init()
 {
@@ -35,16 +36,63 @@ void audio_record_init()
 		perror("channels failed");
 		exit(1);
 	}
-	// register all the codecs
-	//avcodec_init();
-	//avcodec_register_all();
+	audio_input_frame_size = audio_context->frame_size;
+	sample_size = channels * sample_bits/8;
 
-	// find the lame mp3 encoder
-	audio_codec = avcodec_find_encoder(CODEC_ID_MP3);
-	if (!audio_codec) {
-	fprintf(stderr, "audio_codec not found\n");
-	exit(1);
+  	audio_buf_size = audio_input_frame_size * sample_size;
+	audio_buf =  avmalloc(audio_buf_size);
+}
+
+void audio_segment_copy()
+{	
+	if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
+		perror("audio_segment_copy read: ");
+}
+
+void audio_segment_compress(AVStream *st)
+{
+    av_init_packet(&audio_pkt);
+
+    audio_pkt.size= avcodec_encode_audio(audio_context, audio_outbuf, audio_outbuf_size, samples);
+
+    if (audio_context->coded_frame && audio_context->coded_frame->pts != AV_NOPTS_VALUE)
+        audio_pkt.pts= av_rescale_q(audio_context->coded_frame->pts, audio_context->time_base, st->time_base);
+    audio_pkt.flags |= AV_PKT_FLAG_KEY;
+    audio_pkt.stream_index= st->index;
+    audio_pkt.data= audio_outbuf;
+}
+
+void audio_packet_write(AVFormatContext *oc)
+{
+	/* write the compressed frame in the media file */
+	if (av_interleaved_write_frame(oc, &audio_pkt) != 0) {
+		fprintf(stderr, "Error while writing audio frame\n");
+		exit(1);
 	}
+}
+
+//Frees all memory and closes codecs.
+void audio_close()
+{
+	free(audio_outbuf);	
+	free(audio_buf);
+	avcodec_close(audio_context);
+	av_free(audio_context);
+}
+
+AVStream *add_audio_stream(AVFormatContext *oc, enum CodecID codec_id)
+{
+	AVStream *st;
+	st = av_new_stream(oc, 1);
+	if (!st) {
+		fprintf(stderr, "Could not alloc stream\n");
+		exit(1);
+	}
+
+	c = st->codec;
+	c->codec_id = codec_id;
+	c->codec_type = AVMEDIA_TYPE_AUDIO;
+
 	// Initialize the sample context
 	audio_context = avcodec_alloc_context();	
 	audio_context->sample_fmt = SAMPLE_FMT_S16;
@@ -52,62 +100,28 @@ void audio_record_init()
 	audio_context->channels = 1;
 	//audio_context->bit_rate = 64000;
 
-	// open the codec
-	if( avcodec_open(audio_context, audio_codec) < 0) {
-		fprintf(stderr, "could not open audio_codec\n");
+	// some formats want stream headers to be separate
+	if(oc->oformat->flags & AVFMT_GLOBALHEADER)
+		c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+		
+	return st;
+}
+
+void open_audio(AVFormatContext *oc)
+{
+	/* find the audio encoder */
+	audio_codec = avcodec_find_encoder(c->codec_id);
+	if (!audio_codec) {
+		fprintf(stderr, "codec not found\n");
 		exit(1);
-  	}
-	frame_size = audio_context->frame_size;
-	sample_size = channels * sample_bits/8;
+	}
 
-	//buf
-  	buf_size = frame_size * sample_size;
-	printf("buf size: %d\n", buf_size);
-	buf =  malloc(buf_size);
-	//outbuf
-	outbuf_size = 10000; // size?	
-	outbuf = malloc(outbuf_size);
-	
-}
-
-void audio_segment_copy()
-{	
-	printf("[A_REC] This function copies the audio segment from sound driver\n");	
-	int bytes;
-	if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
-		printf("Wrong number of bytes read: %d\n", bytes);
-  	//FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.wav", "wb" );
-	//write( microphone_fd, buf, buf_size );//plays the audio back
-	//fwrite( buf, 1, buf_size, file );
-	//audio_segment_compress();
-	//fclose(file);
-}
-
-void audio_segment_compress()
-{
-    printf("[A_REC] This function should compress the raw wav to MP3 or AAC\n");
-		/* must be called before using avcodec lib */
-
-	//encode the audio from buf to outbuf
-	//FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.mp2", "wb" );
-
-	int out_size = 0;
-	out_size = avcodec_encode_audio(audio_context, outbuf, outbuf_size, (buf));
-	//printf("Encoded %d bytes\n", out_size);
-	//if(out_size == 0)
-	//	fwrite( outbuf, 1, outbuf_size, file );
-	//else
-	//	fwrite( outbuf, 1, out_size, file );
-	//fclose(file);
-	//fwrite(outbuf, 1, out_size, f);
-}
-
-//Frees all memory and closes codecs.
-void audio_exit()
-{
-	free(outbuf);	
-	free(buf);
-	avcodec_close(audio_context);
-	av_free(audio_context);
-	printf("closing interface");
+	/* open it */
+	if (avcodec_open(audio_context, audio_codec) < 0) {
+		fprintf(stderr, "could not open codec\n");
+		exit(1);
+	}
+    
+	audio_outbuf_size = 10000;
+	audio_outbuf = av_malloc(audio_outbuf_size);
 }

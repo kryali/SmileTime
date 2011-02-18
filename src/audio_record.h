@@ -21,6 +21,9 @@ AVCodecContext *audio_context;
 
 void audio_record_init();
 void audio_segment_copy();
-void audio_segment_compress();
-void audio_exit();
+void audio_segment_compress(AVStream *st);
+void audio_segment_write(AVFormatContext *oc);
+void audio_close(AVFormatContext *oc);
+AVStream *add_audio_stream(AVFormatContext *oc, enum CodecID codec_id);
+void open_audio(AVFormatContext *oc);
 #endif
