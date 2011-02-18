@@ -2,7 +2,7 @@ INSTALLROOT=$(PWD)
 
 CC=gcc -O0 -pthread
 
-FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lx264 -lvpx -lmp3lame
+FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lx264 -lmp3lame
 
 SDLLIBS = $(shell sdl-config --libs) 
 SDLFLAGS = $(shell sdl-config --cflags)

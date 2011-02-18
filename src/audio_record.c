@@ -28,8 +28,8 @@ AVCodecContext *c = NULL;
 int channels = 1;
 int sample_bits = 16; //bits per sample
 int sample_rate = 44100; //samples per second
-int sample_size; //size of 1 sample in bytes
-int frame_size; //size of a frame in samples
+int sample_size; //size of a sample in bytes
+int frame_size; //number of samples per frame
 
 void audio_record_init()
 {
@@ -53,8 +53,6 @@ void audio_record_init()
 		perror("channels failed");
 		exit(1);
 	}
-	sample_size = channels * sample_bits/8; 
-
 	// register all the codecs
 	avcodec_init();
 	avcodec_register_all();
@@ -79,6 +77,7 @@ void audio_record_init()
 		exit(1);
   	}
 	frame_size = c->frame_size;
+	sample_size = channels * sample_bits/8;
 
 	//buf
   	buf_size = frame_size * sample_size;
@@ -92,9 +91,9 @@ void audio_record_init()
 void audio_segment_copy()
 {	
 	printf("[A_REC] This function copies the audio segment from sound driver\n");	
-	//int bytes;
-	//if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
-	//	printf("Wrong number of bytes read: %d\n", bytes);
+	int bytes;
+	if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
+		printf("Wrong number of bytes read: %d\n", bytes);
   	//FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.wav", "wb" );
 	//write( microphone_fd, buf, buf_size );//plays the audio back
 	//fwrite( buf, 1, buf_size, file );
@@ -108,23 +107,16 @@ void audio_segment_compress()
 		/* must be called before using avcodec lib */
 
 	//encode the audio from buf to outbuf
-	FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.mp2", "wb" );
+	//FILE* file = fopen( "/home/engr/hughes11/Desktop/raw.mp2", "wb" );
 
-	int out_size, i, bytes;
-	out_size = 0;
-
-	for(i=0; i< 300; i++){
-		if( (bytes = read( microphone_fd, buf, buf_size )) != buf_size )
-			printf("Wrong number of bytes read: %d\n", bytes);
-		out_size = avcodec_encode_audio(c, outbuf, outbuf_size, (buf));
-		printf("Encoded %d bytes\n", out_size);
-		if(out_size == 0)
-			fwrite( outbuf, 1, outbuf_size, file );
-		else
-			fwrite( outbuf, 1, out_size, file );
-	}
-
-	fclose(file);
+	int out_size = 0;
+	out_size = avcodec_encode_audio(c, outbuf, outbuf_size, (buf));
+	//printf("Encoded %d bytes\n", out_size);
+	//if(out_size == 0)
+	//	fwrite( outbuf, 1, outbuf_size, file );
+	//else
+	//	fwrite( outbuf, 1, out_size, file );
+	//fclose(file);
 	//fwrite(outbuf, 1, out_size, f);
 }
 
