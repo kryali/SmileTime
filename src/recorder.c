@@ -41,7 +41,7 @@ void onExit()
 
 int main(int argc, char*argv[])
 {
-    pthread_t video_encoding_thread;
+    //pthread_t video_encoding_thread;
     if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
     {
       usage();
@@ -71,7 +71,8 @@ int main(int argc, char*argv[])
     while(stopRecording == 0)
     {
         bufferIndex = video_frame_copy();
-        pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
+        //pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
+        video_frame_compress(0);
         video_frame_display(bufferIndex);
         //usleep(40000);
 /*

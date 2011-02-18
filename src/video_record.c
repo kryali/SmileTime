@@ -286,7 +286,7 @@ int video_frame_copy(){
 }
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void *video_frame_compress(int index){
+void video_frame_compress(int index){
 
    int i, enc_size, x, outbuf_size, inbuf_size;
    FILE *f;
