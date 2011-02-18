@@ -420,7 +420,6 @@ void video_frame_compress(int index){
    outbuf[3] = 0xb7;
    fwrite(outbuf, 1, 4, f);
    */
-   pthread_exit(NULL);
 }
 
 //Closes the camera and frees all memory
