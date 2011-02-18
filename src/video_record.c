@@ -5,53 +5,33 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
+#define STREAM_FRAME_RATE 25 //frames per second
+#define STREAM_PIX_FMT PIX_FMT_YUV420P //YUV420 pixel format
+#define VIDEO_WIDTH 640;
+#define VIDEO_HEIGHT 480;
 
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
 int enc_size;
 
+AVStream *video_st;
+AVFormatContext *output_context;
+
+AVFrame *picture, *tmp_picture;
+uint8_t *video_outbuf;
+int frame_count, video_outbuf_size;
+
 //This function initialize the camera device and V4L2 interface
-void video_record_init(){
+void video_record_init(AVFormatContext *oc){
+	video_st = NULL;
+	output_context = oc;
 	//open camera
 	camera_fd = open(camera_name, O_RDWR );
 	if(camera_fd == -1){
 		printf("error opening camera %s\n", camera_name);
 		return;
 	}
-	   // find the h264 video encoder
-   video_codec = avcodec_find_encoder(CODEC_ID_H264);
-   if (!video_codec) {
-       fprintf(stderr, "video_codec not found\n");
-       exit(1);
-       
-   }
-
-   video_context = avcodec_alloc_context();
-
-   // sample parameters
-   video_context->bit_rate = 400000;
-   video_context->width = 640;
-   video_context->height = 480;
-
-   // frames parameters
-   video_context->time_base= (AVRational){1,25};
-   video_context->gop_size = 10; // emit one intra frame every ten frames
-   video_context->max_b_frames=1;
-   video_context->pix_fmt = PIX_FMT_YUV420P;
-
-   // h264 parameters
-   video_context->me_range = 16;
-   video_context->max_qdiff = 4;
-   video_context->qmin = 10;
-   video_context->qmax = 51;
-   video_context->qcompress = 0.6;
-   
-   // open the codec
-   if (avcodec_open(video_context, video_codec) < 0) {
-       fprintf(stderr, "could not open video_codec\n");
-       exit(1);
-   }
-      
+         
 	print_Camera_Info();
 	set_format();	
 	mmap_init();	
@@ -87,7 +67,7 @@ void video_frame_compress(){
    
    uint8_t *outbuf, *inbuf;
 	int outbuf_size, inbuf_size;
-   outbuf_size = avpicture_get_size(PIX_FMT_YUV420P, video_context->width, video_context->height);
+   outbuf_size = avpicture_get_size(STREAM_PIX_FMT, video_context->width, video_context->height);
    outbuf = av_malloc(outbuf_size);
    inbuf_size = avpicture_get_size(PIX_FMT_YUYV422, video_context->width, video_context->height);
    inbuf = av_malloc(inbuf_size);
@@ -98,7 +78,7 @@ void video_frame_compress(){
    dstFrame = avcodec_alloc_frame(); 
 
    // Create AVFrame for YUV420 frame
-   avpicture_fill((AVPicture *)dstFrame, outbuf, PIX_FMT_YUV420P, video_context->width, video_context->height);
+   avpicture_fill((AVPicture *)dstFrame, outbuf, STREAM_PIX_FMT, video_context->width, video_context->height);
 
    // Create AVFrame for YUYV422 frame
    x = avpicture_fill((AVPicture *)srcFrame, buffers[0].start, PIX_FMT_YUYV422, video_context->width, video_context->height);
@@ -106,7 +86,7 @@ void video_frame_compress(){
    // Make the conversion context
    img_convert_ctx = sws_getContext(video_context->width, video_context->height, 
                     PIX_FMT_YUYV422, 
-                    video_context->width, video_context->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
+                    video_context->width, video_context->height, STREAM_PIX_FMT, SWS_BICUBIC, 
                     NULL, NULL, NULL);
    
    sws_scale(img_convert_ctx, srcFrame->data, 
@@ -135,6 +115,11 @@ void video_frame_compress(){
    av_free(inbuf);
 }
 
+void video_frame_write()
+{
+
+}
+
 //Closes the camera and frees all memory
 void video_close(){
    avcodec_close(video_context);
@@ -144,35 +129,97 @@ void video_close(){
 		camera_fd = -1;
 }
 
+   // frames parameters
+   video_context->gop_size = 10; // emit one intra frame every ten frames
 
-void read_frame(){
+   video_context->pix_fmt = ;
 
-	// DEQUEUE frame from buffer
-	struct v4l2_buffer buf;
-	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	buf.memory = V4L2_MEMORY_MMAP;
-	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
-		perror("VIDIOC_DQBUF");
+
+   
+void add_video_stream(enum CodecID codec_id)
+{
+	video_st = av_new_stream(output_context, 0);
+	if (!video_st) {
+		fprintf(stderr, "Could not alloc stream\n");
+		exit(1);
 	}
-	
-	//printf("Read buffer index:%d\n", buf.index);
 
-	// WRITE buffer to file
-	/*FILE * frame_fd = fopen( "1.jpg", "w+");
-	if( fwrite(buffers[buf.index].start, buffers[buf.index].length, 1, frame_fd) != 1)
-		perror("fwrite");
-	fclose(frame_fd);
-  */
+	video_context = video_st->codec;
+	video_context->codec_id = codec_id;
+	video_context->codec_type = AVMEDIA_TYPE_VIDEO;
 
-	// ENQUEUE frame into buffer
-	struct v4l2_buffer bufQ;
-	bufQ.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	bufQ.memory = V4L2_MEMORY_MMAP;
-	bufQ.index = buf.index;
-	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
-		perror("VIDIOC_QBUF");
-	}
+	// put sample parameters
+	video_context->bit_rate = 400000;
+	video_context->width = VIDEO_WIDTH;
+	video_context->height = VIDEO_HEIGHT;
+	// timing
+	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE};
+	// frame type limits
+	video_context->gop_size = 12; /* emit one intra frame every twelve frames at most */
+	video_context->max_b_frames=2;
+	// pix format
+	video_context->pix_fmt = STREAM_PIX_FMT;
+	// h264 parameters
+   video_context->me_range = 16;
+   video_context->max_qdiff = 4;
+   video_context->qmin = 10;
+   video_context->qmax = 51;
+   video_context->qcompress = 0.6;
+	// some formats want stream headers to be separate
+	if(output_context->oformat->flags & AVFMT_GLOBALHEADER)
+		video_context->flags |= CODEC_FLAG_GLOBAL_HEADER;
 }
+
+void open_video()
+{
+    /* find the video encoder */
+    video_codec = avcodec_find_encoder(c->codec_id);
+    if (!video_codec) {
+        fprintf(stderr, "video_codec not found\n");
+        exit(1);
+    }
+
+    /* open the codec */
+    if (avcodec_open(c, video_codec) < 0) {
+        fprintf(stderr, "could not open video_codec\n");
+        exit(1);
+    }
+
+    video_outbuf = NULL;
+    if (!(output_context->oformat->flags & AVFMT_RAWPICTURE)) {
+        /* allocate output buffer */
+        /* XXX: API change will be done */
+        /* buffers passed into lav* can be allocated any way you prefer,
+           as long as they're aligned enough for the architecture, and
+           they're freed appropriately (such as using av_free for buffers
+           allocated with av_malloc) */
+        video_outbuf_size = 200000;
+        video_outbuf = av_malloc(video_outbuf_size);
+    }
+
+    /* allocate the encoded raw picture */
+    picture = alloc_picture(c->pix_fmt, c->width, c->height);
+    if (!picture) {
+        fprintf(stderr, "Could not allocate picture\n");
+        exit(1);
+    }
+
+    /* if the output format is not YUV420P, then a temporary YUV420P
+       picture is needed too. It is then converted to the required
+       output format */
+    tmp_picture = NULL;
+    if (c->pix_fmt != PIX_FMT_YUV420P) {
+        tmp_picture = alloc_picture(PIX_FMT_YUV420P, c->width, c->height);
+        if (!tmp_picture) {
+            fprintf(stderr, "Could not allocate temporary picture\n");
+            exit(1);
+        }
+    }
+}
+
+
+
+
 
 void mmap_init(){
 	// Request that the device start using the buffers
@@ -250,7 +297,7 @@ void print_Camera_Info(){
 		printf("No streaming capabilities!\n");
 	}
 }
-
+/*
 void print_default_crop(){
 	// Get information about the video cropping and scaling abilities
 	struct v4l2_cropcap crop;
@@ -296,29 +343,24 @@ void print_input_info(){
 
 	printf ("Current input: %s\n", input.name);
 
-}
+}*/
 
 void set_format(){
-	// Set the format of the image from the video
+	// Set the format of the image from the video device
 	struct v4l2_format format;
 	format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	format.fmt.pix.width = 640;
-	format.fmt.pix.height = 480;
+	format.fmt.pix.width = VIDEO_WIDTH;
+	format.fmt.pix.height = VIDEO_HEIGHT;
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
-//	format.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPG;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		perror("VIDIOC_S_FMT");
 		exit( EXIT_FAILURE );
 	}
-	struct v4l2_pix_format pix_format;
-	pix_format = format.fmt.pix;
-	printf("Image Width: %d\n",pix_format.width);
-	if(!(format.fmt.pix.pixelformat & V4L2_PIX_FMT_MJPG)){
-		printf("Error: MJPG compressions wasn't set\n");
-	}
 }
+
+
 
 //http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
 int pan_relative(int pan)

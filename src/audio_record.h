@@ -19,11 +19,11 @@
 AVCodec *audio_codec;
 AVCodecContext *audio_context;
 
-void audio_record_init();
+void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 void audio_segment_copy();
-void audio_segment_compress(AVStream *st);
-void audio_segment_write(AVFormatContext *oc);
-void audio_close(AVFormatContext *oc);
-AVStream *add_audio_stream(AVFormatContext *oc, enum CodecID codec_id);
-void open_audio(AVFormatContext *oc);
+void audio_segment_compress();
+void audio_segment_write();
+void audio_close();
+void add_audio_stream(enum CodecID codec_id);
+void open_audio();
 #endif

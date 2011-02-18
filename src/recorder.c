@@ -50,7 +50,7 @@ int main(int argc, char*argv[])
 	
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
-	AVStream *audio_st, *video_st;
+	AVStream *video_st;
 	double audio_pts, video_pts;
 	int i = 0;
     
@@ -80,13 +80,9 @@ int main(int argc, char*argv[])
 
 	/* add the audio and video streams using the default format codecs
 	and initialize the codecs */
-    	video_st = NULL;
-    	audio_st = NULL;
+    	video_st = NULL;    	
     	if (fmt->video_codec != CODEC_ID_NONE) {
     	    //video_st = add_video_stream(oc, fmt->video_codec);
-    	}
-    	if (fmt->audio_codec != CODEC_ID_NONE) {
-    	    audio_st = add_audio_stream(oc, fmt->audio_codec);
     	}
 
     	/* set the output parameters (must be done even if no parameters). */
@@ -101,37 +97,33 @@ int main(int argc, char*argv[])
        video codecs and allocate the necessary encode buffers */
     if (video_st)
         open_video(oc);
-    if (audio_st)
-        open_audio(oc);
    
     printf("[MAIN] I am going to record both video and audio data to the file: %s\n", argv[1]);
     buffers = NULL;
 
-	av_write_header(oc);
+	
 	video_record_init();
 	video_play_init();
-	audio_record_init();
-
-	int bufferIndex = 0;
-
+	audio_record_init(fmt, oc);
+	
+	av_write_header(oc);
 	while(stopRecording == 0)
 	{//pthread_create( &video_encoding_thread, NULL, video_frame_compress, (void *)0 );
 		video_frame_copy();        
-		video_frame_compress(video_st);        
+		video_frame_compress();        
 		video_frame_display();
+		
 		audio_segment_copy();
-		audio_segment_compress(audio_st);
-		video_segment_write(oc);
-		audio_segment_write(oc);
+		audio_segment_compress();
+		
+		video_frame_write();
+		audio_segment_write();
 		printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
 	}
 	av_write_trailer(oc);
     
-    /* close each codec */
-    if (video_st)
-        video_close();
-    if (audio_st)
-        audio_close();
+	video_close();
+	audio_close();
 
     /* free the streams */
     for(i = 0; i < oc->nb_streams; i++) {
