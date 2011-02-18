@@ -104,6 +104,7 @@ void video_frame_write()
 {
 	// write the compressed frame in the media file
 	if (av_interleaved_write_frame(output_context, &video_pkt) != 0) {
+		perror("video frame write");
 		fprintf(stderr, "Error while writing video frame\n");
 		//exit(1);
 	}

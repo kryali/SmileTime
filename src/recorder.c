@@ -35,7 +35,6 @@ void onExit()
 {
     printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
     stopRecording = 1;
-    sdl_quit();
 }
 
 int main(int argc, char*argv[])
@@ -59,14 +58,14 @@ int main(int argc, char*argv[])
 	fmt = av_guess_format(NULL, filename, NULL);
 	if (!fmt) {
 		printf("Could not deduce output format from file extension: using mkv.\n");
-		fmt = av_guess_format(".mkv", NULL, NULL);
+		fmt = av_guess_format("mkv", NULL, NULL);
 	}
 	if (!fmt) {
 		fprintf(stderr, "Could not find suitable output format\n");
 		exit(1);
 	}
-	fmt->video_codec = CODEC_ID_H264;
-	fmt->audio_codec = CODEC_ID_MP3;
+	//fmt->video_codec = CODEC_ID_H264;
+	//fmt->audio_codec = CODEC_ID_MP3;
 
 	// allocate the output media context
 	oc = avformat_alloc_context();
@@ -115,27 +114,21 @@ int main(int argc, char*argv[])
 			printf("vid frame write\n");
 		video_frame_write();
 			printf("aud seg write\n");
-		//audio_segment_write();
+		audio_segment_write();
 		printf("[MAIN] One frame has been captured, sleep for a while and continue...\n");
 	}
 	av_write_trailer(oc);
-    
+	sdl_quit();
 	video_close();
 	audio_close();
 
-    /* free the streams */
-    for(i = 0; i < oc->nb_streams; i++) {
-        av_freep(&oc->streams[i]->codec);
-        av_freep(&oc->streams[i]);
-    }
+	if (!(fmt->flags & AVFMT_NOFILE)) {
+		/* close the output file */
+		url_fclose(oc->pb);
+		}
 
-    if (!(fmt->flags & AVFMT_NOFILE)) {
-        /* close the output file */
-        url_fclose(oc->pb);
-    }
-
-    /* free the stream */
-    av_free(oc);
-    printf("[MAIN] Quit recorder\n");
-    return 0;
+		/* free the stream */
+		av_free(oc);
+		printf("[MAIN] Quit recorder\n");
+		return 0;
 }
