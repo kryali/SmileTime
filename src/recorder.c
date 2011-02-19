@@ -94,9 +94,22 @@ int main(int argc, char*argv[])
 	video_play_init();
 	audio_record_init(fmt, oc);
 	
+	//int i = 0;
+	//srand ( time(NULL) );
+	//int num;
 	av_write_header(oc);
 	while(stopRecording == 0)
 	{
+		/*if((i++)%3==0)
+		{
+			num = rand() % 2;
+			if(num == 0){
+				pan_relative(-500 + rand()%1000);
+			}
+			else{
+				tilt_relative(-300 + rand()%600);
+			}
+		}*/
 		video_frame_copy();
 		video_frame_compress();  
 		video_frame_display();

@@ -95,7 +95,6 @@ void video_frame_compress(){
  		video_pkt.data= video_outbuf;
 		video_pkt.size= enc_size;
 	}
-	//av_free(yuyv422_frame->data[0]);
 	av_free(yuyv422_frame);
 }
 
@@ -289,53 +288,6 @@ void print_Camera_Info(){
 		printf("No streaming capabilities!\n");
 	}
 }
-/*
-void print_default_crop(){
-	// Get information about the video cropping and scaling abilities
-	struct v4l2_cropcap crop;
-	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // Set the cropping request to be specific to video capture
-	if(ioctl(camera_fd, VIDIOC_CROPCAP, &crop)==-1){
-		printf("Couldn't get cropping info\n");
-		perror("ioctl");
-	}
-	struct v4l2_rect defaultRect;
-	defaultRect = crop.bounds;
-	printf("Default cropping rectangle\nLeft: %d, Top: %d\n %dpx by %dpx\n", defaultRect.left, defaultRect.top, defaultRect.width, defaultRect.height);
-
-	int i = 0;
-	for(; i < 5; i++){
-		struct v4l2_fmtdesc fmtdesc;
-		fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		fmtdesc.index = 1;
-		if(ioctl(camera_fd, VIDIOC_ENUM_FMT, &fmtdesc)==-1){
-			printf("Format query failed\n");
-			perror("ioctl");
-		}
-		printf("Format: %s\n", fmtdesc.description);
-	}
-}
-
-void print_input_info(){
-	//found these online
-	struct v4l2_input input;
-	int index;
-
-	if (-1 == ioctl (camera_fd, VIDIOC_G_INPUT, &index)) {
-       		perror ("VIDIOC_G_INPUT");
-        	exit (EXIT_FAILURE);
-	}
-
-	memset (&input, 0, sizeof (input));
-	input.index = index;
-
-	if (-1 == ioctl (camera_fd, VIDIOC_ENUMINPUT, &input)) {
-   	     perror ("VIDIOC_ENUMINPUT");
-  	      exit (EXIT_FAILURE);
-	}
-
-	printf ("Current input: %s\n", input.name);
-
-}*/
 
 void set_format(){
 	// Set the format of the image from the video device
@@ -352,95 +304,42 @@ void set_format(){
 	}
 }
 
-
-
 //http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
-int pan_relative(int pan)
-{
-
+void xioctl(int ctrl, int value){
 	struct v4l2_queryctrl qctrl;
-
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+
 	while (0 == ioctl (camera_fd, VIDIOC_QUERYCTRL, &qctrl)) {
-			/* ... */
-			qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
-
-	if(! (qctrl.id & V4L2_CID_PAN_RELATIVE)  ){
-		printf("Pan doesn't work!\n");
-	} else{
-		printf("Pan is enabled\n");
-	}
-
-    struct v4l2_ext_control xctrls;
-    struct v4l2_ext_controls ctrls;
-    xctrls.id = V4L2_CID_PAN_RELATIVE;
-    xctrls.value = pan;
-    ctrls.count = 1;
-    ctrls.controls = &xctrls;
+	struct v4l2_ext_control xctrls;
+	struct v4l2_ext_controls ctrls;
+	xctrls.id = ctrl;
+	xctrls.value = value;
+	ctrls.count = 1;
+	ctrls.controls = &xctrls;
 	int r = 0;
 	do r = ioctl (camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls);
-			while (-1 == r && EINTR == errno);
-
-
-    return 0;
+		while (-1 == r && EINTR == errno);	
 }
 
-int tilt_relative(int tilt)
-{
-    struct v4l2_ext_control xctrls;
-    struct v4l2_ext_controls ctrls;
-    xctrls.id = V4L2_CID_TILT_RELATIVE;
-    xctrls.value = tilt;
-    ctrls.count = 1;
-    ctrls.controls = &xctrls;
-    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-    {
-        perror("VIDIOC_S_EXT_CTRLS - Tilt error. Are the extended controls available?\n");
-        return -1;
-    } else {
-        printf("TILT Success\n");
-    }
 
-    return 0;
+void pan_relative(int pan){
+	xioctl(V4L2_CID_PAN_RELATIVE, pan);
 }
 
-int panTilt_relative(int pan, int tilt)
-{
-    struct v4l2_ext_control xctrls[2];
-    struct v4l2_ext_controls ctrls;
-    xctrls[0].id = V4L2_CID_PAN_RELATIVE;
-    xctrls[0].value = pan;
-    xctrls[1].id = V4L2_CID_TILT_RELATIVE;
-    xctrls[1].value = tilt;
-    ctrls.count = 2;
-    ctrls.controls = xctrls;
-    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-    {
-        perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
-        return -1;
-    } else {
-        printf("PAN/TILT Success\n");
-    }
-
-    return 0;
+void tilt_relative(int tilt){
+	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
 }
 
-int panTilt_reset()
-{
-    struct v4l2_ext_control xctrls;
-    struct v4l2_ext_controls ctrls;
-    xctrls.id = V4L2_CID_PANTILT_RESET;
-    xctrls.value = 1;
-    ctrls.count = 1;
-    ctrls.controls = &xctrls;
-    if ( ioctl(camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0 )
-    {
-        perror("VIDIOC_S_EXT_CTRLS - Pan/Tilt error. Are the extended controls available?\n");
-        return -1;
-    } else {
-        printf("PAN/TILT reset Success\n");
-    }
-	 
-    return 0;
+void pan_reset(){
+	xioctl(V4L2_CID_PAN_RESET, 1);
+}
+
+void tilt_reset(){
+	xioctl(V4L2_CID_TILT_RESET, 1);
+}
+
+void panTilt_reset(){
+	xioctl(V4L2_CID_PANTILT_RESET, 1);
 }
