@@ -26,6 +26,33 @@ typedef struct PacketQueue {
 
 PacketQueue audioq;
 
+typedef struct VideoState {
+
+  AVFormatContext *pFormatCtx;
+  int             videoStream, audioStream;
+  AVStream        *audio_st;
+  PacketQueue     audioq;
+  uint8_t         audio_buf[(AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2];
+  unsigned int    audio_buf_size;
+  unsigned int    audio_buf_index;
+  AVPacket        audio_pkt;
+  uint8_t         *audio_pkt_data;
+  int             audio_pkt_size;
+  AVStream        *video_st;
+  PacketQueue     videoq;
+
+  VideoPicture    pictq[VIDEO_PICTURE_QUEUE_SIZE];
+  int             pictq_size, pictq_rindex, pictq_windex;
+  SDL_mutex       *pictq_mutex;
+  SDL_cond        *pictq_cond;
+  
+  SDL_Thread      *parse_tid;
+  SDL_Thread      *video_tid;
+
+  char            filename[1024];
+  int             quit;
+} VideoState;
+
 
 void packet_queue_init(PacketQueue *q) {
   memset(q, 0, sizeof(PacketQueue));
@@ -195,6 +222,97 @@ void onExit()
     frames_to_play = 0;
 }
 
+int stream_component_open(VideoState *is, int stream_index) {
+
+  AVFormatContext *pFormatCtx = is->pFormatCtx;
+  AVCodecContext *codecCtx;
+  AVCodec *codec;
+  SDL_AudioSpec wanted_spec, spec;
+
+  if(stream_index < 0 || stream_index >= pFormatCtx->nb_streams) {
+    return -1;
+  }
+
+  // Get a pointer to the codec context for the video stream
+  codecCtx = pFormatCtx->streams[stream_index]->codec;
+
+  if(codecCtx->codec_type == CODEC_TYPE_AUDIO) {
+    // Set audio settings from codec info
+    wanted_spec.freq = codecCtx->sample_rate;
+    /* .... */
+    wanted_spec.callback = audio_callback;
+    wanted_spec.userdata = is;
+    
+    if(SDL_OpenAudio(&wanted_spec, &spec) < 0) {
+      fprintf(stderr, "SDL_OpenAudio: %s\n", SDL_GetError());
+      return -1;
+    }
+  }
+  codec = avcodec_find_decoder(codecCtx->codec_id);
+  if(!codec || (avcodec_open(codecCtx, codec) < 0)) {
+    fprintf(stderr, "Unsupported codec!\n");
+    return -1;
+  }
+
+  switch(codecCtx->codec_type) {
+    case CODEC_TYPE_AUDIO:
+      is->audioStream = stream_index;
+      is->audio_st = pFormatCtx->streams[stream_index];
+      is->audio_buf_size = 0;
+      is->audio_buf_index = 0;
+      memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
+      packet_queue_init(&is->audioq);
+      SDL_PauseAudio(0);
+      break;
+
+    case CODEC_TYPE_VIDEO:
+      is->videoStream = stream_index;
+      is->video_st = pFormatCtx->streams[stream_index];
+      
+      packet_queue_init(&is->videoq);
+      is->video_tid = SDL_CreateThread(video_thread, is);
+      break;
+
+    default:
+      break;
+  }
+
+  is->video_tid = SDL_CreateThread(video_thread, is);
+
+}
+
+int decode_thread( VideoState *is )
+{
+  for(;;) {
+    if(is->quit) {
+      break;
+    }
+    // seek stuff goes here
+    if(is->audioq.size > MAX_AUDIOQ_SIZE ||
+       is->videoq.size > MAX_VIDEOQ_SIZE) {
+      SDL_Delay(10);
+      continue;
+    }
+    if(av_read_frame(is->pFormatCtx, packet) < 0) {
+      if(url_ferror(&pFormatCtx->pb) == 0) {
+        SDL_Delay(100); /* no error; wait for user input */
+        continue;
+      } else {
+        break;
+      }
+    }
+    // Is this a packet from the video stream?
+    if(packet->stream_index == is->videoStream) {
+      packet_queue_put(&is->videoq, packet);
+    } else if(packet->stream_index == is->audioStream) {
+      packet_queue_put(&is->audioq, packet);
+    } else {
+      av_free_packet(packet);
+    }
+  }
+}
+
+
 int main(int argc, char*argv[])
 {
   if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
@@ -208,6 +326,45 @@ int main(int argc, char*argv[])
   printf("[MAIN] I am going to play both video and audio data from file: %s\n", argv[1]);
 
   av_register_all();
+
+  SDL_Event       event;
+  VideoState      *is;
+  is = av_mallocz(sizeof(VideoState));
+
+  pstrcpy(is->filename, sizeof(is->filename), argv[1]);
+
+  is->pictq_mutex = SDL_CreateMutex();
+  is->pictq_cond = SDL_CreateCond();
+
+  schedule_refresh(is, 40);
+
+  is->parse_tid = SDL_CreateThread(decode_thread, is);
+  if(!is->parse_tid) {
+    av_free(is);
+    return -1;
+  }
+
+  for(;;) {
+    SDL_WaitEvent(&event);
+    switch(event.type) {
+    case FF_QUIT_EVENT:
+    case SDL_QUIT:
+      is->quit = 1;
+      SDL_Quit();
+      return 0;
+      break;
+    case FF_ALLOC_EVENT:
+      alloc_picture(event.user.data1);
+      break;
+    case FF_REFRESH_EVENT:
+      video_refresh_timer(event.user.data1);
+      break;
+    default:
+      break;
+    }
+  }
+  
+
 
   AVFormatContext *pFormatCtx;
 
