@@ -117,6 +117,48 @@ void sdl_quit(){
 	//SDL_Quit();
 }
 
+
+//http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
+void xioctl(int ctrl, int value){
+	struct v4l2_queryctrl qctrl;
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+	printf("%d\n",camera_fd);
+	while (0 == ioctl (camera_fd, VIDIOC_QUERYCTRL, &qctrl)) {
+		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+	}
+	struct v4l2_ext_control xctrls;
+	struct v4l2_ext_controls ctrls;
+	xctrls.id = ctrl;
+	xctrls.value = value;
+	ctrls.count = 1;
+	ctrls.controls = &xctrls;
+	int r = 0;
+	do r = ioctl (camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls);
+		while (-1 == r && EINTR == errno);	
+}
+
+
+void pan_relative(int pan){
+	xioctl(V4L2_CID_PAN_RELATIVE, pan);
+}
+
+void tilt_relative(int tilt){
+	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
+}
+
+void pan_reset(){
+	xioctl(V4L2_CID_PAN_RESET, 1);
+}
+
+void tilt_reset(){
+	xioctl(V4L2_CID_TILT_RESET, 1);
+}
+
+void panTilt_reset(){
+	xioctl(V4L2_CID_PANTILT_RESET, 1);
+}
+
+
 void keyboard_capture()
 {
 	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.

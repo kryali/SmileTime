@@ -11,4 +11,10 @@
 	int sdl_init();
 	void sdl_quit();
 	void keyboard_capture();
+	void xioctl(int ctrl, int value);
+	void pan_relative(int pan);
+	void tilt_relative(int tilt);
+	void pan_reset();
+	void tilt_reset();
+	void panTilt_reset();
 #endif

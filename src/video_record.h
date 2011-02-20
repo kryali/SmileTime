@@ -85,6 +85,7 @@
 AVCodec *video_codec;
 AVCodecContext *video_context;
 AVStream *video_st;
+int camera_fd;
 
 struct buffer {
     void * start;
@@ -113,10 +114,4 @@ void open_video();
 void print_Camera_Info();
 void mmap_init();
 void set_format();
-void xioctl(int ctrl, int value);
-void pan_relative(int pan);
-void tilt_relative(int tilt);
-void pan_reset();
-void tilt_reset();
-void panTilt_reset();
 #endif
