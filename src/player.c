@@ -9,6 +9,8 @@
 #include "io_tools.h"
 #include "SDL/SDL.h"
 
+#include <sys/timeb.h>
+
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
 #include <libavutil/avstring.h>
@@ -31,6 +33,9 @@
 #define VIDEO_WIDTH 640
 #define VIDEO_HEIGHT 480
 
+struct timeb startTime;
+struct timeb endTime;
+int frameCount;
 
 typedef struct PacketQueue {
   AVPacketList *first_pkt, *last_pkt;
@@ -90,6 +95,8 @@ uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 void onExit()
 {
   global_video_state->quit = 1;
+  float fps = frameCount / (endTime.time - startTime.time);
+  printf("Playback Frame Rate: %f fps\n", fps);
   printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
   //frames_to_play = 0;
 }
@@ -207,9 +214,9 @@ int audio_decode_frame(VideoState *is, uint8_t *audio_buf, int buf_size, double 
   for(;;) {
     while(is->audio_pkt_size > 0) {
       data_size = buf_size;
-      len1 = avcodec_decode_audio2(is->audio_st->codec, 
-				  (int16_t *)audio_buf, sizeof(is->audio_buf),
-				  is->audio_pkt_data, is->audio_pkt_size);
+      len1 = avcodec_decode_audio3(is->audio_st->codec, 
+				  (int16_t *)audio_buf, &data_size, pkt);
+				  //is->audio_pkt_data, is->audio_pkt_size);
 
       //len1 = avcodec_decode_audio2(aCodecCtx, (int16_t *)audio_buf, &data_size, 
 			//	  audio_pkt_data, audio_pkt_size);
@@ -408,6 +415,7 @@ int video_thread(void *arg) {
     global_video_pkt_pts = packet->pts;
 
     // Decode video frame
+    frameCount++;
     len1 = avcodec_decode_video2(is->video_st->codec, pFrame, &frameFinished, packet );
 
     if(packet->dts != AV_NOPTS_VALUE) {
@@ -507,9 +515,10 @@ int stream_component_open(VideoState *is, int stream_index) {
 int decode_thread( void *thread_arg )
 {
   VideoState *is = (VideoState *) thread_arg;
-  global_video_state = is;
   AVFormatContext *pFormatCtx;
   AVPacket pkt1, *packet = &pkt1;
+  global_video_state = is;
+  url_set_interrupt_cb(decode_interrupt_cb); // will interrupt blocking functions if we quit!
 
   int i;
   //AVCodecContext *pCodecCtx;
@@ -525,11 +534,13 @@ int decode_thread( void *thread_arg )
     return -1; // Couldn't find stream information
 
   // Dump information about file onto standard error
-  dump_format(pFormatCtx, 0, is->filename, 0);
+  //dump_format(pFormatCtx, 0, is->filename, 0);
 
   // Find the video stream and audio stream
   int videoStream = -1;
   int audioStream = -1;
+  is->videoStream = -1;
+  is->audioStream = -1;
   for( i=0; i<pFormatCtx->nb_streams; i++ )
   {
     if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO ) {
@@ -539,6 +550,7 @@ int decode_thread( void *thread_arg )
       audioStream = i;
     }
   }
+
   if(videoStream == -1)
     return -1; // Didn't find a video stream
   if(audioStream == -1)
@@ -547,6 +559,11 @@ int decode_thread( void *thread_arg )
 
   stream_component_open( is, audioStream );
   stream_component_open( is, videoStream );
+
+  if(is->videoStream < 0 || is->audioStream < 0) {
+    fprintf(stderr, "%s: could not open codecs\n", is->filename);
+    goto fail;
+  }
 
   // Decode loop
   for(;;) {
@@ -559,7 +576,7 @@ int decode_thread( void *thread_arg )
       continue;
     }
     if( av_read_frame(is->pFormatCtx, packet) < 0 ) {
-      if( url_ferror(&pFormatCtx->pb) == 0 ) {
+      if( url_ferror((ByteIOContext *)&pFormatCtx->pb) == 0 ) {
         SDL_Delay(100); // no error; wait for user input
         continue;
       } else {
@@ -634,6 +651,7 @@ static void schedule_refresh(VideoState *is, int delay) {
 }
 
 void video_display(VideoState *is) {
+  ftime(&endTime); // Update the endTime; the last displayed frame will finally represent the real end time
 
   SDL_Rect rect;
   VideoPicture *vp;
@@ -764,6 +782,8 @@ int main(int argc, char*argv[])
 
   printf("[MAIN] I am going to play both video and audio data from file: %s\n", argv[1]);
 
+  ftime(&startTime);
+
   av_register_all();
 
   // Create space for all the video data
@@ -801,7 +821,8 @@ int main(int argc, char*argv[])
     return -1;
   }
 
-  for(;;) {
+  //while(global_video_state->quit != 1) {
+  while(1) {
     SDL_WaitEvent(&event);
     switch(event.type)
     {
@@ -809,8 +830,7 @@ int main(int argc, char*argv[])
       case FF_QUIT_EVENT:
       case SDL_QUIT:
         is->quit = 1;
-        SDL_Quit();
-        return 0;
+        exit(0);
         break;
       // Get frame
       case FF_ALLOC_EVENT:
@@ -827,9 +847,7 @@ int main(int argc, char*argv[])
     }
   }
 
-  //int fps = 25;
-  int fps = 1000/global_video_pkt_pts;
-  printf("Playback Frame Rate: %i fps\n", fps);
+  printf("Frames per second: %i\n", 5);
   printf("[MAIN] Quit player\n");
   return 0;
 }
