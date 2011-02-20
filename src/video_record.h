@@ -63,8 +63,15 @@
 #define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
+
+#ifndef FRAMES_ENCODED
+#define FRAMES_ENCODED 4797
+#endif
+#ifndef TIME_TOTAL
+#define TIME_TOTAL 320967
+#endif
 #ifndef STREAM_FRAME_RATE
-#define STREAM_FRAME_RATE 13 //frames per second
+#define STREAM_FRAME_RATE 25 //frames per second
 #endif
 #ifndef STREAM_PIX_FMT
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format

@@ -81,8 +81,14 @@ void video_frame_compress( int bufferIndex){
 	enc_size = avcodec_encode_video(video_context, video_outbuf, video_outbuf_size, yuv420_frame);
 	if (enc_size > 0) {
 		av_init_packet(&video_pkt);
-		if (video_context->coded_frame->pts != AV_NOPTS_VALUE)
-			video_pkt.pts= av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
+		if (video_context->coded_frame->pts != AV_NOPTS_VALUE){
+					//printf("codedframe: %d\n",video_context->coded_frame->pts);
+					//printf("contexttimebaseden: %d\n",video_context->time_base.den);
+					//printf("videosttimebaseden: %d\n",video_st->time_base.den);
+			//video_pkt.pts= av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
+					//printf("pts`	: %d\n",video_pkt.pts);
+					video_pkt.pts= av_rescale(video_context->coded_frame->pts, TIME_TOTAL, FRAMES_ENCODED);
+		}
 		if(video_context->coded_frame->key_frame)
 			video_pkt.flags |= AV_PKT_FLAG_KEY;
 		video_pkt.stream_index= video_st->index;
@@ -132,7 +138,7 @@ void add_video_stream(enum CodecID codec_id)
 	video_context->width = VIDEO_WIDTH;
 	video_context->height = VIDEO_HEIGHT;
 	// timing
-	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE };
+	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE};
 //	video_context->time_base.den = STREAM_FRAME_RATE;
 //	video_context->time_base.den = 1;
 	// frame type limits
