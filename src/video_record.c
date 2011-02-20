@@ -133,7 +133,7 @@ void add_video_stream(enum CodecID codec_id)
 	video_context->width = VIDEO_WIDTH;
 	video_context->height = VIDEO_HEIGHT;
 	// timing
-	video_context->time_base = (AVRational){ 1 , STREAM_FRAME_RATE};
+	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE };
 //	video_context->time_base.den = STREAM_FRAME_RATE;
 //	video_context->time_base.den = 1;
 	// frame type limits
