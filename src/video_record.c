@@ -5,13 +5,6 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
-#define STREAM_FRAME_RATE 24 //frames per second
-#define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
-#define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
-#define VIDEO_WIDTH 640;
-#define VIDEO_HEIGHT 480;
-
-int camera_fd = -1;
 char* camera_name = "/dev/video0";
 int enc_size;
 
@@ -48,7 +41,7 @@ void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc){
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
-void video_frame_copy(){
+int video_frame_copy(){
 
 	// DEQUEUE frame from buffer
 	struct v4l2_buffer buf;
@@ -66,12 +59,13 @@ void video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
 		perror("VIDIOC_QBUF");
 	}
+	return bufQ.index;
 }
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void video_frame_compress(){
+void video_frame_compress( int bufferIndex){
    static struct SwsContext *img_convert_ctx;
-	yuyv422_frame = alloc_frame(buffers[0].start, CAMERA_PIX_FMT, video_context->width, video_context->height);
+	yuyv422_frame = alloc_frame(buffers[bufferIndex].start, CAMERA_PIX_FMT, video_context->width, video_context->height);
    // Make the conversion context
    img_convert_ctx = sws_getContext(
    	video_context->width, video_context->height, CAMERA_PIX_FMT, 
@@ -114,8 +108,8 @@ void video_close(){
 	av_free(yuv420_frame->data[0]);
 	av_free(yuv420_frame);
 	av_free(video_outbuf);
-   avcodec_close(video_context);
-   av_free(video_context);
+    avcodec_close(video_context);
+    av_free(video_context);
 	int closed = close(camera_fd);
 	if(closed == 0)
 		camera_fd = -1;
@@ -138,7 +132,9 @@ void add_video_stream(enum CodecID codec_id)
 	video_context->width = VIDEO_WIDTH;
 	video_context->height = VIDEO_HEIGHT;
 	// timing
-	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE};
+	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE };
+//	video_context->time_base.den = STREAM_FRAME_RATE;
+//	video_context->time_base.den = 1;
 	// frame type limits
 	video_context->gop_size = 12; // emit one intra frame every twelve frames at most
 	video_context->max_b_frames=2;
@@ -302,44 +298,4 @@ void set_format(){
 		perror("VIDIOC_S_FMT");
 		exit( EXIT_FAILURE );
 	}
-}
-
-//http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
-void xioctl(int ctrl, int value){
-	struct v4l2_queryctrl qctrl;
-	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-
-	while (0 == ioctl (camera_fd, VIDIOC_QUERYCTRL, &qctrl)) {
-		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-	}
-	struct v4l2_ext_control xctrls;
-	struct v4l2_ext_controls ctrls;
-	xctrls.id = ctrl;
-	xctrls.value = value;
-	ctrls.count = 1;
-	ctrls.controls = &xctrls;
-	int r = 0;
-	do r = ioctl (camera_fd, VIDIOC_S_EXT_CTRLS, &ctrls);
-		while (-1 == r && EINTR == errno);	
-}
-
-
-void pan_relative(int pan){
-	xioctl(V4L2_CID_PAN_RELATIVE, pan);
-}
-
-void tilt_relative(int tilt){
-	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
-}
-
-void pan_reset(){
-	xioctl(V4L2_CID_PAN_RESET, 1);
-}
-
-void tilt_reset(){
-	xioctl(V4L2_CID_TILT_RESET, 1);
-}
-
-void panTilt_reset(){
-	xioctl(V4L2_CID_PANTILT_RESET, 1);
 }

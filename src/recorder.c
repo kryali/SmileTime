@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <pthread.h>
 
+
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
 #include <libavutil/avstring.h>
@@ -21,8 +22,11 @@
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
-pthread_t threads;
 FILE* output;
+pthread_mutex_t fileMutex;
+pthread_t video_thread_id;
+pthread_t audio_thread_id;
+pthread_t keyboard_thread_id;
 
 void usage()
 {
@@ -37,19 +41,61 @@ void onExit()
     stopRecording = 1;
 }
 
+void * startVideoEncoding(){
+	int bufferIndex = 0;
+	int elapsedTime = 0;
+	int frames = 0;
+	ftime(&startTime);
+
+	while( stopRecording == 0){
+		bufferIndex = video_frame_copy();
+		video_frame_display( bufferIndex );
+
+		video_frame_compress( bufferIndex );  
+
+		pthread_mutex_lock( &fileMutex );
+		video_frame_write();
+		pthread_mutex_unlock( &fileMutex );
+		frames++;
+		ftime(&currentTime);
+		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
+		framesps = (float)elapsedTime / 1000;
+	}
+	pthread_exit(NULL);
+}
+
+
+void * captureKeyboard(){
+	while( stopRecording == 0){
+		keyboard_capture();
+	}
+	pthread_exit(NULL);
+}
+
+void * startAudioEncoding(){
+	while( stopRecording == 0){
+		audio_segment_copy();
+		audio_segment_compress();
+
+		pthread_mutex_lock( &fileMutex );
+		audio_segment_write();
+		pthread_mutex_unlock( &fileMutex );
+	}
+	pthread_exit(NULL);
+}
+
 int main(int argc, char*argv[])
 {
 	if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		usage();
 		return 0;
 	} 
+
 	signal(SIGINT, &onExit);
 	const char *filename = argv[1];
 	
-	
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
-	double audio_pts, video_pts;
     
 	avcodec_init();
 	av_register_all();
@@ -63,6 +109,10 @@ int main(int argc, char*argv[])
 		fprintf(stderr, "Could not find suitable output format\n");
 		exit(1);
 	}
+	printf("v codec chosen: %d\n", fmt->video_codec);
+	printf("h264:           %d\n", CODEC_ID_H264);
+	printf("a codec chosen: %d\n", fmt->audio_codec);
+	printf("mp3:            %d\n", CODEC_ID_MP3);
 	//fmt->video_codec = CODEC_ID_H264;
 	//fmt->audio_codec = CODEC_ID_MP3;
 
@@ -74,14 +124,13 @@ int main(int argc, char*argv[])
 	}
 	oc->oformat = fmt;
 	snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
-
+ 
 	// set the output parameters (must be done even if no parameters).
 	if (av_set_parameters(oc, NULL) < 0) {
 		fprintf(stderr, "Invalid output format parameters\n");
 		exit(1);
 	}
-
-	dump_format(oc, 0, filename, 1);
+  
 	// open the output file
 	if (!(fmt->flags & AVFMT_NOFILE)) {
 		if (url_fopen(&oc->pb, filename, URL_WRONLY) < 0) {
@@ -93,49 +142,28 @@ int main(int argc, char*argv[])
 	video_record_init(fmt, oc);
 	video_play_init();
 	audio_record_init(fmt, oc);
-	
-	//int i = 0;
-	//srand ( time(NULL) );
-	//int num;
+	dump_format(oc, 0, filename, 1);
+
+
 	av_write_header(oc);
-	while(stopRecording == 0)
-	{
-		/*if((i++)%3==0)
-		{
-			num = rand() % 2;
-			if(num == 0){
-				pan_relative(-500 + rand()%1000);
-			}
-			else{
-				tilt_relative(-300 + rand()%600);
-			}
-		}*/
-		video_frame_copy();
-		video_frame_compress();  
-		video_frame_display();
-		audio_segment_copy();
-		audio_segment_compress();
-		
-		/*if (audio_st)
-			audio_pts = (double)audio_st->pts.val * audio_st->time_base.num / audio_st->time_base.den;
-		else
-			audio_pts = 0.0;
-	
-		if (video_st)
-			video_pts = (double)video_st->pts.val * video_st->time_base.num / video_st->time_base.den;
-		else
-			video_pts = 0.0;
 
-		//write interleaved audio and video frames
-		if (!video_st || (video_st && audio_st && audio_pts < video_pts)) {
-			audio_segment_write();
-		} else {
-			video_frame_write();
-		}*/
-		audio_segment_write();
-		video_frame_write();
 
-	}
+	pthread_mutex_init(&fileMutex, NULL);
+
+	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
+	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+
+
+	pthread_join(video_thread_id, NULL);	
+	pthread_join(audio_thread_id, NULL);	
+	pthread_join(keyboard_thread_id, NULL);	
+	pthread_mutex_destroy(&fileMutex);
+
+	int end = time(NULL);
+	//printf("fps: %d\n", frames/(end-start));
+	//int fps = frames / ((end-start)/1000);
+	//printf("%d\n", fps);
 	av_write_trailer(oc);
 	sdl_quit();
 	video_close();

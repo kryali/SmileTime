@@ -20,15 +20,6 @@ int audio_input_frame_size; //number of samples per frame
 
 void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc)
 {
-	audio_st = NULL;
-	output_context = oc;
-	if (fmt->audio_codec != CODEC_ID_NONE) {
-		add_audio_stream(fmt->audio_codec);
-	}
-	if (audio_st) {
-		open_audio();
-	}
-		
 	// Open the microphone device
 	microphone_fd = open( microphone_name, O_RDWR );
 	if(microphone_fd == -1){
@@ -48,6 +39,16 @@ void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc)
 		perror("channels failed");
 		exit(1);
 	}
+
+	audio_st = NULL;
+	output_context = oc;
+	if (fmt->audio_codec != CODEC_ID_NONE) {
+		add_audio_stream(fmt->audio_codec);
+	}
+	if (audio_st) {
+		open_audio();
+	}
+	
 	audio_input_frame_size = audio_context->frame_size;
 	sample_size = channels * sample_bits/8;
 
@@ -63,15 +64,17 @@ void audio_segment_copy()
 
 void audio_segment_compress()
 {
-    av_init_packet(&audio_pkt);
+	av_init_packet(&audio_pkt);
 
-    audio_pkt.size= avcodec_encode_audio(audio_context, audio_outbuf, audio_outbuf_size, audio_buf);
+	audio_pkt.size= avcodec_encode_audio(audio_context, audio_outbuf, audio_outbuf_size, audio_buf);
 
-    if (audio_context->coded_frame && audio_context->coded_frame->pts != AV_NOPTS_VALUE)
-        audio_pkt.pts= av_rescale_q(audio_context->coded_frame->pts, audio_context->time_base, audio_st->time_base);
-    audio_pkt.flags |= AV_PKT_FLAG_KEY;
-    audio_pkt.stream_index= audio_st->index;
-    audio_pkt.data= audio_outbuf;
+	if (audio_context->coded_frame && audio_context->coded_frame->pts != AV_NOPTS_VALUE){
+		
+	}
+	audio_pkt.pts= av_rescale_q(audio_context->coded_frame->pts, audio_context->time_base, audio_st->time_base);
+	audio_pkt.flags |= AV_PKT_FLAG_KEY;
+	audio_pkt.stream_index= audio_st->index;
+	audio_pkt.data= audio_outbuf;
 }
 
 void audio_segment_write()
@@ -100,13 +103,13 @@ void add_audio_stream(enum CodecID codec_id)
 		exit(1);
 	}
 	audio_context = audio_st->codec;	
-
+	audio_context->time_base = (AVRational){1, 25};
 	audio_context->codec_id = codec_id;
 	audio_context->codec_type = AVMEDIA_TYPE_AUDIO;
 	audio_context->sample_fmt = SAMPLE_FMT_S16;
 	audio_context->sample_rate = sample_rate;
 	audio_context->channels = channels;
-	//audio_context->bit_rate = 64000;
+	audio_context->bit_rate = 64000;
 	
 	// some formats want stream headers to be separate
 	if(output_context->oformat->flags & AVFMT_GLOBALHEADER)

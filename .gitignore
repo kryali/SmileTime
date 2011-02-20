@@ -17,3 +17,6 @@
 # Executables
 src/recorder
 src/player
+
+# Video Files
+*.mkv

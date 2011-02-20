@@ -66,9 +66,9 @@ static AVStream *add_audio_stream(AVFormatContext *oc, enum CodecID codec_id)
     c = st->codec;
     c->codec_id = codec_id;
     c->codec_type = AVMEDIA_TYPE_AUDIO;
-
+	 c->sample_fmt = SAMPLE_FMT_S16;
     /* put sample parameters */
-    c->bit_rate = 64000;
+    //c->bit_rate = 64000;
     c->sample_rate = 44100;
     c->channels = 2;
 
@@ -328,6 +328,7 @@ static void fill_yuv_image(AVFrame *pict, int frame_index, int width, int height
 
 static void write_video_frame(AVFormatContext *oc, AVStream *st)
 {
+	printf("Writing a video frame\n");
     int out_size, ret;
     AVCodecContext *c;
     static struct SwsContext *img_convert_ctx;
