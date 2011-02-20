@@ -61,6 +61,12 @@
 #define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
+#define STREAM_FRAME_RATE 24 //frames per second
+#define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
+#define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
+#define VIDEO_WIDTH 640
+#define VIDEO_HEIGHT 480
+
 #ifndef VIDEO_RECORDER_H
 #define VIDEO_RECORDER_H
 

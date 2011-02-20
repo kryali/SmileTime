@@ -5,12 +5,6 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
-#define STREAM_FRAME_RATE 24 //frames per second
-#define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
-#define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
-#define VIDEO_WIDTH 640;
-#define VIDEO_HEIGHT 480;
-
 int camera_fd = -1;
 char* camera_name = "/dev/video0";
 int enc_size;
@@ -87,8 +81,10 @@ void video_frame_compress(){
 	enc_size = avcodec_encode_video(video_context, video_outbuf, video_outbuf_size, yuv420_frame);
 	if (enc_size > 0) {
 		av_init_packet(&video_pkt);
-		if (video_context->coded_frame->pts != AV_NOPTS_VALUE)
-			video_pkt.pts= av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
+		if (video_context->coded_frame->pts != AV_NOPTS_VALUE){
+			
+		}
+		video_pkt.pts = av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
 		if(video_context->coded_frame->key_frame)
 			video_pkt.flags |= AV_PKT_FLAG_KEY;
 		video_pkt.stream_index= video_st->index;
