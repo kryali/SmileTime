@@ -117,13 +117,15 @@ int main(int argc, char*argv[])
 				tilt_relative(-300 + rand()%600);
 			}
 		}*/
-		//video_frame_copy();
-		//video_frame_compress();  
-		//video_frame_display();
+		bufferIndex = video_frame_copy();
+		printf("Buffer %d read\n", bufferIndex);
+		video_frame_compress( bufferIndex );  
+		video_frame_display( bufferIndex );
+		printf("Displaying buffer\n", bufferIndex);
 		//audio_segment_copy();
 		//audio_segment_compress();
 		
-		//video_frame_write();
+		video_frame_write();
 		//audio_segment_write();
 		frames++;
 	}

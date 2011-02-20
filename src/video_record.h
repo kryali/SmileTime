@@ -22,7 +22,7 @@
 #include <libswscale/swscale.h>
 
 #ifndef BUFFERCOUNT
-#define BUFFERCOUNT 1
+#define BUFFERCOUNT 4
 #endif
 
 #ifndef V4L2_PIX_FMT_PJPG
@@ -61,7 +61,7 @@
 #define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
-#define STREAM_FRAME_RATE 24 //frames per second
+#define STREAM_FRAME_RATE 13 //frames per second
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
 #define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
 #define VIDEO_WIDTH 640
@@ -85,7 +85,7 @@ struct buffer * buffers;
 
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();
-void video_frame_compress();
+void video_frame_compress(int bufferIndex);
 void video_frame_write();
 void video_close();
 void add_video_stream(enum CodecID codec_id);

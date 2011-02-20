@@ -98,8 +98,10 @@ void video_frame_display(int bufferIndex)
 		exit(EXIT_FAILURE);
 	}
 
-//	memcpy(overlay->pixels[bufferIndex], buffers[bufferIndex].start, buffers[bufferIndex].length);
-	overlay->pixels[bufferIndex] = buffers[bufferIndex].start;
+//	if(overlay->pixels[0] == NULL)
+	overlay->pixels[0] = malloc(buffers[bufferIndex].length);
+	memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
+//	overlay->pixels[bufferIndex] = buffers[bufferIndex].start;
 
 	SDL_UnlockYUVOverlay(overlay);
 
@@ -114,6 +116,6 @@ void video_frame_display(int bufferIndex)
 
 void sdl_quit(){
 	printf("Freeing SDL\n");
-	SDL_FreeYUVOverlay(overlay);
+//	SDL_FreeYUVOverlay(overlay);
 	//SDL_Quit();
 }

@@ -64,9 +64,9 @@ int video_frame_copy(){
 }
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
-void video_frame_compress(){
+void video_frame_compress( int bufferIndex){
    static struct SwsContext *img_convert_ctx;
-	yuyv422_frame = alloc_frame(buffers[0].start, CAMERA_PIX_FMT, video_context->width, video_context->height);
+	yuyv422_frame = alloc_frame(buffers[bufferIndex].start, CAMERA_PIX_FMT, video_context->width, video_context->height);
    // Make the conversion context
    img_convert_ctx = sws_getContext(
    	video_context->width, video_context->height, CAMERA_PIX_FMT, 
