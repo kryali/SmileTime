@@ -122,7 +122,6 @@ void sdl_quit(){
 void xioctl(int ctrl, int value){
 	struct v4l2_queryctrl qctrl;
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	printf("%d\n",camera_fd);
 	while (0 == ioctl (camera_fd, VIDIOC_QUERYCTRL, &qctrl)) {
 		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
 	}
@@ -168,20 +167,16 @@ void keyboard_capture()
 		case SDL_KEYDOWN:
 			switch(event.key.keysym.sym) {
 				case SDLK_LEFT:
-					printf("left\n");
-					pan_relative(-50);
+					pan_relative(-250);
 				break;
       		case SDLK_RIGHT:
-					printf("right\n");
-					pan_relative(50);
+					pan_relative(250);
 				break;
       		case SDLK_UP:
-					printf("up\n");
-					tilt_relative(25);
+					tilt_relative(-150);
 				break;
       		case SDLK_DOWN:
-					printf("down\n");
-					tilt_relative(-25);
+					tilt_relative(150);
 				break;
 				default:
 				break;

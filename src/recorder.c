@@ -135,6 +135,7 @@ int main(int argc, char*argv[])
 	audio_record_init(fmt, oc);
 	dump_format(oc, 0, filename, 1);
 
+
 	av_write_header(oc);
 
 
@@ -142,6 +143,7 @@ int main(int argc, char*argv[])
 
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+
 
 	pthread_join(video_thread_id, NULL);	
 	pthread_join(audio_thread_id, NULL);	
