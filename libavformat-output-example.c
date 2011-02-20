@@ -328,6 +328,7 @@ static void fill_yuv_image(AVFrame *pict, int frame_index, int width, int height
 
 static void write_video_frame(AVFormatContext *oc, AVStream *st)
 {
+	printf("Writing a video frame\n");
     int out_size, ret;
     AVCodecContext *c;
     static struct SwsContext *img_convert_ctx;

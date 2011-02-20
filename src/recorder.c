@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <pthread.h>
 
+
 #include <libavutil/avutil.h>
 #include <libavutil/log.h>
 #include <libavutil/avstring.h>
@@ -95,9 +96,10 @@ int main(int argc, char*argv[])
 	audio_record_init(fmt, oc);
 	
 	av_write_header(oc);
+	int bufferIndex = 0;
 	while(stopRecording == 0)
 	{
-		video_frame_copy();
+		bufferIndex = video_frame_copy();
 		video_frame_compress();  
 		video_frame_display();
 		audio_segment_copy();

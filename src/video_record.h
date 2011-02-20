@@ -78,7 +78,7 @@ struct buffer * buffers;
 
 
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
-void video_frame_copy();
+int video_frame_copy();
 void video_frame_compress();
 void video_frame_write();
 void video_close();

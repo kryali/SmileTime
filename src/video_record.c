@@ -5,7 +5,7 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
-#define STREAM_FRAME_RATE 24 //frames per second
+#define STREAM_FRAME_RATE 8 //frames per second
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
 #define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
 #define VIDEO_WIDTH 640;
@@ -48,7 +48,7 @@ void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc){
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
-void video_frame_copy(){
+int video_frame_copy(){
 
 	// DEQUEUE frame from buffer
 	struct v4l2_buffer buf;
@@ -66,6 +66,7 @@ void video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_QBUF, &bufQ) == -1 ){
 		perror("VIDIOC_QBUF");
 	}
+	return bufQ.index;
 }
 
 // This function should compress the raw image to JPEG image, or MPEG-4 or H.264 frame if you choose to implemente that feature
@@ -88,6 +89,9 @@ void video_frame_compress(){
 	if (enc_size > 0) {
 		av_init_packet(&video_pkt);
 		if (video_context->coded_frame->pts != AV_NOPTS_VALUE)
+		//  video_st->time_base.den = STREAM_FRAME_RATE;
+		//	printf("VC: %d/%d\n", video_st->time_base.num ,video_st->time_base.den );
+		// 	printf("Coded_Frame: %d\n", video_context->coded_frame->pts);
 			video_pkt.pts= av_rescale_q(video_context->coded_frame->pts, video_context->time_base, video_st->time_base);
 		if(video_context->coded_frame->key_frame)
 			video_pkt.flags |= AV_PKT_FLAG_KEY;
@@ -115,8 +119,8 @@ void video_close(){
 	av_free(yuv420_frame->data[0]);
 	av_free(yuv420_frame);
 	av_free(video_outbuf);
-   avcodec_close(video_context);
-   av_free(video_context);
+    avcodec_close(video_context);
+    av_free(video_context);
 	int closed = close(camera_fd);
 	if(closed == 0)
 		camera_fd = -1;
@@ -139,7 +143,9 @@ void add_video_stream(enum CodecID codec_id)
 	video_context->width = VIDEO_WIDTH;
 	video_context->height = VIDEO_HEIGHT;
 	// timing
-	video_context->time_base = (AVRational){1, STREAM_FRAME_RATE};
+	video_context->time_base = (AVRational){1 ,STREAM_FRAME_RATE};
+//	video_context->time_base.den = STREAM_FRAME_RATE;
+//	video_context->time_base.den = 1;
 	// frame type limits
 	video_context->gop_size = 12; // emit one intra frame every twelve frames at most
 	video_context->max_b_frames=2;
@@ -318,7 +324,6 @@ void print_default_crop(){
 void print_input_info(){
 	//found these online
 	struct v4l2_input input;
-	int index;
 
 	if (-1 == ioctl (camera_fd, VIDIOC_G_INPUT, &index)) {
        		perror ("VIDIOC_G_INPUT");
