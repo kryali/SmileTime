@@ -26,6 +26,7 @@ FILE* output;
 pthread_mutex_t fileMutex;
 pthread_t video_thread_id;
 pthread_t audio_thread_id;
+pthread_t keyboard_thread_id;
 
 void usage()
 {
@@ -43,11 +44,10 @@ void onExit()
 void * startVideoEncoding(){
 	int bufferIndex = 0;
 	int elapsedTime = 0;
-  int frames = 0;
+	int frames = 0;
 	ftime(&startTime);
 
 	while( stopRecording == 0){
-		keyboard_capture();
 		bufferIndex = video_frame_copy();
 		video_frame_compress( bufferIndex );  
 		video_frame_display( bufferIndex );
@@ -59,6 +59,13 @@ void * startVideoEncoding(){
 		ftime(&currentTime);
 		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
 		framesps = (float)elapsedTime / 1000;
+	}
+	pthread_exit(NULL);
+}
+
+void * captureKeyboard(){
+	while( stopRecording == 0){
+		keyboard_capture();
 	}
 	pthread_exit(NULL);
 }
@@ -143,10 +150,12 @@ int main(int argc, char*argv[])
 
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
 
 	pthread_join(video_thread_id, NULL);	
 	pthread_join(audio_thread_id, NULL);	
+	pthread_join(keyboard_thread_id, NULL);	
 	pthread_mutex_destroy(&fileMutex);
 
 	int end = time(NULL);
