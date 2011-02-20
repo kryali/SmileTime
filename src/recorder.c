@@ -49,8 +49,9 @@ void * startVideoEncoding(){
 
 	while( stopRecording == 0){
 		bufferIndex = video_frame_copy();
-		video_frame_compress( bufferIndex );  
 		video_frame_display( bufferIndex );
+
+		video_frame_compress( bufferIndex );  
 
 		pthread_mutex_lock( &fileMutex );
 		video_frame_write();
@@ -62,6 +63,7 @@ void * startVideoEncoding(){
 	}
 	pthread_exit(NULL);
 }
+
 
 void * captureKeyboard(){
 	while( stopRecording == 0){
