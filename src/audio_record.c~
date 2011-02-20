@@ -1,201 +1,135 @@
 #include "audio_record.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <malloc.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <alsa/asoundlib.h>
-#include <libavutil/avutil.h>
-#include <libavutil/log.h>
-#include <libavutil/avstring.h>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
-
-#define AUDIO_FORMAT SND_PCM_FORMAT_S16_LE
-
-// http://www.equalarea.com/paul/alsa-audio.html
 int microphone_fd = -1;
-char* microphone_name = "default";
-short * buf;
+char *microphone_name = "/dev/dsp";
 
-// Microphone global vars
-snd_pcm_t *capture_handle;
-	FILE *f;
-    uint8_t *outbuf;
-    AVCodec *codec;
-    AVCodecContext *c= NULL;
+short *audio_buf;
+int audio_buf_size;
 
+uint8_t *audio_outbuf;
+int audio_outbuf_size;
 
-void audio_record_init()
+AVPacket audio_pkt;
+AVFormatContext *output_context;
+
+int channels = 1;
+int sample_bits = 16; //bits per sample
+int sample_rate = 44100; //samples per second
+int sample_size; //size of a sample in bytes
+int audio_input_frame_size; //number of samples per frame
+
+void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc)
 {
-		printf("[A_REC] This function initializes the audio device for recording\n");
-		int i;
-		int err;
-		unsigned int rate = 44100;
-		snd_pcm_hw_params_t *hw_params;
-		if ((err = snd_pcm_open (&capture_handle, microphone_name, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
-			fprintf (stderr, "cannot open audio device %s (%s)\n", 
-				 microphone_name,
-				 snd_strerror (err));
-			exit (1);
-		}
+	// Open the microphone device
+	microphone_fd = open( microphone_name, O_RDWR );
+	if(microphone_fd == -1){
+		perror("Opening microphone");
+		exit(1);
+	}
+	// Set sampling parameters
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_BITS, &sample_bits ) == -1){
+		perror("Write bits failed");
+		exit(1);
+	}	
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_RATE, &sample_rate ) == -1){
+		perror("rate failed");
+		exit(1);
+	}
+	if( ioctl( microphone_fd, SOUND_PCM_WRITE_CHANNELS, &channels ) == -1){
+		perror("channels failed");
+		exit(1);
+	}
 
-		if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
-			fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
+	audio_st = NULL;
+	output_context = oc;
+	if (fmt->audio_codec != CODEC_ID_NONE) {
+		add_audio_stream(fmt->audio_codec);
+	}
+	if (audio_st) {
+		open_audio();
+	}
+	
+	audio_input_frame_size = audio_context->frame_size;
+	sample_size = channels * sample_bits/8;
 
-		if ((err = snd_pcm_hw_params_any (capture_handle, hw_params)) < 0) {
-			fprintf (stderr, "cannot initialize hardware parameter structure (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		if ((err = snd_pcm_hw_params_set_access (capture_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-			fprintf (stderr, "cannot set access type (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		if ((err = snd_pcm_hw_params_set_format (capture_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
-			fprintf (stderr, "cannot set sample format (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		if ((err = snd_pcm_hw_params_set_rate_near (capture_handle, hw_params, &rate, 0)) < 0) {
-			fprintf (stderr, "cannot set sample rate (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		if ((err = snd_pcm_hw_params_set_channels (capture_handle, hw_params, 2)) < 0) {
-			fprintf (stderr, "cannot set channel count (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		if ((err = snd_pcm_hw_params (capture_handle, hw_params)) < 0) {
-			fprintf (stderr, "cannot set parameters (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-		snd_pcm_hw_params_free (hw_params);
-
-		if ((err = snd_pcm_prepare (capture_handle)) < 0) {
-			fprintf (stderr, "cannot prepare audio interface for use (%s)\n",
-				 snd_strerror (err));
-			exit (1);
-		}
-
-    f = fopen("audio.mp2", "w+");
-
+  	audio_buf_size = audio_input_frame_size * sample_size;
+	audio_buf =  av_malloc(audio_buf_size);
 }
 
 void audio_segment_copy()
-{
-	int err;
-    printf("[A_REC] This function copies the audio segment from sound driver\n");
-
-	// Grabbing size of bytes per frame!
-	int frame_size = snd_pcm_format_width( SND_PCM_FORMAT_S16_LE );
-	
-	printf("Frame size is %d\n", frame_size/8);
-	buf =  malloc(2 * 12800 * frame_size/8); // OMG WTF why does this need more memory?
-
-	printf("reading from interface\n");
-		//if ((err = snd_pcm_readi (capture_handle, buf, 64)) != 64) {
-	int i;
-	if ((err = snd_pcm_readi (capture_handle, buf, 128)) != 128) {
-		fprintf (stderr, "read from audio interface failed (%s)\n",
-			 snd_strerror (err));
-		exit (1);
-	}
-	audio_segment_compress();
+{	
+	if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
+		perror("audio_segment_copy read: ");
 }
 
 void audio_segment_compress()
 {
-    printf("[A_REC] This function should compress the raw wav to MP3 or AAC\n");
-		/* must be called before using avcodec lib */
-	avcodec_init();
+	av_init_packet(&audio_pkt);
 
-	/* register all the codecs */
-	avcodec_register_all();
-    int frame_size, out_size, outbuf_size;
-    short *samples;
+	audio_pkt.size= avcodec_encode_audio(audio_context, audio_outbuf, audio_outbuf_size, audio_buf);
 
-	char * filename = "audio.mp3";
-
-
-    printf("Audio encoding\n");
-
-    AVCodec *codec;
-    AVCodecContext *c= NULL;
-    /* find the MP2 encoder */
-    codec = avcodec_find_encoder(CODEC_ID_MP3);
-    if (!codec) {
-        fprintf(stderr, "codec not found\n");
-        exit(1);
-    }
-    c= avcodec_alloc_context();
-    /* put sample parameters */
-    c->bit_rate = 64000;
-    c->sample_rate = 44100;
-    c->channels = 2;
-	c->sample_fmt = SAMPLE_FMT_S16;
-
-    /* open it */
-    if (avcodec_open(c, codec) < 0) {
-        fprintf(stderr, "could not open codec\n");
-        exit(1);
-    }
-    /* the codec gives us the frame size, in samples */
-    frame_size = c->frame_size;
-    samples = malloc(frame_size * 2 * c->channels);
-    outbuf_size = 10000;
-    outbuf = malloc(outbuf_size);
-
-    f = fopen(filename, "wb");
-    if (!f) {
-        fprintf(stderr, "could not open %s\n", filename);
-        exit(1);
-    }
-    /* encode a single tone sound */
-/*
-    float t = 0;
-	int j = 0;
-	int i = 0;    
-float tincr = 2 * M_PI * 440.0 / c->sample_rate;
-    for(i=0;i<200;i++) {
-        for(j=0;j<frame_size;j++) {
-            samples[2*j] = (int)(sin(t) * 10000);
-            samples[2*j+1] = samples[2*j];
-            t += tincr;
-        }
-        //out_size = avcodec_encode_audio(c, outbuf, outbuf_size, samples);
-        out_size = avcodec_encode_audio(c, outbuf, outbuf_size, buf);
-        fwrite(outbuf, 1, out_size, f);
-    }
-
-	*/
-
+	if (audio_context->coded_frame && audio_context->coded_frame->pts != AV_NOPTS_VALUE){
+		audio_pkt.pts= av_rescale_q(audio_context->coded_frame->pts, audio_context->time_base, audio_st->time_base);
+	}
+	audio_pkt.flags |= AV_PKT_FLAG_KEY;
+	audio_pkt.stream_index= audio_st->index;
+	audio_pkt.data= audio_outbuf;
 }
 
-void audio_exit(){
+void audio_segment_write()
+{
+	/* write the compressed frame in the media file */
+	if (av_interleaved_write_frame(output_context, &audio_pkt) != 0) {
+		fprintf(stderr, "Error while writing audio frame\n");
+		//exit(1);
+	}
+}
 
-if( fclose(f) != 0)
-	perror("fclose");
+//Frees all memory and closes codecs.
+void audio_close()
+{
+	free(audio_outbuf);	
+	free(audio_buf);
+	avcodec_close(audio_context);
+	av_free(audio_context);
+}
+
+void add_audio_stream(enum CodecID codec_id)
+{
+	audio_st = av_new_stream(output_context, 1);
+	if (!audio_st) {
+		fprintf(stderr, "Could not alloc stream\n");
+		exit(1);
+	}
+	audio_context = audio_st->codec;	
+	//audio_context->time_base = (AVRational){1, 25};
+	audio_context->codec_id = codec_id;
+	audio_context->codec_type = AVMEDIA_TYPE_AUDIO;
+	audio_context->sample_fmt = SAMPLE_FMT_S16;
+	audio_context->sample_rate = sample_rate;
+	audio_context->channels = channels;
+	audio_context->bit_rate = 64000;
 	
-    free(outbuf);	
-    free(buf);
-    avcodec_close(c);
-    av_free(c);
+	// some formats want stream headers to be separate
+	if(output_context->oformat->flags & AVFMT_GLOBALHEADER)
+		audio_context->flags |= CODEC_FLAG_GLOBAL_HEADER;
+}
 
-	printf("closing interface");
-	snd_pcm_close (capture_handle);
+void open_audio()
+{
+	/* find the audio encoder */
+	audio_codec = avcodec_find_encoder(audio_context->codec_id);
+	if (!audio_codec) {
+		fprintf(stderr, "audio codec not found\n");
+		exit(1);
+	}
+
+	/* open it */
+	if (avcodec_open(audio_context, audio_codec) < 0) {
+		fprintf(stderr, "could not open audio codec\n");
+		exit(1);
+	}
+    
+	audio_outbuf_size = 10000;
+	audio_outbuf = av_malloc(audio_outbuf_size);
 }

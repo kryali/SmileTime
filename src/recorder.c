@@ -61,6 +61,8 @@ void * startVideoEncoding(){
 		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
 		framesps = (float)elapsedTime / 1000;
 	}
+	printf("frames: %d\n", frames);
+	printf("time ms: %d\n", elapsedTime);
 	pthread_exit(NULL);
 }
 
@@ -160,10 +162,6 @@ int main(int argc, char*argv[])
 	pthread_join(keyboard_thread_id, NULL);	
 	pthread_mutex_destroy(&fileMutex);
 
-	int end = time(NULL);
-	//printf("fps: %d\n", frames/(end-start));
-	//int fps = frames / ((end-start)/1000);
-	//printf("%d\n", fps);
 	av_write_trailer(oc);
 	sdl_quit();
 	video_close();
