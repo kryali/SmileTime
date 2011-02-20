@@ -9,6 +9,8 @@
 #include <asm/types.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/timeb.h>
+
 #include <fcntl.h>
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
@@ -90,6 +92,15 @@ struct buffer {
 };
 
 struct buffer * buffers;
+
+struct timeb currentTime;
+struct timeb startTime;
+
+pthread_t video_thread_id;
+pthread_t audio_thread_id;
+
+int stopRecording;
+float framesps;
 
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();

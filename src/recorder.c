@@ -42,6 +42,10 @@ void onExit()
 
 void * startVideoEncoding(){
 	int bufferIndex = 0;
+	int elapsedTime = 0;
+  int frames = 0;
+	ftime(&startTime);
+
 	while( stopRecording == 0){
 		keyboard_capture();
 		bufferIndex = video_frame_copy();
@@ -51,6 +55,10 @@ void * startVideoEncoding(){
 		pthread_mutex_lock( &fileMutex );
 		video_frame_write();
 		pthread_mutex_unlock( &fileMutex );
+		frames++;
+		ftime(&currentTime);
+		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
+		framesps = (float)elapsedTime / 1000;
 	}
 	pthread_exit(NULL);
 }
@@ -127,48 +135,20 @@ int main(int argc, char*argv[])
 	audio_record_init(fmt, oc);
 	dump_format(oc, 0, filename, 1);
 
-	panTilt_reset();
-	/*int i = 0;
-	srand ( time(NULL) );
-	int num;*/
-	int start = time(NULL);
-	int frames = 0;
 	av_write_header(oc);
+
 
 	pthread_mutex_init(&fileMutex, NULL);
 
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
-/*
-	while(stopRecording == 0)
-	{
-		bufferIndex = video_frame_copy();
-		video_frame_compress( bufferIndex );  
-		video_frame_display( bufferIndex );
-		//audio_segment_copy();
-		//audio_segment_compress();
-		
-		video_frame_write();
-		//audio_segment_write();
-		frames++;
-	} */
-		/*if((i++)%3==0)
-		{
-			num = rand() % 2;
-			if(num == 0){
-				pan_relative(-500 + rand()%1000);
-			}
-			else{
-				tilt_relative(-300 + rand()%600);
-			}
-		}*/
 
 	pthread_join(video_thread_id, NULL);	
 	pthread_join(audio_thread_id, NULL);	
 	pthread_mutex_destroy(&fileMutex);
 
 	int end = time(NULL);
-	printf("fps: %d\n", frames/(end-start));
+	//printf("fps: %d\n", frames/(end-start));
 	//int fps = frames / ((end-start)/1000);
 	//printf("%d\n", fps);
 	av_write_trailer(oc);
