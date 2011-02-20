@@ -22,8 +22,8 @@
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
-pthread_t threads;
 FILE* output;
+pthread_mutex_t fileMutex;
 
 void usage()
 {
@@ -38,12 +38,40 @@ void onExit()
     stopRecording = 1;
 }
 
+void * startVideoEncoding(){
+	int bufferIndex = 0;
+	while( stopRecording == 0){
+		bufferIndex = video_frame_copy();
+		video_frame_compress( bufferIndex );  
+		video_frame_display( bufferIndex );
+
+		pthread_mutex_lock( &fileMutex );
+		video_frame_write();
+		pthread_mutex_unlock( &fileMutex );
+	}
+	pthread_exit(NULL);
+}
+
+void * startAudioEncoding(){
+	while( stopRecording == 0){
+		audio_segment_copy();
+		audio_segment_compress();
+
+		pthread_mutex_lock( &fileMutex );
+		audio_segment_write();
+		pthread_mutex_unlock( &fileMutex );
+	}
+	pthread_exit(NULL);
+}
+
 int main(int argc, char*argv[])
 {
 	if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		usage();
 		return 0;
 	} 
+
+
 	signal(SIGINT, &onExit);
 	const char *filename = argv[1];
 	
@@ -104,9 +132,24 @@ int main(int argc, char*argv[])
 	int start = time(NULL);
 	int frames = 0;
 	av_write_header(oc);
-	int bufferIndex = 0;
+
+	pthread_mutex_init(&fileMutex, NULL);
+
+	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
+	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+/*
 	while(stopRecording == 0)
 	{
+		bufferIndex = video_frame_copy();
+		video_frame_compress( bufferIndex );  
+		video_frame_display( bufferIndex );
+		//audio_segment_copy();
+		//audio_segment_compress();
+		
+		video_frame_write();
+		//audio_segment_write();
+		frames++;
+	} */
 		/*if((i++)%3==0)
 		{
 			num = rand() % 2;
@@ -117,16 +160,11 @@ int main(int argc, char*argv[])
 				tilt_relative(-300 + rand()%600);
 			}
 		}*/
-		bufferIndex = video_frame_copy();
-		video_frame_compress( bufferIndex );  
-		video_frame_display( bufferIndex );
-		//audio_segment_copy();
-		//audio_segment_compress();
-		
-		video_frame_write();
-		//audio_segment_write();
-		frames++;
-	}
+
+	pthread_join(video_thread_id, NULL);	
+	pthread_join(audio_thread_id, NULL);	
+	pthread_mutex_destroy(&fileMutex);
+
 	int end = time(NULL);
 	printf("fps: %d\n", frames/(end-start));
 	//int fps = frames / ((end-start)/1000);

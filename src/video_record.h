@@ -22,7 +22,7 @@
 #include <libswscale/swscale.h>
 
 #ifndef BUFFERCOUNT
-#define BUFFERCOUNT 4
+#define BUFFERCOUNT 10
 #endif
 
 #ifndef V4L2_PIX_FMT_PJPG
@@ -82,6 +82,10 @@ struct buffer {
 
 struct buffer * buffers;
 
+pthread_t video_thread_id;
+pthread_t audio_thread_id;
+
+int stopRecording;
 
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();
