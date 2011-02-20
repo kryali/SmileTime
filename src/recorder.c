@@ -64,6 +64,10 @@ int main(int argc, char*argv[])
 		fprintf(stderr, "Could not find suitable output format\n");
 		exit(1);
 	}
+	printf("v codec chosen: %d\n", fmt->video_codec);
+	printf("h264:           %d\n", CODEC_ID_H264);
+	printf("a codec chosen: %d\n", fmt->audio_codec);
+	printf("mp3:            %d\n", CODEC_ID_MP3);
 	//fmt->video_codec = CODEC_ID_H264;
 	//fmt->audio_codec = CODEC_ID_MP3;
 
@@ -75,14 +79,13 @@ int main(int argc, char*argv[])
 	}
 	oc->oformat = fmt;
 	snprintf(oc->filename, sizeof(oc->filename), "%s", filename);
-
+ 
 	// set the output parameters (must be done even if no parameters).
 	if (av_set_parameters(oc, NULL) < 0) {
 		fprintf(stderr, "Invalid output format parameters\n");
 		exit(1);
 	}
-
-	dump_format(oc, 0, filename, 1);
+  
 	// open the output file
 	if (!(fmt->flags & AVFMT_NOFILE)) {
 		if (url_fopen(&oc->pb, filename, URL_WRONLY) < 0) {
@@ -94,37 +97,40 @@ int main(int argc, char*argv[])
 	video_record_init(fmt, oc);
 	video_play_init();
 	audio_record_init(fmt, oc);
-	
+	dump_format(oc, 0, filename, 1);
+	/*int i = 0;
+	srand ( time(NULL) );
+	int num;*/
+	int start = time(NULL);
+	int frames = 0;
 	av_write_header(oc);
 	int bufferIndex = 0;
 	while(stopRecording == 0)
 	{
-		bufferIndex = video_frame_copy();
-		video_frame_compress();  
-		video_frame_display();
-		audio_segment_copy();
-		audio_segment_compress();
-		
-		/*if (audio_st)
-			audio_pts = (double)audio_st->pts.val * audio_st->time_base.num / audio_st->time_base.den;
-		else
-			audio_pts = 0.0;
-	
-		if (video_st)
-			video_pts = (double)video_st->pts.val * video_st->time_base.num / video_st->time_base.den;
-		else
-			video_pts = 0.0;
-
-		//write interleaved audio and video frames
-		if (!video_st || (video_st && audio_st && audio_pts < video_pts)) {
-			audio_segment_write();
-		} else {
-			video_frame_write();
+		/*if((i++)%3==0)
+		{
+			num = rand() % 2;
+			if(num == 0){
+				pan_relative(-500 + rand()%1000);
+			}
+			else{
+				tilt_relative(-300 + rand()%600);
+			}
 		}*/
-		audio_segment_write();
-		video_frame_write();
-
+		//video_frame_copy();
+		//video_frame_compress();  
+		//video_frame_display();
+		//audio_segment_copy();
+		//audio_segment_compress();
+		
+		//video_frame_write();
+		//audio_segment_write();
+		frames++;
 	}
+	int end = time(NULL);
+	printf("fps: %d\n", frames/(end-start));
+	//int fps = frames / ((end-start)/1000);
+	//printf("%d\n", fps);
 	av_write_trailer(oc);
 	sdl_quit();
 	video_close();
