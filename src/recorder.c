@@ -118,10 +118,8 @@ int main(int argc, char*argv[])
 			}
 		}*/
 		bufferIndex = video_frame_copy();
-		printf("Buffer %d read\n", bufferIndex);
 		video_frame_compress( bufferIndex );  
 		video_frame_display( bufferIndex );
-		printf("Displaying buffer\n", bufferIndex);
 		//audio_segment_copy();
 		//audio_segment_compress();
 		
