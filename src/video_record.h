@@ -61,12 +61,21 @@
 #define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
+#ifndef STREAM_FRAME_RATE
 #define STREAM_FRAME_RATE 13 //frames per second
+#endif
+#ifndef STREAM_PIX_FMT
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
+#endif
+#ifndef CAMERA_PIX_FMT
 #define CAMERA_PIX_FMT PIX_FMT_YUYV422 // Read YUYV422 from camera
+#endif
+#ifndef VIDEO_WIDTH
 #define VIDEO_WIDTH 640
+#endif
+#ifndef VIDEO_HEIGHT
 #define VIDEO_HEIGHT 480
-
+#endif
 #ifndef VIDEO_RECORDER_H
 #define VIDEO_RECORDER_H
 
@@ -81,11 +90,6 @@ struct buffer {
 };
 
 struct buffer * buffers;
-
-pthread_t video_thread_id;
-pthread_t audio_thread_id;
-
-int stopRecording;
 
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();

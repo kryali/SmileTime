@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include "SDL/SDL.h"
-
-#include "video_record.h"
+#include "video_play.h"
 
 #define SDL_YV12_OVERLAY  0x32315659  /* Planar mode: Y + V + U */
 #define SDL_IYUV_OVERLAY  0x56555949  /* Planar mode: Y + U + V */
@@ -25,6 +22,7 @@ const int SCREEN_HEIGHT = 480;
 const int SCREEN_BPP = 16;
 const int CAM_WIDTH = 320;
 const int CAM_HEIGHT = 240;
+SDL_Event event;
 
 int sdl_init(){
 	//SDL_Event event;
@@ -97,7 +95,6 @@ void video_frame_display(int bufferIndex)
 	if(buffers == NULL){
 		exit(EXIT_FAILURE);
 	}
-
 //	if(overlay->pixels[0] == NULL)
 	overlay->pixels[0] = malloc(buffers[bufferIndex].length);
 	memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
@@ -118,4 +115,36 @@ void sdl_quit(){
 	printf("Freeing SDL\n");
 //	SDL_FreeYUVOverlay(overlay);
 	//SDL_Quit();
+}
+
+void keyboard_capture()
+{
+	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.
+	{
+
+	switch(event.type) {
+		case SDL_KEYDOWN:
+			switch(event.key.keysym.sym) {
+				case SDLK_LEFT:
+					printf("left\n");
+					pan_relative(-50);
+				break;
+      		case SDLK_RIGHT:
+					printf("right\n");
+					pan_relative(50);
+				break;
+      		case SDLK_UP:
+					printf("up\n");
+					tilt_relative(25);
+				break;
+      		case SDLK_DOWN:
+					printf("down\n");
+					tilt_relative(-25);
+				break;
+				default:
+				break;
+
+				}
+		}
+	}
 }

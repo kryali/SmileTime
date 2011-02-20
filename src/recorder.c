@@ -24,6 +24,8 @@ char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
 FILE* output;
 pthread_mutex_t fileMutex;
+pthread_t video_thread_id;
+pthread_t audio_thread_id;
 
 void usage()
 {
@@ -41,6 +43,7 @@ void onExit()
 void * startVideoEncoding(){
 	int bufferIndex = 0;
 	while( stopRecording == 0){
+		keyboard_capture();
 		bufferIndex = video_frame_copy();
 		video_frame_compress( bufferIndex );  
 		video_frame_display( bufferIndex );
@@ -71,14 +74,11 @@ int main(int argc, char*argv[])
 		return 0;
 	} 
 
-
 	signal(SIGINT, &onExit);
 	const char *filename = argv[1];
 	
-	
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
-	double audio_pts, video_pts;
     
 	avcodec_init();
 	av_register_all();
@@ -126,6 +126,8 @@ int main(int argc, char*argv[])
 	video_play_init();
 	audio_record_init(fmt, oc);
 	dump_format(oc, 0, filename, 1);
+
+	panTilt_reset();
 	/*int i = 0;
 	srand ( time(NULL) );
 	int num;*/
