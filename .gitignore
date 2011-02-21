@@ -20,3 +20,7 @@ src/player
 
 # Video Files
 *.mkv
+
+# LaTeX files
+*.log
+*.aux
