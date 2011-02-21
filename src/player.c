@@ -95,8 +95,8 @@ uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 void onExit()
 {
   global_video_state->quit = 1;
-  float fps = frameCount / (endTime.time - startTime.time);
-  printf("Playback Frame Rate: %f fps\n", fps);
+  float fps = frameCount / (float)(endTime.time - startTime.time);
+  printf("Playback Frame Rate: %.2f fps\n", fps);
   printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
   //frames_to_play = 0;
 }
