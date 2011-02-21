@@ -31,7 +31,9 @@
 		\item We then instruct the webcam to queue 10 buffer frames to be ready for retrieval.
 		\item SDL Initialize
 			\begin{itemize}
-				\item In order to display the webcam's image to the screen, we use SDL to display the images we receive from the webcam buffer. We initialize the SDL window to match our image format paramters and create a \textbf{YUYOverlay} to present the frame.
+				\item In order to display the webcam's image to the screen, we use SDL to display the images we receive from the webcam buffer. The SDL window is initialized to match our image format paramters and create a \textbf{YUYOverlay} to present the frame.
+				\item To allow for pan/tilt control, we listen for key presses in the SDL window. The up/down arrow keys are mapped for tilt functions and the left/right arrow keys are mapped for pan functions.
+	\\\it Note: We have to wrap the pan/tilt ioctl calls in a while loop since they don't necessarily work the first time we try to control the camera.
 			\end{itemize}
 	\end{enumerate}
 \item \textbf{Concurrent Encoding}
@@ -62,6 +64,17 @@
 
 
 \end{enumerate}
+
+\section{Sources}
+\begin{description}
+	\item We used example usage of ffmpeg and the v4l2 api to help drive our development. The resources we used are linked here.
+\end{description}
+\begin{itemize}
+	\item \textbf{V4l2 API:} http://v4l2spec.bytesex.org/spec/book1.htm
+	\item \textbf{V4L2 Capture Example:} http://v4l2spec.bytesex.org/spec/capture-example.html
+	\item \textbf{Pan/Tilt Example:} http://www.zerofsck.org/2009/03/09/example-code-pan-and-tilt-your-logitech-sphere-webcam-using-python-module-lpantilt-linux-v4l2/
+	\item \textbf{FFMPEG Example:} http://recapstudio.googlecode.com/hg/src/common/AVEncoder.cpp?r=4c707b0b25c2499b86aaeb3d096e16bd7dc441a6
+\end{itemize}
 
 \end{document}
 
