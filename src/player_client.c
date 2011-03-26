@@ -9,7 +9,7 @@ void client_init(){
     hints2.ai_flags = AI_PASSIVE | AI_NUMERICSERV;     // fill in my IP for me
 	//char * hostname = "localhost";
 	char * hostname = "127.0.0.1";
-    char * port = "1338";
+    char * port = "1336";
 
     if((getaddrinfo(hostname, port, &hints2, &res2)) != 0){
         perror("getaddrinfo");

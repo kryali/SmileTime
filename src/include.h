@@ -10,6 +10,6 @@
 #include <string.h>
 
 #define LISTEN_PORT 1336
-#define BACKLOG 10
+#define BACKLOG 20
 
 #endif

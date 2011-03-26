@@ -4,7 +4,7 @@ void init_server(){
 	printf("Initializing the recorder server!\n");
 
 	// Open up a socket
-	recorder_socket = socket( AF_INET, SOCK_STREAM, NULL );
+	recorder_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	if( recorder_socket == -1 ){
 		perror("socket");
 		exit(1);
@@ -42,7 +42,7 @@ void init_server(){
 	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 
 	printf("Waiting for a connection...\n");
-	if(( acceptfd = accept( recorder_socket, &addr, &addr_size )) == -1 ){
+	if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
 		perror("accept");
 		exit(1);
 	}
