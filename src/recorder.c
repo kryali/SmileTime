@@ -19,6 +19,9 @@
 #include "audio_play.h"
 #include "io_tools.h"
 
+#include "recorder_server.h"
+#include "recorder_client.h"
+
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
@@ -143,7 +146,7 @@ int main(int argc, char*argv[])
 	
 	video_record_init(fmt, oc);
 	video_play_init();
-	audio_record_init(fmt, oc);
+//	audio_record_init(fmt, oc);
 	dump_format(oc, 0, filename, 1);
 
 
@@ -153,19 +156,19 @@ int main(int argc, char*argv[])
 	pthread_mutex_init(&fileMutex, NULL);
 
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
-	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+//	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
 
 	pthread_join(video_thread_id, NULL);	
-	pthread_join(audio_thread_id, NULL);	
+//	pthread_join(audio_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);	
 	pthread_mutex_destroy(&fileMutex);
 
 	av_write_trailer(oc);
 	sdl_quit();
 	video_close();
-	audio_close();
+//	audio_close();
 
 	if (!(fmt->flags & AVFMT_NOFILE)) {
 		/* close the output file */
