@@ -37,14 +37,25 @@ void init_server(){
 		exit(1);
 	}
 
-//	addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	while(1){
+		//	addr_size = sizeof(struct sockaddr_storage);
+		struct sockaddr_storage their_addr;
+		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 
-	printf("Waiting for a connection...\n");
-	if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
-		perror("accept");
-		exit(1);
+		printf("Waiting for a connection...\n");
+		if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
+			perror("accept");
+			exit(1);
+		}
+		printf("Connection recieved!\n");
+		char * buf = malloc(25);
+		memset(buf, 0, 25);
+		strcpy(buf, "Hello World!\0");
+		if( write(acceptfd, buf, 25) == -1){
+			printf("SODIJF\n");
+			perror("write");
+			exit(1);
+		}
+		printf("Message Sent!\n");
 	}
-	printf("Connection recieved!\n");
 }

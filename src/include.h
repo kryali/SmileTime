@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>
 
 #define LISTEN_PORT 1336
 #define BACKLOG 20

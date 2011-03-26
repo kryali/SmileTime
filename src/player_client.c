@@ -16,6 +16,9 @@ void client_init(){
         exit(1);
     }
 
+	if( (res2->ai_protocol & SOCK_NONBLOCK) == 0 ){
+		printf("Socket is blocking\n");
+	}
  	if( (player_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
 		perror("socket");
 		exit(1);
@@ -28,5 +31,13 @@ void client_init(){
 	}
 
     printf("Conected client \n");
+	char * buf = malloc( 500 );
+	memset(buf, 0 , 500);
 
+	int dataread = 0;
+	if( ( dataread = read(player_socket, buf, 25)) == -1){
+		perror("read");
+		exit(1);
+	}
+	printf("Received %d bytes: %s\n", dataread, buf);
 }
