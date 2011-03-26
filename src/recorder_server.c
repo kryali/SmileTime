@@ -37,6 +37,9 @@ void init_server(){
 		exit(1);
 	}
 
+	struct timeb tp; 
+	int t1, t2;
+
 	while(1){
 		//	addr_size = sizeof(struct sockaddr_storage);
 		struct sockaddr_storage their_addr;
@@ -51,11 +54,30 @@ void init_server(){
 		char * buf = malloc(25);
 		memset(buf, 0, 25);
 		strcpy(buf, "Hello World!\0");
+
+		ftime(&tp);
+		t1 = (tp.time * 1000) + tp.millitm;
+		//printf("Start: %d\n", tp.millitm);
+		
+		// Send the packet to the client
 		if( write(acceptfd, buf, 25) == -1){
-			printf("SODIJF\n");
 			perror("write");
 			exit(1);
 		}
+
+		// Get the time elapsed on the client
+		int * t3 = malloc(sizeof(int));
+		if( read(acceptfd, t3, sizeof(int)) == -1 ){
+			perror("read");
+			exit(1);
+		}
+		//printf("Elapsed time from client: %d\n", *t3);
+
+		ftime(&tp);
+		t2 = (tp.time * 1000) + tp.millitm;
+		//printf("End: %d\n", tp.millitm);
+
 		printf("Message Sent!\n");
+		printf("RTT:%ds\n", t2-t1-*t3);
 	}
 }

@@ -24,6 +24,7 @@ void client_init(){
 		exit(1);
 	}
 
+
 	printf("Client connecting to server...\n");
 	if( connect(player_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
 			perror("connect");
@@ -33,11 +34,31 @@ void client_init(){
     printf("Conected client \n");
 	char * buf = malloc( 500 );
 	memset(buf, 0 , 500);
+	
+	struct timeb tp;
+	int t1, t2;
+
+	ftime(&tp);
+	t1 = (tp.time * 1000) + tp.millitm;
+	//printf("Start: %d\n", tp.millitm);
 
 	int dataread = 0;
 	if( ( dataread = read(player_socket, buf, 25)) == -1){
 		perror("read");
 		exit(1);
 	}
+
+	ftime(&tp);
+	t2 = (tp.time * 1000) + tp.millitm;
+	printf("Elapsed Time: %d\n", t2-t1);
+
+
+	int * t3 = malloc(sizeof(int));
+	*t3 = t2-t1;
+	if( write(player_socket, t3, sizeof(int))== -1 ){
+		perror("write");
+		exit(1);
+	}
+
 	printf("Received %d bytes: %s\n", dataread, buf);
 }
