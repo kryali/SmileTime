@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#include <netdb.h>
+#include <string.h>
 
 #define LISTEN_PORT 1336
 #define BACKLOG 10

@@ -1,7 +1,10 @@
 #ifndef PLAYER_CLIENT_H
 #define PLAYER_CLIENT_H
 
-#include <sys/types.h>          /* See NOTES */
-#include <sys/socket.h>
+#include "include.h"
+
+void client_init();
+
+int player_socket;
 
 #endif

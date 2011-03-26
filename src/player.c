@@ -9,6 +9,8 @@
 #include "io_tools.h"
 #include "SDL/SDL.h"
 
+#include "player_client.h"
+
 #include <sys/timeb.h>
 
 #include <libavutil/avutil.h>
@@ -805,6 +807,7 @@ int main(int argc, char*argv[])
     exit(1);
   }
 
+  client_init();
   // Get the filename
   av_strlcpy(is->filename, argv[1], sizeof(is->filename));
 

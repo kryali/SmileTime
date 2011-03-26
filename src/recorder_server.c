@@ -17,8 +17,16 @@ void init_server(){
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port =  htons(LISTEN_PORT);
 
+	int addr_size = sizeof(struct sockaddr_in);
+
+	int optval = 1;
+    if( (setsockopt(recorder_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
+        perror("setsockopt");
+        exit(1);
+    }
+
 	// Bind socket
-	if( bind( recorder_socket, &addr, sizeof(addr) ) == -1) {
+	if( bind( recorder_socket, &addr, addr_size ) == -1) {
 		perror("bind");
 		exit(1);
 	}
@@ -28,4 +36,15 @@ void init_server(){
 		perror("listen");
 		exit(1);
 	}
+
+//	addr_size = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+
+	printf("Waiting for a connection...\n");
+	if(( acceptfd = accept( recorder_socket, &addr, &addr_size )) == -1 ){
+		perror("accept");
+		exit(1);
+	}
+	printf("Connection recieved!\n");
 }

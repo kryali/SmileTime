@@ -6,5 +6,6 @@
 void init_server();
 
 int recorder_socket;
+int acceptfd;
 
 #endif
