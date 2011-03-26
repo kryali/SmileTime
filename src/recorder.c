@@ -143,10 +143,13 @@ int main(int argc, char*argv[])
 			exit(1);
 		}
 	}
+
+	// Initializiations
 	
 	video_record_init(fmt, oc);
 	video_play_init();
 //	audio_record_init(fmt, oc);
+	init_server();
 	dump_format(oc, 0, filename, 1);
 
 
