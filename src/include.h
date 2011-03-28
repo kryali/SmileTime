@@ -3,9 +3,11 @@
 
 #include <sys/types.h>          /* See NOTES */
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>

@@ -41,6 +41,8 @@ void init_server(){
 		exit(1);
 	}
 
+	printf("IP ADDRESS: \n");
+
 	printf("[NAMESERVER] Server initialization complete.\n");
 
 }
