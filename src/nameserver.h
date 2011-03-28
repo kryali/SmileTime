@@ -8,5 +8,6 @@ void init_server();
 void message_listen();
 
 int nameserver_socket;
+list * iplist;
 
 #endif

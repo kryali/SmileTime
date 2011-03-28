@@ -17,6 +17,7 @@ int list_length(list * head);
 void list_add(list ** head, char * name, char * ip);
 char * list_find(list * head, char * name);
 void list_destroy(list ** head);
+void list_print(list * head);
 
 
 #include "linkedlist.c"

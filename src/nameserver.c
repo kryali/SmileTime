@@ -1,9 +1,18 @@
 #include "nameserver.h"
 
 int main(){
+	iplist = NULL;
+	list_add(&iplist, "Kiran", "127.0.0.1");
+	list_add(&iplist, "John", "127.0.0.2");
+	list_add(&iplist, "Cliff", "127.0.0.3");
+	list_add(&iplist, "Batman", "127.0.0.4");
+	list_print(iplist);
+
 	init_server();
 	message_listen();
+	return 0;
 }
+
 
 void init_server(){
 

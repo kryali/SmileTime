@@ -47,3 +47,12 @@ void list_destroy(list ** head){
 	free(*head);
 	*head = NULL;
 }
+
+void list_print(list * head){
+	int count = 0;
+	while(head != NULL){
+		printf("%d> %s - %s\n", count, head->name, head->ip);
+		count++;
+		head = head->next;
+	}
+}
