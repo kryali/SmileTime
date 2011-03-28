@@ -14,8 +14,9 @@ CFLAGS = -O0 $(SDLFLAGS) -Wall -g -L/nmnt/work1/cs414/G6/x264/lib/ -I/nmnt/work1
 
 REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o recorder_server.o recorder_client.o
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o player_client.o
-		
-all:	recorder player
+NAMESERVER_OBJ= nameserver.o
+
+all:	recorder player nameserver
 
 clean:
 	@echo "Cleaning up directory."
@@ -27,6 +28,10 @@ recorder:	$(REC_OBJECTS)
 
 player:	$(PLAY_OBJECTS)
 	$(CC)	$(CFLAGS) $(PLAY_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) $(FFMPEG_LIB) -o $@
+
+nameserver:	$(NAMESERVER_OBJ)
+	$(CC)	$(CFLAGS) $(NAMESERVER_OBJ) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) $(FFMPEG_LIB) -o $@
+
 
 player_client.o: player_client.c player_client.h
 
@@ -48,3 +53,4 @@ audio_record.o:	audio_record.c audio_record.h
 
 audio_play.o:	audio_play.c audio_play.h
 
+nameserver.o: nameserver.c nameserver.h
