@@ -8,6 +8,7 @@ int main(){
 	list_add(&iplist, "Batman", "127.0.0.4");
 	list_print(iplist);
 
+
 	init_server();
 	message_listen();
 	return 0;
@@ -67,5 +68,28 @@ void message_listen(){
 			exit(1);
 		}
 		printf("Connection recieved!\n");
+		handle_connection(acceptfd);
+	}
+}
+
+void handle_connection(int fd){
+	char headerCode = 10; //Hardcode some value that isn't any of the defined properties
+	if( read (fd, &headerCode, 1) != 1){
+		perror("read");
+		exit(1);
+	}
+	switch(headerCode){
+		case FIND:
+			printf("[NAMESERVER] FIND received!\n");
+			break;
+		case ADD:
+			printf("[NAMESERVER] ADD received!\n");
+			break;
+		case EXIT:
+			printf("[NAMESERVER] EXIT received!\n");
+			break;
+		default:
+			printf("[NAMESERVER] Invalid header code\n");
+			break;
 	}
 }
