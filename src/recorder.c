@@ -42,6 +42,7 @@ void onExit()
 {
     printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
     stopRecording = 1;
+	exit(0);
 }
 
 void * startVideoEncoding(){
