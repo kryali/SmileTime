@@ -2,6 +2,7 @@
 #define NAMESERVER_H
 
 #include "include.h"
+#include "lib/linkedlist.h"
 
 void init_server();
 void message_listen();
