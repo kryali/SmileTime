@@ -22,6 +22,8 @@
 #include "recorder_server.h"
 #include "recorder_client.h"
 
+#include "network_packet.h"
+
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
