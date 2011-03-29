@@ -32,7 +32,7 @@ void client_init(){
 			perror("connect");
 			exit(1);
 	}
-
+/*
     printf("Conected client \n");
 	char * buf = malloc( 500 );
 	memset(buf, 0 , 500);
@@ -63,4 +63,14 @@ void client_init(){
 	}
 
 	printf("Received %d bytes: %s\n", dataread, buf);
+*/
+	pantilt_packet pt;
+	pt.type = TILT;
+	pt.distance = -250;
+	HTTP_packet* http = pantilt_to_network_packet(&pt);
+	if( write(player_socket, http->message, http->length)== -1 ){
+		perror("write");
+		exit(1);
+	}
+	destroy_HTTP_packet(http);
 }

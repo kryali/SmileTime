@@ -22,7 +22,7 @@
 #include "recorder_server.h"
 #include "recorder_client.h"
 
-#include "lib/network_packet.h"
+#include "include.h"
 
 
 char* defaultPath = "/nmnt/work1/cs414/G6/";
