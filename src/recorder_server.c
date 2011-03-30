@@ -37,8 +37,69 @@ void init_server(){
 		exit(1);
 	}
 
+	register_nameserver();
+	listen_connections();
+}
+
+void register_nameserver(){
+	printf("[Recorder] registering IP with nameserver\n");
+
+	// Connect to nameserver
+    struct addrinfo hints2, * res2;
+	int nameserver_socket;
+    memset(&hints2, 0, sizeof hints2);
+    hints2.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+    hints2.ai_socktype = SOCK_STREAM;
+    hints2.ai_flags = AI_PASSIVE | AI_NUMERICSERV;     // fill in my IP for me
+	char * hostname = "127.0.0.1";
+//    char * port = NAMESERVER_LISTEN_PORT;
+    char * port = "1337";
+    if((getaddrinfo(hostname, port, &hints2, &res2)) != 0){
+        perror("getaddrinfo");
+        exit(1);
+    }
+
+ 	if( (nameserver_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
+		perror("socket");
+		exit(1);
+	}
+
+	
+
+	printf("[RECORDER] connecting to nameserver...\n");
+	if( connect(nameserver_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
+		perror("connect");
+		exit(1);
+	}
+	printf("[RECORDER] nameserver connected!...\n");
+
+	char headerCode = ADD;
+	if( write( nameserver_socket, &headerCode, 1) == -1){
+		perror("write");
+		exit(1);
+	}
+
+	char * msg = "kiran#127.0.0.1:1337#1";
+	printf("IP ADD: %s\n", getIP());
+	int size = strlen(msg);
+	
+	// Send size of message
+	if( write( nameserver_socket, &size, sizeof(int)) == -1){
+		perror("write");
+		exit(1);
+	}
+
+	if( write( nameserver_socket, msg, strlen(msg)) == -1){
+		perror("write");
+		exit(1);
+	}
+}
+
+void listen_connections(){
+
 	struct timeb tp; 
 	int t1, t2;
+	int addr_size = sizeof(struct sockaddr_storage);
 
 	while(1){
 		//	addr_size = sizeof(struct sockaddr_storage);
@@ -80,4 +141,30 @@ void init_server(){
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
 	}
+}
+char *  getIP() {
+    struct ifaddrs * ifAddrStruct=NULL;
+    void * tmpAddrPtr=NULL;
+
+    getifaddrs(&ifAddrStruct);
+
+    while (ifAddrStruct!=NULL) {
+        if (ifAddrStruct->ifa_addr->sa_family==AF_INET) { // check it is IP4
+            // is a valid IP4 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
+            char addressBuffer[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+			if( strcmp( ifAddrStruct->ifa_name, "eth1") == 0 ){
+				return addressBuffer;
+			}
+        } else if (ifAddrStruct->ifa_addr->sa_family==AF_INET6) { // check it is IP6
+            // is a valid IP6 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
+            char addressBuffer[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+            printf("%s IP Address %s\n", ifAddrStruct->ifa_name, addressBuffer); 
+        } 
+        ifAddrStruct=ifAddrStruct->ifa_next;
+    }
+    return "(null)";
 }
