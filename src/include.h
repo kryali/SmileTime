@@ -15,6 +15,7 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 
+#include "network_packet.h"
 
 #define NAMESERVER_LISTEN_PORT 1337
 #define LISTEN_PORT 1336

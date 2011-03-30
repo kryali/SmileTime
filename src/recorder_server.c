@@ -2,7 +2,10 @@
 
 void init_server(){
 	printf("Initializing the recorder server!\n");
+	init_control_connection();
+}
 
+void init_control_connection(){
 	// Open up a socket
 	recorder_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	if( recorder_socket == -1 ){
@@ -101,7 +104,6 @@ void listen_connections(){
 	int t1, t2;
 	int addr_size = sizeof(struct sockaddr_storage);
 
-	while(1){
 		//	addr_size = sizeof(struct sockaddr_storage);
 		struct sockaddr_storage their_addr;
 		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
@@ -110,7 +112,7 @@ void listen_connections(){
 		if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
 			perror("accept");
 			exit(1);
-		}
+		}/*
 		printf("Connection recieved!\n");
 		char * buf = malloc(25);
 		memset(buf, 0, 25);
@@ -140,7 +142,38 @@ void listen_connections(){
 
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
+*/
+	//listen for control and pantilt packets.
+	void* buffer = malloc(100);
+	while(1){
+		int size = read(acceptfd, buffer, 100);
+		if( size == -1 ){
+			perror("read");
+			exit(1);
+		}
+		printf("read packet of size: %d\n",size);
+		HTTP_packet packet;
+		packet.message = buffer;
+		packet.length = size;
+		char packet_type = get_packet_type(&packet);
+		switch(packet_type)
+		{
+			case CONTROL_PACKET:
+				printf("received control packet\n");
+			break;
+			case PANTILT_PACKET:
+				pantilt_packet* pt = to_pantilt_packet(&packet);
+				if(pt->type == PAN)
+					printf("replace this line with a pan of distance %d\n", pt->distance);
+				if(pt->type == TILT)
+					printf("replace this line with a tilt of distance %d\n", pt->distance);
+			break;
+			default:
+				printf("received INVALID packet\n");
+			break;
+		}
 	}
+	free(buffer);
 }
 char *  getIP() {
     struct ifaddrs * ifAddrStruct=NULL;
