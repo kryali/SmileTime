@@ -161,11 +161,12 @@ void listen_connections(){
 
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
+	*/
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
 	while(1){
 		int size = read(acceptfd, buffer, 100);
-		if( size == -1 ){
+		if( size == -1 || size == 0 ){
 			perror("read");
 			exit(1);
 		}
@@ -193,7 +194,7 @@ void listen_connections(){
 		}
 	}
 	free(buffer);
-	*/
+	
 }
 char *  getIP() {
     struct ifaddrs * ifAddrStruct=NULL;
