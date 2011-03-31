@@ -181,6 +181,7 @@ void listen_connections(){
 				printf("received control packet\n");
 				break;
 			case PANTILT_PACKET:
+				printf("received pantilt packet\n");//	WHAT THE FUCK?
 				pantilt_packet* pt = to_pantilt_packet(&packet);
 				if(pt->type == PAN)
 					printf("replace this line with a pan of distance %d\n", pt->distance);
