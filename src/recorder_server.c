@@ -82,20 +82,39 @@ void register_nameserver(){
 		exit(1);
 	}
 
-	char * msg = "kiran#127.0.0.1:1337#1";
-	printf("IP ADD: %s\n", getIP());
-	int size = strlen(msg);
+	char * name = "kiran";
+	char * ip = getIP();
+	int size = 0;
+	char * msg = nameServerMsg(name, ip, port, &size);
+	printf("Sending message: %s of length %d\n", msg, size);
 	
-	// Send size of message
+	// Send size );of message
 	if( write( nameserver_socket, &size, sizeof(int)) == -1){
 		perror("write");
 		exit(1);
 	}
 
-	if( write( nameserver_socket, msg, strlen(msg)) == -1){
+	if( write( nameserver_socket, msg, size) == -1){
 		perror("write");
 		exit(1);
 	}
+
+	free(msg);
+}
+
+char * nameServerMsg(char * name, char * ip, char * port, int * size){
+	*size = strlen(ip) + strlen(port) + 5 + strlen(name);
+	char * msg = malloc(*size);
+	memset(msg, 0, *size);
+	strcat(msg, name);
+	strcat(msg, "#");
+	strcat(msg, ip);
+	strcat(msg, ":");
+	strcat(msg, port);
+	strcat(msg, "#");
+	strcat(msg, TCP);
+	msg[*size-1] = '\0';
+	return msg;
 }
 
 void listen_connections(){
@@ -142,7 +161,6 @@ void listen_connections(){
 
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
-*/
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
 	while(1){
@@ -160,7 +178,7 @@ void listen_connections(){
 		{
 			case CONTROL_PACKET:
 				printf("received control packet\n");
-			break;
+				break;
 			case PANTILT_PACKET:
 				printf("received pantilt packet\n");//	WHAT THE FUCK?
 				pantilt_packet* pt = to_pantilt_packet(&packet);
@@ -168,13 +186,14 @@ void listen_connections(){
 					printf("replace this line with a pan of distance %d\n", pt->distance);
 				if(pt->type == TILT)
 					printf("replace this line with a tilt of distance %d\n", pt->distance);
-			break;
+				break;
 			default:
 				printf("received INVALID packet\n");
-			break;
+				break;
 		}
 	}
 	free(buffer);
+	*/
 }
 char *  getIP() {
     struct ifaddrs * ifAddrStruct=NULL;
@@ -186,10 +205,11 @@ char *  getIP() {
         if (ifAddrStruct->ifa_addr->sa_family==AF_INET) { // check it is IP4
             // is a valid IP4 Address
             tmpAddrPtr=&((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
-            char addressBuffer[INET_ADDRSTRLEN];
+//            char addressBuffer[INET_ADDRSTRLEN];
+			char * addressBuffer = malloc(INET_ADDRSTRLEN);
             inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			if( strcmp( ifAddrStruct->ifa_name, "eth1") == 0 ){
-				return addressBuffer;
+				return (char *)addressBuffer;
 			}
         } else if (ifAddrStruct->ifa_addr->sa_family==AF_INET6) { // check it is IP6
             // is a valid IP6 Address

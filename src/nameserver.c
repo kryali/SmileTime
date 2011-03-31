@@ -92,6 +92,7 @@ void handle_connection(int fd){
 				perror("read");
 				exit(1);
 			}
+			printf("Incoming message size: %d bytes\n", size);
 			char * msg = malloc(size);
 			memset(msg, 0, size);
 
@@ -99,7 +100,7 @@ void handle_connection(int fd){
 				perror("read");
 				exit(1);
 			}
-			printf("[NAMESERVER] received msg: %s\n");
+			printf("[NAMESERVER] received msg: %s\n", msg);
 			break;
 		case EXIT:
 			printf("[NAMESERVER] EXIT received!\n");
