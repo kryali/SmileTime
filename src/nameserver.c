@@ -87,7 +87,7 @@ void add_server(char * msg){
 	char * prot = msg;
 	printf("PROT %s\n", msg);
 
-	list_add(&iplist, name, ip, port, msg);
+	list_add(&iplist, name, ip, port,msg);
 	list_print(iplist);
 }
 
@@ -102,7 +102,7 @@ char* strstp(char * str, char * stp, int * size){
 }
 
 
-char * nameServerMsg(char * name, char * ip, char * port, int * size){
+char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size){
     *size = strlen(ip) + strlen(port) + 5 + strlen(name);
     char * msg = malloc(*size);
     memset(msg, 0, *size);
@@ -112,7 +112,7 @@ char * nameServerMsg(char * name, char * ip, char * port, int * size){
     strcat(msg, ":");
     strcat(msg, port);
     strcat(msg, "#");
-    strcat(msg, TCP);
+    strcat(msg, protocol);
     msg[*size-1] = '\0';
     return msg;
 }
@@ -120,7 +120,7 @@ char * nameServerMsg(char * name, char * ip, char * port, int * size){
 char * server_find(char * name){
 	int size = 0;
 	list * f = list_find(iplist, name);
-	return nameServerMsg(f->name, f->ip, f->port, &size);
+	return nameServerMsg(f->name, f->ip, f->port,f->protocol, &size);
 }
 
 void handle_connection(int fd){
