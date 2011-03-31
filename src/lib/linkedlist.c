@@ -8,7 +8,7 @@ char * list_find(list * head, char * name){
 	return "NULL";
 }
 
-void list_add(list ** head, char * name, char * ip, char * port, int protocol){
+void list_add(list ** head, char * name, char * ip, char * port, char * protocol){
 	if(*head == NULL){
 		list * newnode = malloc(sizeof(list));
 		newnode->name = name;
@@ -55,7 +55,7 @@ void list_destroy(list ** head){
 void list_print(list * head){
 	int count = 0;
 	while(head != NULL){
-		printf("%d> %s - %s:%s [%d]\n", count, head->name, head->ip, head->port,head->protocol);
+		printf("%d> %s - %s:%s [%s]\n", count, head->name, head->ip, head->port,head->protocol);
 		count++;
 		head = head->next;
 	}

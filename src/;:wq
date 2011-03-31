@@ -2,10 +2,10 @@
 
 int main(){
 	iplist = NULL;
-	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
-	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
-	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
-	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
+	list_add(&iplist, "Kiran", "127.0.0.1", "1337", SOCK_STREAM);
+	list_add(&iplist, "John", "127.0.0.2","1337", SOCK_STREAM);
+	list_add(&iplist, "Cliff", "127.0.0.3", "1337", SOCK_STREAM);
+	list_add(&iplist, "Batman", "127.0.0.4", "1337", SOCK_STREAM);
 	list_print(iplist);
 
 
@@ -74,21 +74,31 @@ void message_listen(){
 
 void add_server(char * msg){
 
-	int size = 0;
-	char * name = strstp(msg, "#", &size);
-	printf("Name %s\n", name);
+	char * loc = strstr(msg, "#");
+	int size = loc-msg+1;
+	char name[size];
+	memset(&name, 0, size);
+	strncpy(&name, msg, size-1);
+	name[size-1] = '\0';
+	printf("Name %s\n",name);
+	msg+= size;
+	printf("Msg %s\n",msg);
+	printf("IP %s\n", strstp(msg, ":", &size));
 	msg += size;
-	char * ip = strstp(msg, ":", &size);
-	printf("IP %s\n", ip);
+	printf("PORT %s\n", strstp(msg, "#", &size));
 	msg += size;
-	char * port = strstp(msg, "#", &size);
-	printf("PORT %s\n", port);
-	msg += size;
-	char * prot = msg;
 	printf("PROT %s\n", msg);
-
-	list_add(&iplist, name, ip, port, msg);
-	list_print(iplist);
+/*
+	loc = strstr(msg, ":");
+	size = loc-msg+1;
+	char ip[size];
+	memset(&ip, 0, size);
+	strncpy(&ip, msg, size-1);
+	ip[size-1] = '\0';
+	printf("IP %s\n",ip);
+	msg+= size;
+	printf("Msg %s\n",msg);
+	*/
 }
 
 char* strstp(char * str, char * stp, int * size){
