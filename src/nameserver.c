@@ -101,10 +101,26 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
+
+char * nameServerMsg(char * name, char * ip, char * port, int * size){
+    *size = strlen(ip) + strlen(port) + 5 + strlen(name);
+    char * msg = malloc(*size);
+    memset(msg, 0, *size);
+    strcat(msg, name);
+    strcat(msg, "#");
+    strcat(msg, ip);
+    strcat(msg, ":");
+    strcat(msg, port);
+    strcat(msg, "#");
+    strcat(msg, TCP);
+    msg[*size-1] = '\0';
+    return msg;
+}
+
 char * server_find(char * name){
+	int size = 0;
 	list * f = list_find(iplist, name);
-//	return "192.1.1.1:1338#1";
-	return f->ip;
+	return nameServerMsg(f->name, f->ip, f->port, &size);
 }
 
 void handle_connection(int fd){
