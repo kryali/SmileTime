@@ -4,6 +4,8 @@
 
 #ifndef VIDEO_PLAY_H
 #define VIDEO_PLAY_H
+	SDL_Event event;
+
 	void print_overlay_info();
 	void video_play_init();
 	void video_frame_decompress();

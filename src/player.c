@@ -94,6 +94,8 @@ VideoState *global_video_state;
 SDL_Surface     *screen;
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
+pthread_t keyboard_thread_id;
+
 void onExit()
 {
   global_video_state->quit = 1;
@@ -770,7 +772,12 @@ void video_refresh_timer(void *userdata) {
   }
 }
 
-
+void * captureKeyboard(){
+	while( stopRecording == 0){
+		keyboard_send();
+	}
+	pthread_exit(NULL);
+}
 
 int main(int argc, char*argv[])
 {
@@ -823,6 +830,9 @@ int main(int argc, char*argv[])
     av_free(is);
     return -1;
   }
+
+	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_join(keyboard_thread_id, NULL);
 
   //while(global_video_state->quit != 1) {
   while(1) {

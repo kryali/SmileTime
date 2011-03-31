@@ -29,6 +29,8 @@ char* defaultPath = "/nmnt/work1/cs414/G6/";
 int stopRecording = 0;
 FILE* output;
 pthread_mutex_t fileMutex;
+pthread_t control_network_thread_id;
+pthread_t av_network_thread_id;
 pthread_t video_thread_id;
 pthread_t audio_thread_id;
 pthread_t keyboard_thread_id;
@@ -155,20 +157,22 @@ int main(int argc, char*argv[])
 	init_server();
 	dump_format(oc, 0, filename, 1);
 
-
 	av_write_header(oc);
 
-
 	pthread_mutex_init(&fileMutex, NULL);
-
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 //	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	//networking
+	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);
+//	pthread_create(&av_network_thread_id, NULL,  , NULL);
 
 
 	pthread_join(video_thread_id, NULL);	
 //	pthread_join(audio_thread_id, NULL);	
-	pthread_join(keyboard_thread_id, NULL);	
+	pthread_join(keyboard_thread_id, NULL);
+	pthread_join(control_network_thread_id, NULL);
+//	pthread_join(av_network_thread_id, NULL);
 	pthread_mutex_destroy(&fileMutex);
 
 	av_write_trailer(oc);

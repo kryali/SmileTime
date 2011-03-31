@@ -40,7 +40,7 @@ typedef struct __HTTP_packet
 } HTTP_packet;
 
 typedef struct __control_packet{
-	//still up in the air about what shit needs to be in here.
+	int elapsed_time;
 } control_packet;
 
 typedef struct __pantilt_packet{
