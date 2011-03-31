@@ -72,6 +72,9 @@ void message_listen(){
 	}
 }
 
+void add_server(char * msg){
+}
+
 void handle_connection(int fd){
 	char headerCode = 10; //Hardcode some value that isn't any of the defined properties
 	if( read (fd, &headerCode, 1) != 1){
@@ -101,6 +104,8 @@ void handle_connection(int fd){
 				exit(1);
 			}
 			printf("[NAMESERVER] received msg: %s\n", msg);
+			add_server(msg);
+			free(msg);
 			break;
 		case EXIT:
 			printf("[NAMESERVER] EXIT received!\n");
