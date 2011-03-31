@@ -1,4 +1,5 @@
 #include "player_client.h"
+#include "video_play.h"
 
 void client_init(){
 
@@ -59,13 +60,47 @@ void client_init(){
 
 	printf("Received %d bytes: %s\n", dataread, buf);
 */
+}
+
+void keyboard_send()
+{
 	pantilt_packet pt;
-	pt.type = TILT;
-	pt.distance = -250;
-	HTTP_packet* http = pantilt_to_network_packet(&pt);
-	if( write(player_socket, http->message, http->length)== -1 ){
-		perror("write");
-		exit(1);
+	pt.distance = 0;
+	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.
+	{
+	switch(event.type) {
+		case SDL_KEYDOWN:
+			switch(event.key.keysym.sym) {
+				case SDLK_LEFT:
+					pt.type = PAN;
+					pt.distance = -250;
+				break;
+      		case SDLK_RIGHT:
+					pt.type = PAN;
+					pt.distance = 250;
+				break;
+      		case SDLK_UP:
+					pt.type = TILT;
+					pt.distance = -150;
+				break;
+      		case SDLK_DOWN:
+					pt.type = TILT;
+					pt.distance = 150;
+				break;
+				default:
+					pt.distance = 0;
+				break;
+			}
+		}
+		printf("write: %d\n", pt.distance);
+		if(pt.distance != 0)
+		{
+			HTTP_packet* http = pantilt_to_network_packet(&pt);
+			if( write(player_socket, http->message, http->length)== -1 ){
+				perror("write");
+				exit(1);
+			}
+			destroy_HTTP_packet(http);
+		}
 	}
-	destroy_HTTP_packet(http);
 }

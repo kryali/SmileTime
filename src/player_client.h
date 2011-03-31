@@ -4,6 +4,7 @@
 #include "include.h"
 
 void client_init();
+void keyboard_send();
 
 int player_socket;
 

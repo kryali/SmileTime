@@ -41,7 +41,7 @@ void init_control_connection(){
 	}
 
 	register_nameserver();
-	listen_connections();
+	establish_peer_connection();
 }
 
 void register_nameserver(){
@@ -117,8 +117,7 @@ char * nameServerMsg(char * name, char * ip, char * port, int * size){
 	return msg;
 }
 
-void listen_connections(){
-
+void establish_peer_connection(){
 	struct timeb tp; 
 	int t1, t2;
 	int addr_size = sizeof(struct sockaddr_storage);
@@ -162,6 +161,9 @@ void listen_connections(){
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
 	*/
+}
+
+void listen_control_packets(){
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
 	while(1){
@@ -184,9 +186,9 @@ void listen_connections(){
 				printf("received pantilt packet\n");//	WHAT THE FUCK?
 				pantilt_packet* pt = to_pantilt_packet(&packet);
 				if(pt->type == PAN)
-					printf("replace this line with a pan of distance %d\n", pt->distance);
-				if(pt->type == TILT)
-					printf("replace this line with a tilt of distance %d\n", pt->distance);
+					pan_relative(pt->distance);
+				else if(pt->type == TILT)
+					tilt_relative(pt->distance);
 				break;
 			default:
 				printf("received INVALID packet\n");
