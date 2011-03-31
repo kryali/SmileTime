@@ -82,20 +82,39 @@ void register_nameserver(){
 		exit(1);
 	}
 
-	char * msg = "kiran#127.0.0.1:1337#1";
-	printf("IP ADD: %s\n", getIP());
-	int size = strlen(msg);
+	char * name = "kiran";
+	char * ip = getIP();
+	int size = 0;
+	char * msg = nameServerMsg(name, ip, port, &size);
+	printf("Sending message: %s of length %d\n", msg, size);
 	
-	// Send size of message
+	// Send size );of message
 	if( write( nameserver_socket, &size, sizeof(int)) == -1){
 		perror("write");
 		exit(1);
 	}
 
-	if( write( nameserver_socket, msg, strlen(msg)) == -1){
+	if( write( nameserver_socket, msg, size) == -1){
 		perror("write");
 		exit(1);
 	}
+
+	free(msg);
+}
+
+char * nameServerMsg(char * name, char * ip, char * port, int * size){
+	*size = strlen(ip) + strlen(port) + 5 + strlen(name);
+	char * msg = malloc(*size);
+	memset(msg, 0, *size);
+	strcat(msg, name);
+	strcat(msg, "#");
+	strcat(msg, ip);
+	strcat(msg, ":");
+	strcat(msg, port);
+	strcat(msg, "#");
+	strcat(msg, TCP);
+	msg[*size-1] = '\0';
+	return msg;
 }
 
 void listen_connections(){
@@ -185,10 +204,11 @@ char *  getIP() {
         if (ifAddrStruct->ifa_addr->sa_family==AF_INET) { // check it is IP4
             // is a valid IP4 Address
             tmpAddrPtr=&((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
-            char addressBuffer[INET_ADDRSTRLEN];
+//            char addressBuffer[INET_ADDRSTRLEN];
+			char * addressBuffer = malloc(INET_ADDRSTRLEN);
             inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 			if( strcmp( ifAddrStruct->ifa_name, "eth1") == 0 ){
-				return addressBuffer;
+				return (char *)addressBuffer;
 			}
         } else if (ifAddrStruct->ifa_addr->sa_family==AF_INET6) { // check it is IP6
             // is a valid IP6 Address

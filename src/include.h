@@ -1,7 +1,7 @@
 #ifndef INCLUDE_H
 #define INCLUDE_H
 
-#include <sys/types.h>          /* See NOTES */
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
@@ -20,6 +20,11 @@
 #define NAMESERVER_LISTEN_PORT 1337
 #define LISTEN_PORT 1336
 #define BACKLOG 20
+
+#define TCP "0"
+#define UDP "1"
+
+#define NAME "name"
 
 #define FIND 0
 #define ADD  1
