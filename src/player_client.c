@@ -16,11 +16,6 @@ void client_init(){
         exit(1);
     }
 
-/*
-	if( (res2->ai_protocol & SOCK_NONBLOCK) == 0 ){
-		printf("Socket is blocking\n");
-	}
-*/
  	if( (player_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
 		perror("socket");
 		exit(1);
