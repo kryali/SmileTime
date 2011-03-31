@@ -142,7 +142,6 @@ void listen_connections(){
 
 		printf("Message Sent!\n");
 		printf("RTT:%ds\n", t2-t1-*t3);
-*/
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
 	while(1){
@@ -160,20 +159,21 @@ void listen_connections(){
 		{
 			case CONTROL_PACKET:
 				printf("received control packet\n");
-			break;
+				break;
 			case PANTILT_PACKET:
 				pantilt_packet* pt = to_pantilt_packet(&packet);
 				if(pt->type == PAN)
 					printf("replace this line with a pan of distance %d\n", pt->distance);
 				if(pt->type == TILT)
 					printf("replace this line with a tilt of distance %d\n", pt->distance);
-			break;
+				break;
 			default:
 				printf("received INVALID packet\n");
-			break;
+				break;
 		}
 	}
 	free(buffer);
+	*/
 }
 char *  getIP() {
     struct ifaddrs * ifAddrStruct=NULL;
