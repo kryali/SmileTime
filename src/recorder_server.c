@@ -54,9 +54,10 @@ void register_nameserver(){
     hints2.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
     hints2.ai_socktype = SOCK_STREAM;
     hints2.ai_flags = AI_PASSIVE | AI_NUMERICSERV;     // fill in my IP for me
-	char * hostname = "127.0.0.1";
-//    char * port = NAMESERVER_LISTEN_PORT;
-    char * port = "1337";
+
+	char * hostname = NAMESERVER_IP;
+    char * port = NAMESERVER_LISTEN_PORT_S;
+
     if((getaddrinfo(hostname, port, &hints2, &res2)) != 0){
         perror("getaddrinfo");
         exit(1);
@@ -68,7 +69,6 @@ void register_nameserver(){
 	}
 
 	
-
 	printf("[RECORDER] connecting to nameserver...\n");
 	if( connect(nameserver_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
 		perror("connect");
@@ -85,7 +85,8 @@ void register_nameserver(){
 	char * name = "kiran";
 	char * ip = getIP();
 	int size = 0;
-	char * msg = nameServerMsg(name, ip, port, &size);
+	port = LISTEN_PORT_S;
+	char * msg = nameServerMsg(name, ip, port, TCP, &size);
 	printf("Sending message: %s of length %d\n", msg, size);
 	
 	// Send size );of message
@@ -102,7 +103,7 @@ void register_nameserver(){
 	free(msg);
 }
 
-char * nameServerMsg(char * name, char * ip, char * port, int * size){
+char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size){
 	*size = strlen(ip) + strlen(port) + 5 + strlen(name);
 	char * msg = malloc(*size);
 	memset(msg, 0, *size);
@@ -112,7 +113,7 @@ char * nameServerMsg(char * name, char * ip, char * port, int * size){
 	strcat(msg, ":");
 	strcat(msg, port);
 	strcat(msg, "#");
-	strcat(msg, TCP);
+	strcat(msg, protocol);
 	msg[*size-1] = '\0';
 	return msg;
 }

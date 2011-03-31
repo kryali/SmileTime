@@ -818,9 +818,9 @@ int main(int argc, char*argv[])
   printf("Enter target name of the server: ");
   char * name = malloc(16);
   scanf("%s", name);
-  printf("NAME: %s\n", name);	
-  nameserver_init(name);
-  //client_init();
+  char * ip = nameserver_init(name);
+  free(name);
+  client_init(ip);
   // Get the filename
   av_strlcpy(is->filename, argv[1], sizeof(is->filename));
 

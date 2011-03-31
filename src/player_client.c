@@ -48,7 +48,7 @@ char * nameserver_init(char * name){
 	return ip;
 }
 
-void client_init(){
+void client_init(char * ip){
 
     struct addrinfo hints2, * res2;
     memset(&hints2, 0, sizeof hints2);

@@ -3,7 +3,7 @@
 
 #include "include.h"
 
-void client_init();
+void client_init(char * ip);
 void keyboard_send();
 
 char * nameserver_init(char*name);
