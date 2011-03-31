@@ -1,7 +1,7 @@
-char * list_find(list * head, char * name){
+list * list_find(list * head, char * name){
 	while(head != NULL){
 		if( strcmp(head->name, name) == 0){
-			return head->ip;
+			return head;
 		}
 		head = head->next;
 	}

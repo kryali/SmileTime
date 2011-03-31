@@ -6,6 +6,8 @@
 void client_init();
 void keyboard_send();
 
+char * nameserver_init(char*name);
+
 int player_socket;
 
 #endif

@@ -18,8 +18,12 @@
 #include "network_packet.h"
 
 #define NAMESERVER_LISTEN_PORT 1337
+#define NAMESERVER_LISTEN_PORT_S "1337"
 #define LISTEN_PORT 1336
+#define LISTEN_PORT_S "1336"
 #define BACKLOG 20
+
+#define NAMESERVER_IP "127.0.0.1"
 
 #define TCP "0"
 #define UDP "1"

@@ -122,15 +122,15 @@ void establish_peer_connection(){
 	int t1, t2;
 	int addr_size = sizeof(struct sockaddr_storage);
 
-		//	addr_size = sizeof(struct sockaddr_storage);
-		struct sockaddr_storage their_addr;
-		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	//	addr_size = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 
-		printf("Waiting for a connection...\n");
-		if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
-			perror("accept");
-			exit(1);
-		}/*
+	printf("Waiting for a connection...\n");
+	if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
+		perror("accept");
+		exit(1);
+	}/*
 		printf("Connection recieved!\n");
 		char * buf = malloc(25);
 		memset(buf, 0, 25);

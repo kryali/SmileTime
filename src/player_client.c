@@ -1,6 +1,53 @@
 #include "player_client.h"
 #include "video_play.h"
 
+char * nameserver_init(char * name){
+    struct addrinfo hints2, * res2;
+    memset(&hints2, 0, sizeof hints2);
+	int nameserver_socket = 0;
+    hints2.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+    hints2.ai_socktype = SOCK_STREAM;
+    hints2.ai_flags = AI_PASSIVE | AI_NUMERICSERV;     // fill in my IP for me
+	char * hostname = NAMESERVER_IP;
+    char * port = NAMESERVER_LISTEN_PORT_S;
+
+    if((getaddrinfo(hostname, port, &hints2, &res2)) != 0){
+        perror("getaddrinfo");
+        exit(1);
+    }
+
+ 	if( (nameserver_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
+		perror("socket");
+		exit(1);
+	}
+
+
+	printf("[PLAYER] Connecting to nameserver...\n");
+	if( connect(nameserver_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
+			perror("connect");
+			exit(1);
+	}
+
+	// Send the find request
+	char headerCode = FIND;
+	write(nameserver_socket, &headerCode, 1);
+	int size = strlen(name);
+	write(nameserver_socket, &size, sizeof(int)); 
+	write(nameserver_socket, name, size);
+
+
+	// Receive the response from the newsgroup server
+	size = 0;
+	read(nameserver_socket, &size, sizeof(int));
+	printf("Size: %d\n", size);
+	char * ip = malloc(size+1);
+	memset(ip, 0, size+1);
+	read(nameserver_socket, ip, size);
+	ip[size] = '\0';
+	printf("IP Address to connect to is %s\n", ip);
+	return ip;
+}
+
 void client_init(){
 
     struct addrinfo hints2, * res2;

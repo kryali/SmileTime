@@ -101,28 +101,53 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
+char * server_find(char * name){
+	list * f = list_find(iplist, name);
+//	return "192.1.1.1:1338#1";
+	return f->ip;
+}
+
 void handle_connection(int fd){
 	char headerCode = 10; //Hardcode some value that isn't any of the defined properties
 	if( read (fd, &headerCode, 1) != 1){
 		perror("read");
 		exit(1);
 	}
+	int size = 0;
+	char * msg = NULL;
 	switch(headerCode){
 		case FIND:
 			printf("[NAMESERVER] FIND received!\n");
+			
+			// Receive size of message
+			if( read( fd, &size, sizeof(int)) == -1){
+				perror("read");
+				exit(1);
+			}
+			
+			msg = malloc(size);
+			// Read the name
+			memset(msg, 0, size);
+			read(fd, msg, size);
+
+			// return the found name
+			char * ip = server_find(msg);
+			printf("Found: %s for %s\n", ip, msg);
+			size = strlen(ip);
+			write(fd, &size, sizeof(int));
+			printf("Size: %d\n", size);
+			write(fd, ip, size);
 			break;
 		case ADD:
-
 			printf("[NAMESERVER] ADD received!\n");
-			int size = 0;
 			
-			// Send size of message
+			// Receive size of message
 			if( read( fd, &size, sizeof(int)) == -1){
 				perror("read");
 				exit(1);
 			}
 			printf("Incoming message size: %d bytes\n", size);
-			char * msg = malloc(size);
+			msg = malloc(size);
 			memset(msg, 0, size);
 
 			if( read( fd, msg, size) == -1){

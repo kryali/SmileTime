@@ -103,6 +103,7 @@ void onExit()
   printf("Playback Frame Rate: %.2f fps\n", fps);
   printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
   //frames_to_play = 0;
+  exit(0);
 }
 
 void packet_queue_init(PacketQueue *q) {
@@ -814,7 +815,12 @@ int main(int argc, char*argv[])
     exit(1);
   }
 
-  client_init();
+  printf("Enter target name of the server: ");
+  char * name = malloc(16);
+  scanf("%s", name);
+  printf("NAME: %s\n", name);	
+  nameserver_init(name);
+  //client_init();
   // Get the filename
   av_strlcpy(is->filename, argv[1], sizeof(is->filename));
 
