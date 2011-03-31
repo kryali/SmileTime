@@ -50,14 +50,23 @@ char * nameserver_init(char * name){
 
 void client_init(char * ip){
 
+	// Parse the message from the nameserver
+	int size = 0;
+	printf("Parsing %s\n",ip);
+	strstp(ip, "#", &size);
+	ip+= size;
+	char * hostname = strstp(ip, ":", &size);
+	ip+= size;
+	char * port = strstp(ip, "#", &size);
+	ip+= size;
+	
+	printf("TARGET: %s:%s [%s]\n", hostname, port, ip);
+
     struct addrinfo hints2, * res2;
     memset(&hints2, 0, sizeof hints2);
     hints2.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
     hints2.ai_socktype = SOCK_STREAM;
     hints2.ai_flags = AI_PASSIVE | AI_NUMERICSERV;     // fill in my IP for me
-	//char * hostname = "localhost";
-	char * hostname = "127.0.0.1";
-    char * port = "1336";
 
     if((getaddrinfo(hostname, port, &hints2, &res2)) != 0){
         perror("getaddrinfo");

@@ -8,6 +8,16 @@ list * list_find(list * head, char * name){
 	return "NULL";
 }
 
+char* strstp(char * str, char * stp, int * size){
+	char * loc = strstr(str, stp);
+	*size = loc-str+1;
+	char * retstr = malloc(*size);
+	memset(retstr, 0, *size);
+	strncpy(retstr, str, *size-1);
+	retstr[*size-1] = '\0';
+	return retstr;
+}
+
 void list_add(list ** head, char * name, char * ip, char * port, char * protocol){
 	if(*head == NULL){
 		list * newnode = malloc(sizeof(list));

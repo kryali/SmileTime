@@ -15,6 +15,7 @@ struct node {
 
 typedef struct node list;
 
+char* strstp(char * str, char * stp, int * size);
 int list_length(list * head);
 void list_add(list ** head, char * name, char * ip, char * port, char * protocol);
 list * list_find(list * head, char * name);

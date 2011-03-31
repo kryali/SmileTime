@@ -10,6 +10,7 @@
 #include "SDL/SDL.h"
 
 #include "player_client.h"
+#include "lib/linkedlist.h"
 
 #include <sys/timeb.h>
 

@@ -91,15 +91,6 @@ void add_server(char * msg){
 	list_print(iplist);
 }
 
-char* strstp(char * str, char * stp, int * size){
-	char * loc = strstr(str, stp);
-	*size = loc-str+1;
-	char * retstr = malloc(*size);
-	memset(retstr, 0, *size);
-	strncpy(retstr, str, *size-1);
-	retstr[*size-1] = '\0';
-	return retstr;
-}
 
 
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size){
