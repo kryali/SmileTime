@@ -23,7 +23,7 @@
 #define LISTEN_PORT_S "1336"
 #define BACKLOG 20
 
-#define NAMESERVER_IP "127.0.0.1"
+#define NAMESERVER_IP "173.230.140.232"
 
 #define TCP "0"
 #define UDP "1"
