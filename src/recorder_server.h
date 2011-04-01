@@ -12,6 +12,7 @@ void establish_peer_connection();
 void listen_control_packets();
 void register_nameserver();
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
+void register_nameserver(char * name);
 char *  getIP();
 
 #endif

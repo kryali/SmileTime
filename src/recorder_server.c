@@ -40,12 +40,10 @@ void init_control_connection(){
 		exit(1);
 	}
 
-	register_nameserver();
-	establish_peer_connection();
 }
 
-void register_nameserver(){
-	printf("[Recorder] registering IP with nameserver\n");
+void register_nameserver(char * name){
+	printf("[RECORDER] registering IP with nameserver\n");
 
 	// Connect to nameserver
     struct addrinfo hints2, * res2;
@@ -82,7 +80,7 @@ void register_nameserver(){
 		exit(1);
 	}
 
-	char * name = "kiran";
+	//char * name = "kiran";
 	char * ip = getIP();
 	int size = 0;
 	port = LISTEN_PORT_S;
@@ -211,7 +209,8 @@ char *  getIP() {
 //            char addressBuffer[INET_ADDRSTRLEN];
 			char * addressBuffer = malloc(INET_ADDRSTRLEN);
             inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-			if( strcmp( ifAddrStruct->ifa_name, "eth1") == 0 ){
+            printf("%s IP Address %s\n", ifAddrStruct->ifa_name, addressBuffer); 
+			if( strcmp( ifAddrStruct->ifa_name, "eth1") == 0 || strcmp( ifAddrStruct->ifa_name, "eth0") == 0  ){
 				return (char *)addressBuffer;
 			}
         } else if (ifAddrStruct->ifa_addr->sa_family==AF_INET6) { // check it is IP6
