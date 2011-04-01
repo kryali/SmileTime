@@ -96,7 +96,7 @@ void * startAudioEncoding(){
 
 int main(int argc, char*argv[])
 {
-	if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+	if (argc < 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		usage();
 		return 0;
 	} 
@@ -154,7 +154,14 @@ int main(int argc, char*argv[])
 	video_record_init(fmt, oc);
 	video_play_init();
 //	audio_record_init(fmt, oc);
+
+	char * name = "default";
+	if( argc >= 2)
+		name = argv[2];
 	init_server();
+	register_nameserver(name);
+	establish_peer_connection();
+
 	dump_format(oc, 0, filename, 1);
 
 	av_write_header(oc);
