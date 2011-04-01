@@ -9,7 +9,7 @@ struct node {
 	char * name;
 	char * ip;
 	char * port;
-	char * protocol;
+	char protocol;
     struct node * next;
 };
 
@@ -17,7 +17,7 @@ typedef struct node list;
 
 char* strstp(char * str, char * stp, int * size);
 int list_length(list * head);
-void list_add(list ** head, char * name, char * ip, char * port, char * protocol);
+void list_add(list ** head, char * name, char * ip, char * port, char protocol);
 list * list_find(list * head, char * name);
 void list_destroy(list ** head);
 void list_print(list * head);

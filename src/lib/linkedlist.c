@@ -18,13 +18,13 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
-void list_add(list ** head, char * name, char * ip, char * port, char * protocol){
+void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	if(*head == NULL){
 		list * newnode = malloc(sizeof(list));
 		newnode->name = name;
 		newnode->ip = ip;
 		newnode->port = port;
-		newnode->protocol = protocol;
+		newnode.protocol = protocol;
 		newnode->next = NULL;
 		*head = newnode;
 		return;
@@ -40,7 +40,7 @@ void list_add(list ** head, char * name, char * ip, char * port, char * protocol
 	curr->name = name;
 	curr->port = port;
 	curr->ip = ip;
-	curr->protocol = protocol;
+	curr.protocol = protocol;
 	curr->next = NULL;
 }
 

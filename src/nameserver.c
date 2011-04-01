@@ -86,8 +86,8 @@ void add_server(char * msg){
 	char * port = strstp(msg, "#", &size);
 	printf("PORT %s\n", port);
 	msg += size;
-	char * protocol = msg;
-	printf("PROTOCOL %s\n", msg);
+	char protocol = *msg;
+	printf("PROTOCOL %c\n", protocol);
 
 	list_add(&iplist, name, ip, port,protocol);
 	list_print(iplist);
@@ -95,7 +95,7 @@ void add_server(char * msg){
 
 
 
-char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size){
+char * nameServerMsg(char * name, char * ip, char * port, char protocol, int * size){
     *size = strlen(ip) + strlen(port) + 5 + strlen(name);
     char * msg = malloc(*size);
     memset(msg, 0, *size);
@@ -105,7 +105,7 @@ char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int *
     strcat(msg, ":");
     strcat(msg, port);
     strcat(msg, "#");
-    strcat(msg, protocol);
+    strcat(msg, &protocol);
     msg[*size-1] = '\0';
     return msg;
 }
