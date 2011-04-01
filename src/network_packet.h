@@ -67,10 +67,10 @@ pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet);
 av_packet* to_av_packet(HTTP_packet* network_packet);
 
 //data struct creators
-control_packet* generate_control_packet(int elapsed_time);
+//control_packet* generate_control_packet(int elapsed_time);
 pantilt_packet* generate_pantilt_packet(int type, int distance);
 pantilt_packet* generate_pan_packet(int distance);
 pantilt_packet* generate_tilt_packet(int distance);
-av_packet* generate_av_packet(AVPacket* avpacket);
+//av_packet* generate_av_packet(AVPacket* avpacket);
 
 #endif

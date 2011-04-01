@@ -120,42 +120,37 @@ void client_init(char * ip){
 
 void keyboard_send()
 {
-	pantilt_packet pt;
-	pt.distance = 0;
+	pantilt_packet* pt = NULL;
 	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.
 	{
 	switch(event.type) {
 		case SDL_KEYDOWN:
 			switch(event.key.keysym.sym) {
 				case SDLK_LEFT:
-					pt.type = PAN;
-					pt.distance = -250;
+					pt = generate_pan_packet(-250);
 				break;
       		case SDLK_RIGHT:
-					pt.type = PAN;
-					pt.distance = 250;
+					pt = generate_pan_packet(250);
 				break;
       		case SDLK_UP:
-					pt.type = TILT;
-					pt.distance = -150;
+					pt = generate_tilt_packet(-150);
 				break;
       		case SDLK_DOWN:
-					pt.type = TILT;
-					pt.distance = 150;
+					pt = generate_tilt_packet(150);
 				break;
 				default:
-					pt.distance = 0;
 				break;
 			}
 		}
-		if(pt.distance != 0)
+		if(pt != NULL)
 		{
-			HTTP_packet* http = pantilt_to_network_packet(&pt);
+			HTTP_packet* http = pantilt_to_network_packet(pt);
 			if( write(player_socket, http->message, http->length)== -1 ){
 				perror("player_client.c keyboard send write error");
 				exit(1);
 			}
 			destroy_HTTP_packet(http);
+			free(pt);
 		}
 	}
 }
