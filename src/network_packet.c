@@ -76,3 +76,30 @@ av_packet* to_av_packet(HTTP_packet* network_packet)
 	av->av_data.data = (uint8_t*) (network_packet->message + 1 + sizeof(av_packet));
 	return av;
 }
+
+control_packet* generate_control_packet(int elapsed_time);
+
+pantilt_packet* generate_pantilt_packet(int type, int distance)
+{
+	pantilt_packet* pt = malloc(sizeof(pantilt_packet));
+	pt->type = type;
+	pt->distance = distance;
+	return pt;
+}
+
+pantilt_packet* generate_pan_packet(int distance)
+{
+	return generate_pantilt_packet(PAN, distance);
+}
+
+pantilt_packet* generate_tilt_packet(int distance)
+{
+	return generate_pantilt_packet(TILT, distance);
+}
+
+av_packet* generate_av_packet(AVPacket* avpacket)
+{
+	av_packet* av = malloc(sizeof(av_packet));
+	memcpy(&(av->av_data), avpacket, );//fix this sh
+	return av;
+}

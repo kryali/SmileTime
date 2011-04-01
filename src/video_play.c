@@ -137,12 +137,10 @@ void xioctl(int ctrl, int value){
 
 
 void pan_relative(int pan){
-	printf("panning: %d\n",pan);
 	xioctl(V4L2_CID_PAN_RELATIVE, pan);
 }
 
 void tilt_relative(int tilt){
-	printf("panning: %d\n",tilt);
 	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
 }
 

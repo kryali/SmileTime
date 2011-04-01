@@ -148,12 +148,11 @@ void keyboard_send()
 				break;
 			}
 		}
-		printf("write: %d\n", pt.distance);
 		if(pt.distance != 0)
 		{
 			HTTP_packet* http = pantilt_to_network_packet(&pt);
 			if( write(player_socket, http->message, http->length)== -1 ){
-				perror("write");
+				perror("player_client.c keyboard send write error");
 				exit(1);
 			}
 			destroy_HTTP_packet(http);

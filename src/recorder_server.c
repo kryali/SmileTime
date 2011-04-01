@@ -173,7 +173,7 @@ void listen_control_packets(){
 			perror("read");
 			exit(1);
 		}
-		printf("read packet of size: %d\n",size);
+		//printf("read packet of size: %d\n",size);
 		HTTP_packet packet;
 		packet.message = buffer;
 		packet.length = size;
