@@ -156,7 +156,7 @@ int main(int argc, char*argv[])
 //	audio_record_init(fmt, oc);
 
 	char * name = "default";
-	if( argc >= 2)
+	if( argc >= 3)
 		name = argv[2];
 	init_server();
 	register_nameserver(name);
@@ -168,18 +168,15 @@ int main(int argc, char*argv[])
 
 	pthread_mutex_init(&fileMutex, NULL);
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
-//	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 	//networking
 	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);
-//	pthread_create(&av_network_thread_id, NULL,  , NULL);
 
 
 	pthread_join(video_thread_id, NULL);	
-//	pthread_join(audio_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
 	pthread_join(control_network_thread_id, NULL);
-//	pthread_join(av_network_thread_id, NULL);
+
 	pthread_mutex_destroy(&fileMutex);
 
 	av_write_trailer(oc);
