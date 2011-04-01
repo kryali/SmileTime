@@ -3,12 +3,13 @@
 void init_server(){
 	printf("Initializing the recorder server!\n");
 	init_control_connection();
+	init_av_connection();
 }
 
-void init_control_connection(){
+void init_av_connection(){
 	// Open up a socket
-	recorder_socket = socket( AF_INET, SOCK_STREAM, 0 );
-	if( recorder_socket == -1 ){
+	recorder_av_socket = socket( AF_INET, SOCK_DGRAM, 0 );
+	if( recorder_av_socket == -1 ){
 		perror("socket");
 		exit(1);
 	}
@@ -18,31 +19,61 @@ void init_control_connection(){
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port =  htons(LISTEN_PORT);
+	addr.sin_port =  htons(AV_PORT);
 
 	int addr_size = sizeof(struct sockaddr_in);
 
 	int optval = 1;
-    if( (setsockopt(recorder_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
+    if( (setsockopt(recorder_av_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
         perror("setsockopt");
         exit(1);
     }
 
 	// Bind socket
-	if( bind( recorder_socket, &addr, addr_size ) == -1) {
+	if( bind( recorder_av_socket, &addr, addr_size ) == -1) {
+		perror("bind");
+		exit(1);
+	}
+}
+
+void init_control_connection(){
+	// Open up a socket
+	recorder_control_socket = socket( AF_INET, SOCK_STREAM, 0 );
+	if( recorder_control_socket == -1 ){
+		perror("socket");
+		exit(1);
+	}
+
+	// Build sock addr
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(struct sockaddr_in));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port =  htons(CONTROL_PORT);
+
+	int addr_size = sizeof(struct sockaddr_in);
+
+	int optval = 1;
+    if( (setsockopt(recorder_control_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
+        perror("setsockopt");
+        exit(1);
+    }
+
+	// Bind socket
+	if( bind( recorder_control_socket, &addr, addr_size ) == -1) {
 		perror("bind");
 		exit(1);
 	}
 
 	// Listen on the socket for connections
-	if( listen( recorder_socket, BACKLOG ) == -1) {
+	if( listen( recorder_control_socket, BACKLOG ) == -1) {
 		perror("listen");
 		exit(1);
 	}
 
 }
 
-void register_nameserver(char * name){
+void register_nameserver(char * name, char * protocol, char * control_port){
 	printf("[RECORDER] registering IP with nameserver\n");
 
 	// Connect to nameserver
@@ -83,8 +114,7 @@ void register_nameserver(char * name){
 	//char * name = "kiran";
 	char * ip = getIP();
 	int size = 0;
-	port = LISTEN_PORT_S;
-	char * msg = nameServerMsg(name, ip, port, TCP, &size);
+	char * msg = nameServerMsg(name, ip, control_port, protocol, &size);
 	printf("Sending message: %s of length %d\n", msg, size);
 	
 	// Send size );of message
@@ -101,15 +131,15 @@ void register_nameserver(char * name){
 	free(msg);
 }
 
-char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size){
-	*size = strlen(ip) + strlen(port) + 5 + strlen(name);
+char * nameServerMsg(char * name, char * ip, char * control_port, char * protocol, int * size){
+	*size = strlen(ip) + strlen(control_port) + 5 + strlen(name);
 	char * msg = malloc(*size);
 	memset(msg, 0, *size);
 	strcat(msg, name);
 	strcat(msg, "#");
 	strcat(msg, ip);
 	strcat(msg, ":");
-	strcat(msg, port);
+	strcat(msg, control_port);
 	strcat(msg, "#");
 	strcat(msg, protocol);
 	msg[*size-1] = '\0';
@@ -126,7 +156,7 @@ void establish_peer_connection(){
 	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 
 	printf("Waiting for a connection...\n");
-	if(( acceptfd = accept( recorder_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
+	if(( acceptfd = accept( recorder_control_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
 		perror("accept");
 		exit(1);
 	}/*

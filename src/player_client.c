@@ -43,7 +43,7 @@ char * nameserver_init(char * name){
 	char * ip = malloc(size+1);
 	memset(ip, 0, size+1);
 	read(nameserver_socket, ip, size);
-	ip[size] = '\0';
+	//ip[size] = '\0';
 	printf("IP Address to connect to is %s\n", ip);
 	return ip;
 }

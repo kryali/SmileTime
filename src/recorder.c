@@ -102,7 +102,7 @@ int main(int argc, char*argv[])
 	} 
 
 	signal(SIGINT, &onExit);
-	const char *filename = argv[1];
+	const char *filename = "test.mkv";
 	
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
@@ -156,10 +156,16 @@ int main(int argc, char*argv[])
 //	audio_record_init(fmt, oc);
 
 	char * name = "default";
+	char* protocol = "1";
+	char* control_port = CONTROL_PORT_S;
+	if( argc >= 2)
+		name = argv[1];
 	if( argc >= 3)
-		name = argv[2];
+		protocol = argv[2];
+	if( argc >= 4)
+		control_port = argv[3];
 	init_server();
-	register_nameserver(name);
+	register_nameserver(name, protocol, control_port);
 	establish_peer_connection();
 
 	dump_format(oc, 0, filename, 1);
