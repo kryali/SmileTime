@@ -89,7 +89,9 @@ void add_server(char * msg){
 	char protocol = *msg;
 	printf("PROTOCOL %c\n", protocol);
 
+	//printf("ADDING \n");
 	list_add(&iplist, name, ip, port,protocol);
+	//printf("DONE ADDING LLUZ \n");
 	list_print(iplist);
 }
 

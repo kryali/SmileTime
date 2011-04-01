@@ -24,7 +24,7 @@ void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 		newnode->name = name;
 		newnode->ip = ip;
 		newnode->port = port;
-		newnode.protocol = protocol;
+		newnode->protocol = protocol;
 		newnode->next = NULL;
 		*head = newnode;
 		return;
@@ -40,7 +40,7 @@ void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	curr->name = name;
 	curr->port = port;
 	curr->ip = ip;
-	curr.protocol = protocol;
+	curr->protocol = protocol;
 	curr->next = NULL;
 }
 
@@ -65,7 +65,7 @@ void list_destroy(list ** head){
 void list_print(list * head){
 	int count = 0;
 	while(head != NULL){
-		printf("%d> %s - %s:%s [%s]\n", count, head->name, head->ip, head->port,head->protocol);
+		printf("%d> %s - %s:%s [%c]\n", count, head->name, head->ip, head->port,head->protocol);
 		count++;
 		head = head->next;
 	}
