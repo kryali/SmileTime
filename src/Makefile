@@ -30,7 +30,7 @@ player:	$(PLAY_OBJECTS)
 	$(CC)	$(CFLAGS) $(PLAY_OBJECTS) $(MATH_LIB) $(JPEG_LIB) $(SDLLIBS) $(FFMPEG_LIB) -o $@
 
 nameserver:	$(NAMESERVER_OBJ)
-	$(CC)	$(CFLAGS) $(NAMESERVER_OBJ) -o $@
+	$(CC)   $(NAMESERVER_OBJ) -o $@
 
 
 player_client.o: player_client.c player_client.h
