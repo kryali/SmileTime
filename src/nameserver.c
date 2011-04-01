@@ -2,11 +2,13 @@
 
 int main(){
 	iplist = NULL;
+	/*
 	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
 	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
 	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
 	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 	list_print(iplist);
+	*/
 
 
 	init_server();
