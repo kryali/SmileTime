@@ -86,10 +86,10 @@ void add_server(char * msg){
 	char * port = strstp(msg, "#", &size);
 	printf("PORT %s\n", port);
 	msg += size;
-	char * prot = msg;
-	printf("PROT %s\n", msg);
+	char * protocol = msg;
+	printf("PROTOCOL %s\n", msg);
 
-	list_add(&iplist, name, ip, port,msg);
+	list_add(&iplist, name, ip, port,protocol);
 	list_print(iplist);
 }
 
