@@ -15,9 +15,10 @@ int videofd;
 int av_protocol;
 
 int init_connection(int port, int protocol);
-void init_video_connection();
-void init_audio_connection();
-void init_control_connection();
+int accept_connection(int socket, int protocol);
+void establish_video_connection();
+void establish_audio_connection();
+void establish_control_connection();
 void establish_peer_connections(int protocol);
 void listen_control_packets();
 void stream_video_packets();

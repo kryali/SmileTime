@@ -38,7 +38,7 @@ pthread_t keyboard_thread_id;
 void usage()
 {
     printf("\n\
-    recorder USAGE:    ./recorder USERNAME (TCP:0 UDP:1) PORT\n\
+    recorder USAGE:    ./recorder USERNAME PROTOCOL(TCP:0 UDP:1) PORT\n\
     Press CTRL+C to exit\n\n");
 }
 
@@ -129,7 +129,7 @@ int main(int argc, char*argv[])
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
-	
+
 	// * Connect to nameserver * 
 	char * name = "default";
 	char* protocol = "1";
@@ -151,7 +151,7 @@ int main(int argc, char*argv[])
 		exit(1);
 
 	// * Transmit data through the network *
-	pthread_mutex_init(&fileMutex, NULL);
+//	pthread_mutex_init(&fileMutex, NULL);
 	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);
 	pthread_create(&video_network_thread_id, NULL, stream_video_packets, NULL);
 	pthread_create(&audio_network_thread_id, NULL, stream_audio_packets, NULL);
@@ -165,7 +165,7 @@ int main(int argc, char*argv[])
 	pthread_join(audio_network_thread_id, NULL);
 
 	// * Exit *
-	pthread_mutex_destroy(&fileMutex);
+//	pthread_mutex_destroy(&fileMutex);
 
 	av_write_trailer(oc);
 	sdl_quit();

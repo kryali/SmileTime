@@ -45,66 +45,80 @@ int init_connection( int port, int protocol ){
   return conn_socket;
 }
 
-void init_video_connection(){
-  recorder_video_socket = init_connection(VIDEO_PORT, av_protocol);
+int accept_connection(int socket, int protocol){
+	int fd;
+	if(protocol == SOCK_STREAM)
+	{
+		int addr_size = sizeof(struct sockaddr_storage);
+		struct sockaddr_storage their_addr;
+		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
+		if(fd == -1 ){
+			perror("accept connection");
+			exit(1);
+		}
+	}
+	else if(protocol == SOCK_DGRAM)
+	{
+		;//?
+	}
+	return fd;
 }
 
-void init_audio_connection(){
-  recorder_audio_socket = init_connection(AUDIO_PORT, av_protocol);
-}
-
-void init_control_connection(){
+void establish_control_connection(){
 	recorder_control_socket = init_connection(CONTROL_PORT, SOCK_STREAM);
+	printf("Waiting for a peer connection...\n");
+	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
+}
+
+void establish_video_connection(){
+	recorder_video_socket = init_connection(VIDEO_PORT, av_protocol);
+	videofd = accept_connection(recorder_video_socket, av_protocol);
+}
+
+void establish_audio_connection(){
+	recorder_audio_socket = init_connection(AUDIO_PORT, av_protocol);
+	audiofd = accept_connection(recorder_audio_socket, av_protocol);
 }
 
 void establish_peer_connections(int protocol){
 	av_protocol = protocol;
-	init_control_connection();
-	init_video_connection();
-	init_audio_connection();
-
+	establish_control_connection();
+	establish_video_connection();
+	establish_audio_connection();
+	
+	/*
 	struct timeb tp; 
 	int t1, t2;
-	int addr_size = sizeof(struct sockaddr_storage);
+	printf("Connection recieved!\n");
+	char * buf = malloc(25);
+	memset(buf, 0, 25);
+	strcpy(buf, "Hello World!\0");
 
-	//	addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
-
-	printf("Waiting for a connection...\n");
-	if(( controlfd = accept( recorder_control_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
-		perror("accept");
+	ftime(&tp);
+	t1 = (tp.time * 1000) + tp.millitm;
+	//printf("Start: %d\n", tp.millitm);
+	
+	// Send the packet to the client
+	if( write(controlfd, buf, 25) == -1){
+		perror("write");
 		exit(1);
-	}/*
-		printf("Connection recieved!\n");
-		char * buf = malloc(25);
-		memset(buf, 0, 25);
-		strcpy(buf, "Hello World!\0");
+	}
 
-		ftime(&tp);
-		t1 = (tp.time * 1000) + tp.millitm;
-		//printf("Start: %d\n", tp.millitm);
-		
-		// Send the packet to the client
-		if( write(controlfd, buf, 25) == -1){
-			perror("write");
-			exit(1);
-		}
+	// Get the time elapsed on the client
+	int * t3 = malloc(sizeof(int));
+	if( read(controlfd, t3, sizeof(int)) == -1 ){
+		perror("read");
+		exit(1);
+	}
+	//printf("Elapsed time from client: %d\n", *t3);
 
-		// Get the time elapsed on the client
-		int * t3 = malloc(sizeof(int));
-		if( read(controlfd, t3, sizeof(int)) == -1 ){
-			perror("read");
-			exit(1);
-		}
-		//printf("Elapsed time from client: %d\n", *t3);
+	ftime(&tp);
+	t2 = (tp.time * 1000) + tp.millitm;
+	//printf("End: %d\n", tp.millitm);
 
-		ftime(&tp);
-		t2 = (tp.time * 1000) + tp.millitm;
-		//printf("End: %d\n", tp.millitm);
-
-		printf("Message Sent!\n");
-		printf("RTT:%ds\n", t2-t1-*t3);
+	printf("Message Sent!\n");
+	printf("RTT:%ds\n", t2-t1-*t3);
 	*/
 }
 
