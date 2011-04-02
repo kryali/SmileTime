@@ -44,7 +44,7 @@ void usage()
 
 void onExit()
 {
-    printf("[RECORDER] Exiting\n");
+    printf("[RECORDER] Quitting\n");
     stopRecording = 1;
 }
 
@@ -120,15 +120,17 @@ int main(int argc, char*argv[])
 		exit(1);
 	}
   
-	// Initializiations
+	// * Initializiations * 
 	video_record_init(fmt, oc);
 	video_play_init();
-//	audio_record_init(fmt, oc);
+	audio_record_init(fmt, oc);
 
+	// * Start recording and encoding audio and video * 
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
-	//pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
+	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
-
+	
+	// * Connect to nameserver * 
 	char * name = "default";
 	char* protocol = "1";
 	char* control_port = CONTROL_PORT_S;
@@ -139,6 +141,8 @@ int main(int argc, char*argv[])
 	if( argc >= 4)
 		control_port = argv[3];
 	register_nameserver(name, protocol, control_port);
+
+	// * Establish control, audio, and video connections * 
 	if(protocol[0] == TCP)
 		establish_peer_connections(SOCK_STREAM);
 	else if(protocol[0] == UDP)
@@ -146,28 +150,28 @@ int main(int argc, char*argv[])
 	else
 		exit(1);
 
-	//networking
+	// * Transmit data through the network *
 	pthread_mutex_init(&fileMutex, NULL);
 	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);
 	pthread_create(&video_network_thread_id, NULL, stream_video_packets, NULL);
 	pthread_create(&audio_network_thread_id, NULL, stream_audio_packets, NULL);
 
+	// * Wait for threads to exit * 
 	pthread_join(video_thread_id, NULL);
-	//pthread_join(audio_thread_id, NULL);	
+	pthread_join(audio_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
 	pthread_join(control_network_thread_id, NULL);
 	pthread_join(video_network_thread_id, NULL);
 	pthread_join(audio_network_thread_id, NULL);
 
+	// * Exit *
 	pthread_mutex_destroy(&fileMutex);
 
 	av_write_trailer(oc);
 	sdl_quit();
 	video_close();
-//	audio_close();
-	
-	/* free the stream */
+	audio_close();
 	av_free(oc);
-	printf("[MAIN] Quit recorder\n");
+	printf("[RECORDER] Quit Successfully\n");
 	return 0;
 }

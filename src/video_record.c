@@ -214,10 +214,6 @@ void open_video()
     }
 }
 
-
-
-
-
 void mmap_init(){
 	// Request that the device start using the buffers
 	// - Find the number of support buffers
@@ -278,7 +274,6 @@ void print_Camera_Info(){
                 return;
         }
 	// Print out basic statistics
-	printf("File Descriptor: %d\n", camera_fd);
 	printf("Driver: %s\n", cap.driver);
 	printf("Device: %s\n", cap.card);
 	printf("bus_info: %s\n", cap.bus_info);
