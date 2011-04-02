@@ -59,6 +59,8 @@ control_packet* to_control_packet(HTTP_packet* network_packet)
 	int length = sizeof(control_packet);
 	control_packet* cp = malloc(length);
 	memcpy(cp, network_packet->message + 1, length);
+  cp->audio_codec_ctx.codec = &cp->audio_codec;
+  cp->video_codec_ctx.codec = &cp->video_codec;
 	return cp;
 }
 

@@ -3,11 +3,13 @@
 
 #include "include.h"
 
-void client_init(char * ip);
+control_packet* client_init(char * ip);
 void keyboard_send();
 
 char * nameserver_init(char*name);
 
-int player_socket;
+int player_control_socket;
+int player_audio_socket;
+int player_video_socket;
 
 #endif

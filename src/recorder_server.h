@@ -14,6 +14,7 @@ int audiofd;
 int videofd;
 int av_protocol;
 
+void send_init_control_packet( AVStream* steam0, AVStream* stream1 );
 int init_connection(int port, int protocol);
 int accept_connection(int socket, int protocol);
 void establish_video_connection();

@@ -48,7 +48,7 @@ char * nameserver_init(char * name){
 	return ip;
 }
 
-void client_init(char * ip){
+control_packet* client_init(char * ip){
 
 	// Parse the message from the nameserver
 	int size = 0;
@@ -73,17 +73,22 @@ void client_init(char * ip){
         exit(1);
     }
 
- 	if( (player_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
+ 	if( (player_control_socket = socket(res2->ai_family, res2->ai_socktype, res2->ai_protocol)) == -1){
 		perror("socket");
 		exit(1);
 	}
 
 
 	printf("Client connecting to server...\n");
-	if( connect(player_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
+	if( connect(player_control_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
 			perror("connect");
 			exit(1);
 	}
+  
+  HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
+  xread( player_control_socket, np);
+  control_packet* cp = to_control_packet(np);
+  return cp;
 /*
     printf("Conected client \n");
 	char * buf = malloc( 500 );
@@ -97,7 +102,7 @@ void client_init(char * ip){
 	//printf("Start: %d\n", tp.millitm);
 
 	int dataread = 0;
-	if( ( dataread = read(player_socket, buf, 25)) == -1){
+	if( ( dataread = read(player_control_socket, buf, 25)) == -1){
 		perror("read");
 		exit(1);
 	}
@@ -109,7 +114,7 @@ void client_init(char * ip){
 
 	int * t3 = malloc(sizeof(int));
 	*t3 = t2-t1;
-	if( write(player_socket, t3, sizeof(int))== -1 ){
+	if( write(player_control_socket, t3, sizeof(int))== -1 ){
 		perror("write");
 		exit(1);
 	}
@@ -145,7 +150,7 @@ void keyboard_send()
 		if(pt != NULL)
 		{
 			HTTP_packet* http = pantilt_to_network_packet(pt);
-			if( write(player_socket, http->message, http->length)== -1 ){
+			if( write(player_control_socket, http->message, http->length)== -1 ){
 				perror("player_client.c keyboard send write error");
 				exit(1);
 			}

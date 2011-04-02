@@ -81,6 +81,30 @@ void establish_audio_connection(){
 	audiofd = accept_connection(recorder_audio_socket, av_protocol);
 }
 
+
+void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
+  AVStream* audio_stream;
+  AVStream* video_stream;
+  if( stream0->codec->codec_type == AVMEDIA_TYPE_AUDIO )
+  {
+    audio_stream = stream0;
+    video_stream = stream1;
+  }
+  else
+  {
+    audio_stream = stream1;
+    video_stream = stream0;
+  }
+
+  control_packet cp;
+  cp.audio_codec = *audio_stream->codec->codec;
+  cp.video_codec = *video_stream->codec->codec;
+  cp.audio_codec_ctx = *audio_stream->codec;
+  cp.video_codec_ctx = *video_stream->codec;
+  HTTP_packet* np = control_to_network_packet(&cp);
+  xwrite(recorder_control_socket, np );
+}
+
 void establish_peer_connections(int protocol){
 	av_protocol = protocol;
 	establish_control_connection();

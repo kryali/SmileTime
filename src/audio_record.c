@@ -85,7 +85,7 @@ void audio_segment_write()
 	av_packet av;
 	av.av_data = audio_pkt;
 	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(recorder_audio_socket, (void*)http->message, (int)http->length);
+	xwrite(recorder_audio_socket, http);
 	destroy_HTTP_packet(http);
 }
 

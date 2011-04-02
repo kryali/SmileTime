@@ -40,7 +40,11 @@ typedef struct __HTTP_packet
 } HTTP_packet;
 
 typedef struct __control_packet{
-	int elapsed_time;
+  AVCodecContext audio_codec_ctx;
+  AVCodecContext video_codec_ctx;
+  AVCodec audio_codec;
+  AVCodec video_codec;
+	//int elapsed_time;
 } control_packet;
 
 typedef struct __pantilt_packet{

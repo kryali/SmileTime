@@ -61,7 +61,7 @@ typedef struct VideoState {
   int             videoStream, audioStream;
 
   double          audio_clock;
-  AVStream        *audio_st;
+  AVCodecContext  *audio_ctx;
   PacketQueue     audioq;
   uint8_t         audio_buf[(AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2];
   unsigned int    audio_buf_size;
@@ -74,7 +74,7 @@ typedef struct VideoState {
   double          frame_last_pts;
   double          frame_last_delay;
   double          video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
-  AVStream        *video_st;
+  AVCodecContext  *video_ctx;
   PacketQueue     videoq;
 
   VideoPicture    pictq[VIDEO_PICTURE_QUEUE_SIZE];
@@ -205,7 +205,7 @@ double synchronize_video(VideoState *is, AVFrame *src_frame, double pts) {
     pts = is->video_clock;
   }
   // update the video clock
-  frame_delay = av_q2d(is->video_st->codec->time_base);
+  frame_delay = av_q2d(is->video_ctx->time_base);
   // if we are repeating a frame, adjust clock accordingly
   frame_delay += src_frame->repeat_pict * (frame_delay * 0.5);
   is->video_clock += frame_delay;
@@ -221,7 +221,7 @@ int audio_decode_frame(VideoState *is, uint8_t *audio_buf, int buf_size, double 
   for(;;) {
     while(is->audio_pkt_size > 0) {
       data_size = buf_size;
-      len1 = avcodec_decode_audio3(is->audio_st->codec, 
+      len1 = avcodec_decode_audio3(is->audio_ctx, 
 				  (int16_t *)audio_buf, &data_size, pkt);
 				  //is->audio_pkt_data, is->audio_pkt_size);
 
@@ -240,9 +240,10 @@ int audio_decode_frame(VideoState *is, uint8_t *audio_buf, int buf_size, double 
       }
       pts = is->audio_clock;
       *pts_ptr = pts;
-      n = 2 * is->audio_st->codec->channels;
+      //n = 2 * is->audio_ctx->channels;
+      n = 2;
       is->audio_clock += (double)data_size /
-      (double)(n * is->audio_st->codec->sample_rate);
+      (double)(n * is->audio_ctx->sample_rate);
 
       // We have data, return it and come back for more later
       return data_size;
@@ -264,7 +265,7 @@ int audio_decode_frame(VideoState *is, uint8_t *audio_buf, int buf_size, double 
 
     // if update, update the audio clock w/pts
     if(pkt->pts != AV_NOPTS_VALUE) {
-      is->audio_clock = av_q2d(is->audio_st->time_base)*pkt->pts;
+      is->audio_clock = av_q2d(is->audio_ctx->time_base)*pkt->pts;
     }
 
   }
@@ -339,8 +340,8 @@ int queue_picture(VideoState *is, AVFrame *pFrame, double pts) {
 
   // allocate or resize the buffer!
   if(!vp->bmp ||
-     vp->width != is->video_st->codec->width ||
-     vp->height != is->video_st->codec->height) {
+     vp->width != is->video_ctx->width ||
+     vp->height != is->video_ctx->height) {
     SDL_Event event;
 
     vp->allocated = 0;
@@ -377,14 +378,14 @@ int queue_picture(VideoState *is, AVFrame *pFrame, double pts) {
     
     // Convert the image into YUV format that SDL uses
     static struct SwsContext *img_convert_ctx;
-    img_convert_ctx = sws_getContext(is->video_st->codec->width, is->video_st->codec->height, 
+    img_convert_ctx = sws_getContext(is->video_ctx->width, is->video_ctx->height, 
                     PIX_FMT_YUV420P, 
-                    is->video_st->codec->width, is->video_st->codec->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
+                    is->video_ctx->width, is->video_ctx->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
                     NULL, NULL, NULL);
 
     sws_scale(img_convert_ctx, pFrame->data, 
            pFrame->linesize, 0, 
-           is->video_st->codec->height, 
+           is->video_ctx->height, 
            pict.data, pict.linesize);
     
     SDL_UnlockYUVOverlay(vp->bmp);
@@ -423,14 +424,14 @@ int video_thread(void *arg) {
 
     // Decode video frame
     frameCount++;
-    len1 = avcodec_decode_video2(is->video_st->codec, pFrame, &frameFinished, packet );
+    len1 = avcodec_decode_video2(is->video_ctx, pFrame, &frameFinished, packet );
 
     if(packet->dts != AV_NOPTS_VALUE) {
       pts = packet->dts;
     } else {
       pts = 0;
     }
-    pts *= av_q2d(is->video_st->time_base);
+    pts *= av_q2d(is->video_ctx->time_base);
 
 
     // Frame is decoded, queue it to be played
@@ -486,7 +487,7 @@ int stream_component_open(VideoState *is, int stream_index) {
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
       is->audioStream = stream_index;
-      is->audio_st = pFormatCtx->streams[stream_index];
+      is->audio_ctx = pFormatCtx->streams[stream_index];
       is->audio_buf_size = 0;
       is->audio_buf_index = 0;
       memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
@@ -496,7 +497,7 @@ int stream_component_open(VideoState *is, int stream_index) {
 
     case CODEC_TYPE_VIDEO:
       is->videoStream = stream_index;
-      is->video_st = pFormatCtx->streams[stream_index];
+      is->video_ctx = pFormatCtx->streams[stream_index];
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -532,9 +533,8 @@ int decode_thread( void *thread_arg )
   //AVCodecContext *aCodecCtx;
 
   // Open video file
-  if( av_open_input_file(&pFormatCtx, is->filename, NULL, 0, NULL) != 0 )
-    return -1; // Couldn't open file
-  is->pFormatCtx = pFormatCtx;
+  //if( av_open_input_file(&pFormatCtx, is->filename, NULL, 0, NULL) != 0 )
+  //  return -1; // Couldn't open file
 
   // Retrieve stream information
   if(av_find_stream_info(pFormatCtx)<0)
@@ -632,10 +632,10 @@ void alloc_picture(void *userdata) {
   if( !screen )
     perror("screen is false wtfbbq");
 
-  vp->bmp = SDL_CreateYUVOverlay(is->video_st->codec->width,
-				 is->video_st->codec->height, SDL_YV12_OVERLAY, screen);
-  vp->width = is->video_st->codec->width;
-  vp->height = is->video_st->codec->height;
+  vp->bmp = SDL_CreateYUVOverlay(is->video_ctx->width,
+				 is->video_ctx->height, SDL_YV12_OVERLAY, screen);
+  vp->width = is->video_ctx->width;
+  vp->height = is->video_ctx->height;
   
   SDL_LockMutex(is->pictq_mutex);
   vp->allocated = 1;
@@ -670,15 +670,15 @@ void video_display(VideoState *is) {
 
   vp = &is->pictq[is->pictq_rindex];
   if(vp->bmp) {
-    if(is->video_st->codec->sample_aspect_ratio.num == 0) {
+    if(is->video_ctx->sample_aspect_ratio.num == 0) {
       aspect_ratio = 0;
     } else {
-      aspect_ratio = av_q2d(is->video_st->codec->sample_aspect_ratio) *
-        is->video_st->codec->width / is->video_st->codec->height;
+      aspect_ratio = av_q2d(is->video_ctx->sample_aspect_ratio) *
+        is->video_ctx->width / is->video_ctx->height;
     }
     if(aspect_ratio <= 0.0) {
-      aspect_ratio = (float)is->video_st->codec->width /
-        (float)is->video_st->codec->height;
+      aspect_ratio = (float)is->video_ctx->width /
+        (float)is->video_ctx->height;
     }
     h = screen->h;
     w = ((int)rint(h * aspect_ratio)) & -3;
@@ -704,9 +704,9 @@ double get_audio_clock(VideoState *is) {
   pts = is->audio_clock; /* maintained in the audio thread */
   hw_buf_size = is->audio_buf_size - is->audio_buf_index;
   bytes_per_sec = 0;
-  n = is->audio_st->codec->channels * 2;
-  if(is->audio_st) {
-    bytes_per_sec = is->audio_st->codec->sample_rate * n;
+  n = is->audio_ctx->channels * 2;
+  if(is->audio_ctx) {
+    bytes_per_sec = is->audio_ctx->sample_rate * n;
   }
   if(bytes_per_sec) {
     pts -= (double)hw_buf_size / bytes_per_sec;
@@ -720,7 +720,7 @@ void video_refresh_timer(void *userdata) {
   VideoPicture *vp;
   double actual_delay, delay, sync_threshold, ref_clock, diff;
   
-  if(is->video_st) {
+  if(is->video_ctx) {
     if(is->pictq_size == 0) {
       schedule_refresh(is, 1);
     } else {
@@ -822,7 +822,12 @@ int main(int argc, char*argv[])
   scanf("%s", name);
   char * ip = nameserver_init(name);
   free(name);
-  client_init(ip);
+
+  // Get the audio / video stream information
+  control_packet* cp = client_init(ip);
+  is->audio_ctx = &cp->audio_codec_ctx;
+  is->video_ctx = &cp->video_codec_ctx;
+
   // Get the filename
   av_strlcpy(is->filename, argv[1], sizeof(is->filename));
 
@@ -841,7 +846,7 @@ int main(int argc, char*argv[])
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
-  //while(global_video_state->quit != 1) {
+  //while(global_video_ctxate->quit != 1) {
   while(1) {
     SDL_WaitEvent(&event);
     switch(event.type)
@@ -872,137 +877,3 @@ int main(int argc, char*argv[])
   return 0;
 }
 
-
-/* Old code  from tutorials 1-3*/
-  // Get a pointer to the codec context for the video stream
-  /*pCodecCtx = pFormatCtx->streams[videoStream]->codec;
-  aCodecCtx = pFormatCtx->streams[audioStream]->codec;
-
-  SDL_AudioSpec wanted_spec;
-  SDL_AudioSpec spec;
-  wanted_spec.freq = aCodecCtx->sample_rate;
-  wanted_spec.format = AUDIO_S16SYS;
-  wanted_spec.channels = aCodecCtx->channels;
-  wanted_spec.silence = 0;
-  wanted_spec.samples = 1024; //SDL audio buffer size
-  wanted_spec.callback = audio_callback;
-  wanted_spec.userdata = aCodecCtx;
-
-  if(SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    fprintf(stderr, "SDL_OpenAudio: %s\n", SDL_GetError());
-    return -1;
-  }
-
-  // Find the decoder for the audio stream
-  AVCodec         *aCodec;
-  aCodec = avcodec_find_decoder(aCodecCtx->codec_id);
-  if(!aCodec) {
-    fprintf(stderr, "Unsupported codec!\n");
-    return -1;
-  }
-  avcodec_open(aCodecCtx, aCodec);
-
-  packet_queue_init(&audioq);
-  SDL_PauseAudio(0);
-
-  // Find the decoder for the video stream
-  AVCodec *pCodec;
-  pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-  if(pCodec == NULL) {
-    fprintf(stderr, "Unsupported codec!\n");
-    return -1; // Codec not found
-  }
-  // Open codec
-  if( avcodec_open(pCodecCtx, pCodec) < 0 )
-    return -1; // Could not open codec
-
-  AVFrame *pFrame;
-
-  // Allocate video frame
-  pFrame = avcodec_alloc_frame();
-
-  //video_play_init();
-  //audio_play_init();
-
-  SDL_Overlay     *bmp;
-  bmp = SDL_CreateYUVOverlay(pCodecCtx->width, pCodecCtx->height,
-                             SDL_YV12_OVERLAY, screen);
-  int frameFinished;
-  AVPacket packet;
-  static struct SwsContext *img_convert_ctx;
-  
-
-  //while(frames_to_play > 0)
-  while( av_read_frame(pFormatCtx, &packet) >= 0 )
-  {
-    // Is this a packet from the video stream?
-    if( packet.stream_index == videoStream ) {
-      // Decode video frame
-      avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
-                           &packet);
-      SDL_Rect rect;
-
-      if(frameFinished) {
-        SDL_LockYUVOverlay(bmp);
-
-        AVPicture pict;
-        pict.data[0] = bmp->pixels[0];
-        pict.data[1] = bmp->pixels[2];
-        pict.data[2] = bmp->pixels[1];
-
-        pict.linesize[0] = bmp->pitches[0];
-        pict.linesize[1] = bmp->pitches[2];
-        pict.linesize[2] = bmp->pitches[1];
-
-        // Convert the image into YUV format that SDL uses
-        img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, 
-                        PIX_FMT_YUV420P, 
-                        pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_BICUBIC, 
-                        NULL, NULL, NULL);
-
-        sws_scale(img_convert_ctx, pFrame->data, 
-               pFrame->linesize, 0, 
-               pCodecCtx->height, 
-               pict.data, pict.linesize);
-         
-        // Display the video
-        SDL_UnlockYUVOverlay(bmp);
-        rect.x = 0;
-        rect.y = 0;
-        rect.w = pCodecCtx->width;
-        rect.h = pCodecCtx->height;
-        SDL_DisplayYUVOverlay(bmp, &rect);
-      }   
-    } else if(packet.stream_index == audioStream) {
-      packet_queue_put(&audioq, &packet);
-    } else {
-      av_free_packet(&packet);
-    }
-
-
-    // Comment this out
-    audio_read();
-    video_read();
-
-    audio_segment_decompress();
-    audio_segment_playback();
-    video_frame_decompress();
-    // End Comment this out
-
-    printf("[MAIN] Synchronize your video frame play to the audio play.\n");
-    //usleep(1000000);
-    //video_frame_display();
-
-    //frames_to_play --;
-  }
-
-  // Free the YUV frame
-  av_free(pFrame);
-
-  // Close the codec
-  avcodec_close(pCodecCtx);
-
-  // Close the video file
-  av_close_input_file(pFormatCtx);
-
-*/

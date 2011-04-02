@@ -150,6 +150,8 @@ int main(int argc, char*argv[])
 	else
 		exit(1);
 
+  send_init_control_packet( oc->streams[0], oc->streams[1] );
+
 	// * Transmit data through the network *
 //	pthread_mutex_init(&fileMutex, NULL);
 	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);

@@ -106,7 +106,7 @@ void video_frame_write()
 	av_packet av;
 	av.av_data = video_pkt;
 	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(recorder_video_socket, http->message, http->length);
+	xwrite(recorder_video_socket, http);
 	destroy_HTTP_packet(http);
 }
 
