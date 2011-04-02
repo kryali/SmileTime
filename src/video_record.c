@@ -102,17 +102,12 @@ void video_frame_compress( int bufferIndex){
 
 void video_frame_write()
 {
-	// write the compressed frame in the media file
-	av_packet* av;
-	av->av_data = video_pkt;
-	HTTP_packet* http = av_to_network_packet(av);
+  // Transmit the video packet
+	av_packet av;
+	av.av_data = video_pkt;
+	HTTP_packet* http = av_to_network_packet(&av);
 	xwrite(recorder_video_socket, http->message, http->length);
 	destroy_HTTP_packet(http);
-	/*if (av_interleaved_write_frame(output_context, &video_pkt) != 0) {
-		perror("video frame write");
-		fprintf(stderr, "Error while writing video frame\n");
-		//exit(1);
-	}*/
 }
 
 //Closes the camera and frees all memory

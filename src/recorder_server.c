@@ -1,16 +1,8 @@
 #include "recorder_server.h"
 
-void init_server(char prot){
-	printf("Initializing the recorder server!\n");
-	av_protocol = prot;
-	init_control_connection();
-	init_video_connection();
-	init_audio_connection();
-}
-
-int init_connection( int port ){
+int init_connection( int port, int protocol ){
 	// Open up a socket
-	int conn_socket = socket( AF_INET, SOCK_DGRAM, 0 ); //change based on connection
+	int conn_socket = socket( AF_INET, protocol, 0 );
 	if( conn_socket == -1 ){
 		perror("socket");
 		exit(1);
@@ -37,7 +29,7 @@ int init_connection( int port ){
 		exit(1);
 	}
 
-	if(av_protocol == TCP)
+	if(protocol == SOCK_STREAM)
 	{
 		// Listen on the socket for connections
 		if( listen( conn_socket, BACKLOG ) == -1) {
@@ -45,7 +37,7 @@ int init_connection( int port ){
 			exit(1);
 		}
 	}
-	if(av_protocol == UDP)
+	else if(protocol == SOCK_DGRAM)
 	{
 		;//?
 	}
@@ -54,49 +46,123 @@ int init_connection( int port ){
 }
 
 void init_video_connection(){
-  recorder_video_socket = init_connection(VIDEO_PORT);
+  recorder_video_socket = init_connection(VIDEO_PORT, av_protocol);
 }
 
 void init_audio_connection(){
-  recorder_audio_socket = init_connection(AUDIO_PORT);
+  recorder_audio_socket = init_connection(AUDIO_PORT, av_protocol);
 }
 
 void init_control_connection(){
-	// Open up a socket
-	recorder_control_socket = socket( AF_INET, SOCK_STREAM, 0 );
-	if( recorder_control_socket == -1 ){
-		perror("socket");
-		exit(1);
-	}
-
-	// Build sock addr
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof(struct sockaddr_in));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port =  htons(CONTROL_PORT);
-
-	int addr_size = sizeof(struct sockaddr_in);
-
-	int optval = 1;
-    if( (setsockopt(recorder_control_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
-        perror("setsockopt");
-        exit(1);
-    }
-
-	// Bind socket
-	if( bind( recorder_control_socket, &addr, addr_size ) == -1) {
-		perror("bind");
-		exit(1);
-	}
-
-	// Listen on the socket for connections
-	if( listen( recorder_control_socket, BACKLOG ) == -1) {
-		perror("listen");
-		exit(1);
-	}
-
+	recorder_control_socket = init_connection(CONTROL_PORT, SOCK_STREAM);
 }
+
+void establish_peer_connections(int protocol){
+	av_protocol = protocol;
+	init_control_connection();
+	init_video_connection();
+	init_audio_connection();
+
+	struct timeb tp; 
+	int t1, t2;
+	int addr_size = sizeof(struct sockaddr_storage);
+
+	//	addr_size = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+
+	printf("Waiting for a connection...\n");
+	if(( controlfd = accept( recorder_control_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
+		perror("accept");
+		exit(1);
+	}/*
+		printf("Connection recieved!\n");
+		char * buf = malloc(25);
+		memset(buf, 0, 25);
+		strcpy(buf, "Hello World!\0");
+
+		ftime(&tp);
+		t1 = (tp.time * 1000) + tp.millitm;
+		//printf("Start: %d\n", tp.millitm);
+		
+		// Send the packet to the client
+		if( write(controlfd, buf, 25) == -1){
+			perror("write");
+			exit(1);
+		}
+
+		// Get the time elapsed on the client
+		int * t3 = malloc(sizeof(int));
+		if( read(controlfd, t3, sizeof(int)) == -1 ){
+			perror("read");
+			exit(1);
+		}
+		//printf("Elapsed time from client: %d\n", *t3);
+
+		ftime(&tp);
+		t2 = (tp.time * 1000) + tp.millitm;
+		//printf("End: %d\n", tp.millitm);
+
+		printf("Message Sent!\n");
+		printf("RTT:%ds\n", t2-t1-*t3);
+	*/
+}
+
+void stream_video_packets(){
+	while(stopRecording == 0){
+		//pthread_mutex_lock( &fileMutex );
+		video_frame_write();
+		//pthread_mutex_unlock( &fileMutex );
+	}
+	pthread_exit(NULL);
+}
+
+void stream_audio_packets(){
+	while(stopRecording == 0){
+		//pthread_mutex_lock( &fileMutex );
+		audio_segment_write();
+		//pthread_mutex_unlock( &fileMutex );
+	}
+	pthread_exit(NULL);
+}
+
+void listen_control_packets(){
+	//listen for control and pantilt packets.
+	void* buffer = malloc(100);
+	while(stopRecording == 0){
+		int size = read(controlfd, buffer, 100);
+		if( size == -1 || size == 0 ){
+			perror("read");
+			exit(1);
+		}
+		//printf("read packet of size: %d\n",size);
+		HTTP_packet packet;
+		packet.message = buffer;
+		packet.length = size;
+		char packet_type = get_packet_type(&packet);
+		switch(packet_type)
+		{
+			case CONTROL_PACKET:
+				printf("received control packet\n");
+				break;
+			case PANTILT_PACKET:
+				;
+				pantilt_packet* pt = to_pantilt_packet(&packet);
+				if(pt->type == PAN)
+					pan_relative(pt->distance);
+				else if(pt->type == TILT)
+					tilt_relative(pt->distance);
+				break;
+			default:
+				printf("received INVALID packet\n");
+				break;
+		}
+	}
+	free(buffer);
+	pthread_exit(NULL);
+}
+
+//______________NAME SERVER_______________
 
 void register_nameserver(char * name, char * protocol, char * control_port){
 	printf("[RECORDER] registering IP with nameserver\n");
@@ -171,86 +237,6 @@ char * nameServerMsg(char * name, char * ip, char * control_port, char * protoco
 	return msg;
 }
 
-void establish_peer_connection(){
-	struct timeb tp; 
-	int t1, t2;
-	int addr_size = sizeof(struct sockaddr_storage);
-
-	//	addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
-
-	printf("Waiting for a connection...\n");
-	if(( acceptfd = accept( recorder_control_socket, (struct sockaddr *)&their_addr, &addr_size )) == -1 ){
-		perror("accept");
-		exit(1);
-	}/*
-		printf("Connection recieved!\n");
-		char * buf = malloc(25);
-		memset(buf, 0, 25);
-		strcpy(buf, "Hello World!\0");
-
-		ftime(&tp);
-		t1 = (tp.time * 1000) + tp.millitm;
-		//printf("Start: %d\n", tp.millitm);
-		
-		// Send the packet to the client
-		if( write(acceptfd, buf, 25) == -1){
-			perror("write");
-			exit(1);
-		}
-
-		// Get the time elapsed on the client
-		int * t3 = malloc(sizeof(int));
-		if( read(acceptfd, t3, sizeof(int)) == -1 ){
-			perror("read");
-			exit(1);
-		}
-		//printf("Elapsed time from client: %d\n", *t3);
-
-		ftime(&tp);
-		t2 = (tp.time * 1000) + tp.millitm;
-		//printf("End: %d\n", tp.millitm);
-
-		printf("Message Sent!\n");
-		printf("RTT:%ds\n", t2-t1-*t3);
-	*/
-}
-
-void listen_control_packets(){
-	//listen for control and pantilt packets.
-	void* buffer = malloc(100);
-	while(1){
-		int size = read(acceptfd, buffer, 100);
-		if( size == -1 || size == 0 ){
-			perror("read");
-			exit(1);
-		}
-		//printf("read packet of size: %d\n",size);
-		HTTP_packet packet;
-		packet.message = buffer;
-		packet.length = size;
-		char packet_type = get_packet_type(&packet);
-		switch(packet_type)
-		{
-			case CONTROL_PACKET:
-				printf("received control packet\n");
-				break;
-			case PANTILT_PACKET:
-				;
-				pantilt_packet* pt = to_pantilt_packet(&packet);
-				if(pt->type == PAN)
-					pan_relative(pt->distance);
-				else if(pt->type == TILT)
-					tilt_relative(pt->distance);
-				break;
-			default:
-				printf("received INVALID packet\n");
-				break;
-		}
-	}
-	free(buffer);
-}
 char *  getIP() {
     struct ifaddrs * ifAddrStruct=NULL;
     void * tmpAddrPtr=NULL;

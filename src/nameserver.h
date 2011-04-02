@@ -2,6 +2,7 @@
 #define NAMESERVER_H
 
 #include "lib/linkedlist.h"
+#include "helper.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

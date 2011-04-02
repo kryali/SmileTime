@@ -18,6 +18,8 @@
 #include "network_packet.h"
 #include "helper.h"
 
+int stopRecording;
+
 #define CONTROL_PORT 1336
 #define CONTROL_PORT_S "1336"
 #define NAMESERVER_LISTEN_PORT 1337
