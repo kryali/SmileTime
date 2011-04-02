@@ -16,19 +16,22 @@
 #include <arpa/inet.h>
 
 #include "network_packet.h"
+#include "helper.h"
 
-#define NAMESERVER_LISTEN_PORT 1337
-#define NAMESERVER_LISTEN_PORT_S "1337"
 #define CONTROL_PORT 1336
 #define CONTROL_PORT_S "1336"
-#define AV_PORT 1338
-#define AV_PORT_S "1338"
+#define NAMESERVER_LISTEN_PORT 1337
+#define NAMESERVER_LISTEN_PORT_S "1337"
+#define AUDIO_PORT 1338
+#define AUDIO_PORT_S "1338"
+#define VIDEO_PORT 1339
+#define VIDEO_PORT_S "1339"
 #define BACKLOG 20
 
 #define NAMESERVER_IP "173.230.140.232"
 
-#define TCP "0"
-#define UDP "1"
+#define TCP '0'
+#define UDP '1'
 
 #define NAME "name"
 
@@ -39,8 +42,6 @@
 // UDP: SOCK_DGRAM
 // TCP: SOCK_STREAM
 
-int xwrite(int fd, void * buf, int len);
-int xread(int fd, void * buf, int len);
 char * getIP();
 
 #endif

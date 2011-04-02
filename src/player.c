@@ -104,6 +104,7 @@ void onExit()
   printf("Playback Frame Rate: %.2f fps\n", fps);
   printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
   //frames_to_play = 0;
+  //pthread_join(keyboard_thread_id, NULL);
   exit(0);
 }
 
@@ -839,7 +840,6 @@ int main(int argc, char*argv[])
   }
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
-	pthread_join(keyboard_thread_id, NULL);
 
   //while(global_video_state->quit != 1) {
   while(1) {

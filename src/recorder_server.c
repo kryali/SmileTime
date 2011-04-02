@@ -1,15 +1,17 @@
 #include "recorder_server.h"
 
-void init_server(){
+void init_server(char prot){
 	printf("Initializing the recorder server!\n");
+	av_protocol = prot;
 	init_control_connection();
-	init_av_connection();
+	init_video_connection();
+	init_audio_connection();
 }
 
-void init_av_connection(){
+int init_connection( int port ){
 	// Open up a socket
-	recorder_av_socket = socket( AF_INET, SOCK_DGRAM, 0 );
-	if( recorder_av_socket == -1 ){
+	int conn_socket = socket( AF_INET, SOCK_DGRAM, 0 ); //change based on connection
+	if( conn_socket == -1 ){
 		perror("socket");
 		exit(1);
 	}
@@ -19,21 +21,44 @@ void init_av_connection(){
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port =  htons(AV_PORT);
+	addr.sin_port =  htons(port);
 
 	int addr_size = sizeof(struct sockaddr_in);
 
 	int optval = 1;
-    if( (setsockopt(recorder_av_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
+    if( (setsockopt(conn_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) == -1){
         perror("setsockopt");
         exit(1);
     }
 
 	// Bind socket
-	if( bind( recorder_av_socket, &addr, addr_size ) == -1) {
+	if( bind( conn_socket, &addr, addr_size ) == -1) {
 		perror("bind");
 		exit(1);
 	}
+
+	if(av_protocol == TCP)
+	{
+		// Listen on the socket for connections
+		if( listen( conn_socket, BACKLOG ) == -1) {
+			perror("listen");
+			exit(1);
+		}
+	}
+	if(av_protocol == UDP)
+	{
+		;//?
+	}
+
+  return conn_socket;
+}
+
+void init_video_connection(){
+  recorder_video_socket = init_connection(VIDEO_PORT);
+}
+
+void init_audio_connection(){
+  recorder_audio_socket = init_connection(AUDIO_PORT);
 }
 
 void init_control_connection(){
@@ -212,7 +237,7 @@ void listen_control_packets(){
 				printf("received control packet\n");
 				break;
 			case PANTILT_PACKET:
-				printf("received pantilt packet\n");//	WHAT THE FUCK?
+				;
 				pantilt_packet* pt = to_pantilt_packet(&packet);
 				if(pt->type == PAN)
 					pan_relative(pt->distance);

@@ -1,4 +1,6 @@
 #include "audio_record.h"
+#include "recorder_server.h"
+#include "include.h"
 
 int microphone_fd = -1;
 char *microphone_name = "/dev/dsp";
@@ -79,6 +81,13 @@ void audio_segment_compress()
 
 void audio_segment_write()
 {
+  // Transmit the audio packet
+	av_packet* av;
+	av->av_data = audio_pkt;
+	HTTP_packet* http = av_to_network_packet(av);
+	xwrite(recorder_audio_socket, (void*)http->message, (int)http->length);
+	destroy_HTTP_packet(http);
+
 	/* write the compressed frame in the media file */
 	if (av_interleaved_write_frame(output_context, &audio_pkt) != 0) {
 		fprintf(stderr, "Error while writing audio frame\n");

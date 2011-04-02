@@ -164,7 +164,7 @@ int main(int argc, char*argv[])
 		protocol = argv[2];
 	if( argc >= 4)
 		control_port = argv[3];
-	init_server();
+	init_server(protocol[0]);
 	register_nameserver(name, protocol, control_port);
 	establish_peer_connection();
 
