@@ -26,10 +26,10 @@ void establish_control_connection(){
 
 void init_gis(VideoState * global_video_state_in) {
   global_video_state = global_video_state_in;
-  printf("GIS: audio buf size: %d\n", global_video_state->audio_buf_size);
-  printf("GIS: PacketQueue size:%d\n", global_video_state->videoq.size);
-  printf("GIS: parse thread id:%d\n", global_video_state->parse_tid);
-  printf("GIS: video thread id:%d\n", global_video_state->parse_tid);
+//  printf("GIS: audio buf size: %d\n", global_video_state->audio_buf_size);
+//  printf("GIS: PacketQueue size:%d\n", global_video_state->videoq.size);
+//  printf("GIS: parse thread id:%d\n", global_video_state->parse_tid);
+//  printf("GIS: video thread id:%d\n", global_video_state->parse_tid);
 }
 
 void establish_peer_connections(){
@@ -43,8 +43,8 @@ void establish_peer_connections(){
 
 void listen_packets(){
   printf("[PLAYER] Launching listen threads\n");
-  //pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
-  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
+  pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
+ // pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
 
@@ -52,13 +52,11 @@ void * listen_audio_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_audio_socket);
 	// This returns av_packet but this is AVPacket?
-	  printf("APacket.pts = %d\n", packet->av_data.pts);
-	  printf("APacket.size = %d\n", packet->av_data.size);
-	  printf("APacket->data = 0x%x\n", &(packet->av_data));
+	  //printf("APacket.pts = %d\n", packet->av_data.pts);
+	  //printf("APacket.size = %d\n", packet->av_data.size);
+	  //printf("APacket->data = 0x%x\n", &(packet->av_data));
 
-	  int temp = &(packet->av_data);
-	  printf("temp= 0x%x\n", (AVPacket*) temp);
-      packet_queue_put(&(global_video_state->videoq), (AVPacket *)temp);// (AVPacket *)&(packet->av_data));
+      packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
   pthread_exit(NULL);
 }
@@ -67,9 +65,9 @@ void * listen_video_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_video_socket);
 	// This returns av_packet but this is AVPacket?
-	  printf("VPacket.pts = %d\n", packet->av_data.pts);
+	  printf("VPacket.pts = %d\n", (int)packet->av_data.pts);
 	  printf("VPacket.size = %d\n", packet->av_data.size);
-	  printf("APacket->data = 0x%x\n", &(packet->av_data));
+	  printf("APacket->data = 0x%x\n\n", (unsigned int)&(packet->av_data));
 
       packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
@@ -250,8 +248,13 @@ void keyboard_send()
 
 av_packet * read_av_packet(int socket)
 {
-	HTTP_packet* np = create_HTTP_packet( 10000 );
-  int len = xread(socket, np);
+	int size = 0;
+	if( read( socket, &size, sizeof(int))==0){
+		perror("read");
+	}
+	HTTP_packet* np = create_HTTP_packet(size);
+    int len = xread(socket, np);
+	printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,len);
 	av_packet* cp = to_av_packet(np);
 
   // Keep track of incoming bandwidth

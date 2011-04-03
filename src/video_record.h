@@ -23,6 +23,8 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
+#include "packet_queue.h"
+
 #ifndef BUFFERCOUNT
 #define BUFFERCOUNT 10
 #endif
@@ -93,6 +95,7 @@ AVCodec *video_codec;
 AVCodecContext *video_context;
 AVStream *video_st;
 int camera_fd;
+RecorderPacketQueue *videoq;
 
 struct buffer {
     void * start;
@@ -113,6 +116,7 @@ float framesps;
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();
 void video_frame_compress(int bufferIndex);
+void video_frame_queue();
 void video_frame_write();
 void video_close();
 void add_video_stream(enum CodecID codec_id);

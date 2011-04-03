@@ -26,3 +26,4 @@ void* calculate_player_stats();
 
 int bytes_received;
 pthread_mutex_t bytes_received_mutex;
+VideoState *global_video_state;

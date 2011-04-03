@@ -1,6 +1,6 @@
 INSTALLROOT=$(PWD)
 
-CC=gcc -pthread
+CC=gcc -pthread 
 
 FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lx264 -lmp3lame
 
@@ -8,11 +8,11 @@ SDLLIBS = $(shell sdl-config --libs)
 SDLFLAGS = $(shell sdl-config --cflags)
 
 MATH_LIB=-lm 
-JPEG_LIB=-ljpeg
+#JPEG_LIB=-ljpeg
 
 CFLAGS = -O0 $(SDLFLAGS) -Wall -g -L/nmnt/work1/cs414/G6/x264/lib/ -I/nmnt/work1/cs414/G6/x264/include/
 
-REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o
+REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o packet_queue.o
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o player_client.o network_packet.o helper.o
 NAMESERVER_OBJ= nameserver.o
 
@@ -41,7 +41,7 @@ recorder_client.o: recorder_client.c recorder_client.h
 
 recorder.o:	recorder.c
 
-player.o:	player.c
+player.o:	player.c player.h
 
 video_play.o:	video_play.c video_play.h
 
@@ -58,3 +58,5 @@ nameserver.o: nameserver.c nameserver.h
 network_packet.o: network_packet.c network_packet.h
 
 helper.o: helper.c helper.h
+
+packet_queue.o: packet_queue.c packet_queue.h

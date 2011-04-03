@@ -13,7 +13,7 @@ char* strstp(char * str, char * stp, int * size){
 int xwrite(int fd, HTTP_packet* np){
 	int ret = 0;
 	//ret = write(fd, np->message, np->length);
-  ret = send(fd, np->message, np->length, NULL);
+  ret = send(fd, np->message, np->length, (int)NULL);
 	if(ret == -1){
 		perror("write");
 		exit(1);
@@ -24,7 +24,7 @@ int xwrite(int fd, HTTP_packet* np){
 int xread(int fd, HTTP_packet* np){
 	int ret = 0;
 	//ret = read(fd, np->message, np->length);
-	ret = recv(fd, np->message, np->length, NULL);
+	ret = recv(fd, np->message, np->length, (int)NULL);
 	if(ret == -1){
 		perror("write");
 		exit(1);

@@ -95,8 +95,9 @@ void video_frame_display(int bufferIndex)
 		exit(EXIT_FAILURE);
 	}
 //	if(overlay->pixels[0] == NULL)
-	overlay->pixels[0] = malloc(buffers[bufferIndex].length);
-	memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
+	//overlay->pixels[0] = malloc(buffers[bufferIndex].length);
+	//memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
+	overlay->pixels[0] = buffers[bufferIndex].start;
 //	overlay->pixels[bufferIndex] = buffers[bufferIndex].start;
 
 	SDL_UnlockYUVOverlay(overlay);

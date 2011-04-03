@@ -74,7 +74,8 @@ int accept_connection(int socket, int protocol){
 	int fd;
 	if(protocol == SOCK_STREAM)
 	{
-		int addr_size = sizeof(struct sockaddr_storage);
+		socklen_t addr_size = (socklen_t)sizeof(struct sockaddr_storage);
+		
 		struct sockaddr_storage their_addr;
 		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
@@ -178,18 +179,14 @@ void establish_peer_connections(int protocol){
 
 void stream_video_packets(){
 	while(stopRecording == 0){
-		//pthread_mutex_lock( &fileMutex );
 		video_frame_write();
-		//pthread_mutex_unlock( &fileMutex );
 	}
 	pthread_exit(NULL);
 }
 
 void stream_audio_packets(){
 	while(stopRecording == 0){
-		//pthread_mutex_lock( &fileMutex );
 		audio_segment_write();
-		//pthread_mutex_unlock( &fileMutex );
 	}
 	pthread_exit(NULL);
 }
