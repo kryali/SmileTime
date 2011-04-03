@@ -106,6 +106,10 @@ void video_frame_write()
 	av_packet av;
 	av.av_data = video_pkt;
 	HTTP_packet* http = av_to_network_packet(&av);
+	int size = http->length-1;
+	if( write(videofd, &size, sizeof(size)) ==0){
+		perror("write");
+	}
 	xwrite(videofd, http);
 	destroy_HTTP_packet(http);
 }

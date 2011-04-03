@@ -8,6 +8,14 @@ HTTP_packet* create_HTTP_packet(int length)
 	return p;
 }
 
+HTTP_packet* create_HTTP_AV_packet(int length)
+{
+	HTTP_packet* p = malloc(sizeof(HTTP_packet));
+	p->length = sizeof(int) + length;
+	p->message = malloc(p->length);
+	return p;
+}
+
 void destroy_HTTP_packet(HTTP_packet* packet)
 {
 	free(packet->message);

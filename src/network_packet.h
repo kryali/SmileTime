@@ -57,6 +57,7 @@ typedef struct __av_packet{
 } av_packet;
 
 HTTP_packet* create_HTTP_packet(int length);
+HTTP_packet* create_HTTP_AV_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
 
 //data structs -> network packets

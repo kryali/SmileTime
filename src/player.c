@@ -55,7 +55,7 @@ void packet_queue_init(PacketQueue *q) {
 }
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
-	printf("Queue> AVPacket: 0x%x\n", pkt);
+	//printf("Queue> AVPacket: 0x%x\n", pkt);
   AVPacketList *pkt1;
  /* if(av_dup_packet(pkt) < 0) {
     return -1;
