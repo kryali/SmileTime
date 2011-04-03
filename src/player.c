@@ -28,7 +28,6 @@ struct timeb startTime;
 struct timeb endTime;
 int frameCount;
 
-
 // Global variables
 PacketQueue audioq;
 VideoState *global_video_state;
@@ -36,6 +35,7 @@ SDL_Surface     *screen;
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
 pthread_t keyboard_thread_id;
+pthread_t stats_thread_id;
 
 void onExit()
 {
@@ -542,7 +542,7 @@ void alloc_picture(void *userdata) {
 
   // Allocate a place to put our YUV image on that screen
   if( !screen )
-    perror("screen is false wtfbbq");
+    perror("screen is false");
 
   vp->bmp = SDL_CreateYUVOverlay(is->video_ctx->width,
 				 is->video_ctx->height, SDL_YV12_OVERLAY, screen);
@@ -694,6 +694,22 @@ void * captureKeyboard(){
 	pthread_exit(NULL);
 }
 
+void* calculate_player_stats()
+{
+  int current_bandwidth;
+	while( global_video_state->quit == 0){
+    current_bandwidth = bytes_received*8;
+
+    pthread_mutex_lock(&bytes_received_mutex);
+    bytes_received = 0;
+    pthread_mutex_unlock(&bytes_received_mutex);
+
+    printf("[RECORER] Current Bandwidth = %dbps\n", current_bandwidth);
+    sleep(1);
+	}
+	pthread_exit(NULL);
+}
+
 int main(int argc, char*argv[])
 {
   if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
@@ -773,6 +789,7 @@ int main(int argc, char*argv[])
   */
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_create(&stats_thread_id, NULL,  calculate_player_stats, NULL);
 
 //  while(global_video_state->quit == 0) {
   while(1) {

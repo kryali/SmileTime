@@ -86,6 +86,10 @@ void audio_segment_write()
 	av.av_data = audio_pkt;
 	HTTP_packet* http = av_to_network_packet(&av);
 	xwrite(audiofd, http);
+
+  // Track bandwidth
+  bytes_sent += http->length;
+
 	destroy_HTTP_packet(http);
 }
 

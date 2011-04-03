@@ -1,5 +1,9 @@
 #include "player_client.h"
 #include "video_play.h"
+#include "player.h"
+
+extern bytes_received;
+extern bytes_received_mutex;
 
 void establish_video_connection(){
 	printf("[PLAYER] Connecting video socket\n");
@@ -235,8 +239,14 @@ void keyboard_send()
 av_packet * read_av_packet(int socket)
 {
 	HTTP_packet* np = create_HTTP_packet( 10000 );
-    int len = xread(socket, np);
+  int len = xread(socket, np);
 	av_packet* cp = to_av_packet(np);
+
+  // Keep track of incoming bandwidth
+  pthread_mutex_lock(&bytes_received_mutex);
+  bytes_received += np->length;
+  pthread_mutex_unlock(&bytes_received_mutex);
+
 	destroy_HTTP_packet(np);
 	return cp;
 }
@@ -245,10 +255,16 @@ control_packet * read_control_packet()
 {
 	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
   int len = 0;
-  len  = xread(player_control_socket, np);
+  len = xread(player_control_socket, np);
   if( len <= 0 )
     perror("xread == 0 :( :( :(");
 	control_packet* cp = to_control_packet(np);
+
+  // Keep track of incoming bandwidth
+  pthread_mutex_lock(&bytes_received_mutex);
+  bytes_received += np->length;
+  pthread_mutex_unlock(&bytes_received_mutex);
+
 	destroy_HTTP_packet(np);
 	return cp;
 }

@@ -107,6 +107,10 @@ void video_frame_write()
 	av.av_data = video_pkt;
 	HTTP_packet* http = av_to_network_packet(&av);
 	xwrite(videofd, http);
+
+  // Track bandwidth
+  bytes_sent += http->length;
+
 	destroy_HTTP_packet(http);
 }
 
