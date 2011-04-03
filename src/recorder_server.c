@@ -60,7 +60,8 @@ int accept_connection(int socket, int protocol){
 	int fd;
 	if(protocol == SOCK_STREAM)
 	{
-		int addr_size = sizeof(struct sockaddr_storage);
+		socklen_t addr_size = (socklen_t)sizeof(struct sockaddr_storage);
+		
 		struct sockaddr_storage their_addr;
 		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
 		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );

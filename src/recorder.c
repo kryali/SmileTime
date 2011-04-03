@@ -48,8 +48,8 @@ void onExit()
 
 void * startVideoEncoding(){
 	int bufferIndex = 0;
-	int elapsedTime = 0;
-	int frames = 0;
+	//int elapsedTime = 0;
+	//int frames = 0;
 	ftime(&startTime);
 
 	while( stopRecording == 0){
