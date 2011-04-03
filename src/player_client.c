@@ -40,7 +40,7 @@ void establish_peer_connections(){
 void listen_packets(){
   printf("[PLAYER] Launching listen threads\n");
   pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
-  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
+ // pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
 
@@ -63,9 +63,9 @@ void * listen_video_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_video_socket);
 	// This returns av_packet but this is AVPacket?
-	  //printf("VPacket.pts = %d\n", packet->av_data.pts);
-	  //printf("VPacket.size = %d\n", packet->av_data.size);
-	  //printf("APacket->data = 0x%x\n\n", &(packet->av_data));
+	  printf("VPacket.pts = %d\n", packet->av_data.pts);
+	  printf("VPacket.size = %d\n", packet->av_data.size);
+	  printf("APacket->data = 0x%x\n\n", &(packet->av_data));
 
       packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
@@ -252,9 +252,9 @@ av_packet * read_av_packet(int socket)
 	}
 	HTTP_packet* np = create_HTTP_packet(size);
     int len = xread(socket, np);
-	//printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,len);
+	printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,len);
 	av_packet* cp = to_av_packet(np);
-	//printf("read_av_packet size: %d\n", cp->av_data.size);
+	printf("read_av_packet size: %d\n", cp->av_data.size);
 	destroy_HTTP_packet(np);
 	return cp;
 }
