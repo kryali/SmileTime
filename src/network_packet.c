@@ -8,6 +8,14 @@ HTTP_packet* create_HTTP_packet(int length)
 	return p;
 }
 
+HTTP_packet* create_HTTP_AV_packet(int length)
+{
+	HTTP_packet* p = malloc(sizeof(HTTP_packet));
+	p->length = sizeof(int) + length;
+	p->message = malloc(p->length);
+	return p;
+}
+
 void destroy_HTTP_packet(HTTP_packet* packet)
 {
 	free(packet->message);
@@ -80,7 +88,12 @@ av_packet* to_av_packet(HTTP_packet* network_packet)
 {
 	av_packet* av = (av_packet*) malloc(sizeof(av_packet));
 	memcpy(av, network_packet->message + 1, sizeof(av_packet));
-	av->av_data.data = malloc(av->av_data.size);
+//	av->av_data.data = malloc(av->av_data.size);
+	uint8_t * data = malloc(av->av_data.size);
+//	printf("av->av_data.size %d\n", av->av_data.size);
+//	printf("av->av_data.data 0x%x\n", av->av_data.data);
+	av->av_data.data = data;
+//	printf("(malloc'd) av->av_data.data 0x%x\n", av->av_data.data);
 	memcpy(av->av_data.data, network_packet->message + 1 + sizeof(av_packet), av->av_data.size);
 	return av;
 }

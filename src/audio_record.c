@@ -95,9 +95,16 @@ void audio_segment_write()
 
 	if(recorder_packet_queue_get(audioq, &net_pkt) == 1)
 	{
+	  // Transmit the audio packet
 		av_packet av;
 		av.av_data = net_pkt;
 		HTTP_packet* http = av_to_network_packet(&av);
+
+		int size = http->length-1;
+		if( write(audiofd, &size, sizeof(size)) ==0){
+			perror("audio:write");
+		}
+
 		xwrite(audiofd, http);
 		destroy_HTTP_packet(http);
 	}//yo dawg, do we have to free the avpacket's data here?

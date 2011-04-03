@@ -23,6 +23,7 @@
 
 
 #include "structs.h"
+#include "player.h"
 
 struct timeb startTime;
 struct timeb endTime;
@@ -31,7 +32,6 @@ int frameCount;
 
 // Global variables
 PacketQueue audioq;
-VideoState *global_video_state;
 SDL_Surface     *screen;
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
@@ -55,6 +55,7 @@ void packet_queue_init(PacketQueue *q) {
 }
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
+	//printf("Queue> AVPacket: 0x%x\n", pkt);
   AVPacketList *pkt1;
  /* if(av_dup_packet(pkt) < 0) {
     return -1;
@@ -427,10 +428,16 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     return -1;
   }
     
+	/*
   if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
-    return -1;
-  }
+//    return -1;
+  } */
+  printf("codec type: %d\n", codecCtx->codec_type);
+  if( codecCtx->codec_id  == 13)
+  	codecCtx->codec_type = CODEC_TYPE_VIDEO;
+  else if( codecCtx->codec_id == 86016)
+  	codecCtx->codec_type = AVMEDIA_TYPE_AUDIO;
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
@@ -448,7 +455,6 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       //is->videoStream = stream_index;
       //is->video_ctx = pFormatCtx->streams[stream_index];
       is->video_ctx = codecCtx;
-	  printf("Kill rabbits\n");
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -456,7 +462,8 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       
       packet_queue_init(&is->videoq);
       is->video_tid = SDL_CreateThread(video_thread, is);
-	  printf("GOD IS COOL\n");
+
+//	  printf("[PLAYER] launched video thread %d\n", is->video_tid);
 
       // Custom buffer allocation functions
       codecCtx->get_buffer = our_get_buffer;
@@ -743,14 +750,15 @@ int main(int argc, char*argv[])
   parse_nameserver_msg(ip);
 
   global_video_state = is;
-  init_gis(global_video_state);
+  //init_gis(global_video_state);
+  init_gis(is);
   establish_peer_connections();
 
 	control_packet* cp = read_control_packet();
   // Initialize the audio & video streams
-  stream_component_open(is, &cp->audio_codec_ctx);
+  stream_component_open(global_video_state, &cp->audio_codec_ctx);
   printf("[PLAYER] Opened Audio stream\n");
-  stream_component_open(is, &cp->video_codec_ctx);
+  stream_component_open(global_video_state, &cp->video_codec_ctx);
   printf("[PLAYER] Opened Video stream\n");
 
 	is->quit = 0;
@@ -773,6 +781,7 @@ int main(int argc, char*argv[])
   */
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+//	printf("[PLAYER] Keyboard thread :%d\n", keyboard_thread_id);
 
 //  while(global_video_state->quit == 0) {
   while(1) {
