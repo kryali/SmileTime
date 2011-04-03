@@ -449,19 +449,20 @@ int video_thread(void *arg) {
   return 0;
 }
 
-int stream_component_open(VideoState *is, int stream_index) {
+//int stream_component_open(VideoState *is, int stream_index) {
+int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
 
-  AVFormatContext *pFormatCtx = is->pFormatCtx;
-  AVCodecContext *codecCtx;
+  //AVFormatContext *pFormatCtx = is->pFormatCtx;
+  //AVCodecContext *codecCtx;
   AVCodec *codec;
   SDL_AudioSpec wanted_spec, spec;
 
-  if(stream_index < 0 || stream_index >= pFormatCtx->nb_streams) {
+  /*if(stream_index < 0 || stream_index >= pFormatCtx->nb_streams) {
     return -1;
-  }
+  }*/
 
   // Get a pointer to the codec context for the video stream
-  codecCtx = pFormatCtx->streams[stream_index]->codec;
+  //codecCtx = pFormatCtx->streams[stream_index]->codec;
 
   if(codecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
     // Set audio settings from codec info
@@ -486,8 +487,9 @@ int stream_component_open(VideoState *is, int stream_index) {
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
-      is->audioStream = stream_index;
-      is->audio_ctx = pFormatCtx->streams[stream_index];
+      //is->audioStream = stream_index;
+      //is->audio_ctx = pFormatCtx->streams[stream_index];
+      is->audio_ctx = codecCtx;
       is->audio_buf_size = 0;
       is->audio_buf_index = 0;
       memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
@@ -496,8 +498,9 @@ int stream_component_open(VideoState *is, int stream_index) {
       break;
 
     case CODEC_TYPE_VIDEO:
-      is->videoStream = stream_index;
-      is->video_ctx = pFormatCtx->streams[stream_index];
+      //is->videoStream = stream_index;
+      //is->video_ctx = pFormatCtx->streams[stream_index];
+      is->video_ctx = codecCtx;
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -776,7 +779,7 @@ int main(int argc, char*argv[])
 	char * name = malloc(16);
 	if(argc > 1){
 		strcpy(name, argv[1]);
-  	}
+  }
 	else
 	{
 	  printf("Enter target name of the server: ");
@@ -785,11 +788,13 @@ int main(int argc, char*argv[])
   char * ip = nameserver_init(name);
   free(name);
 
-  // Get the audio / video stream information
+  // Get the audio & video stream information
   client_init(ip);
 	control_packet* cp = read_control_packet();
-  is->audio_ctx = &cp->audio_codec_ctx;
-  is->video_ctx = &cp->video_codec_ctx;
+  // Initialize the audio & video streams
+  stream_component_open(&cp->audio_codec_ctx);
+  stream_component_open(&cp->video_codec_ctx);
+
 	is->quit = 0;
 
   // Create thread locks
