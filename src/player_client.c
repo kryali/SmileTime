@@ -16,7 +16,11 @@ void establish_control_connection(){
   player_control_socket = socket_connect(hostname, CONTROL_PORT_S, SOCK_STREAM);
 }
 
-void establish_peer_connections(int protocol){
+void init_gis(VideoState * global_video_state_in) {
+  global_video_state = global_video_state_in;
+}
+
+void establish_peer_connections(){
 	printf("[PLAYER] Establishing peer connections\n");
   establish_control_connection();
   establish_video_connection();
@@ -25,9 +29,9 @@ void establish_peer_connections(int protocol){
 
 void listen_packets(){
 	printf("[PLAYER] Launching listen threads\n");
-  pthread_create(video_thread_id, NULL, listen_video_packets, NULL);
-  pthread_create(audio_thread_id, NULL, listen_audio_packets, NULL);
-  pthread_create(control_thread_id, NULL, listen_control_packets, NULL);
+  pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
+  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
+  pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
 
 void * listen_audio_packets(){

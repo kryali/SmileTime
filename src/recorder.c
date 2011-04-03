@@ -128,7 +128,7 @@ int main(int argc, char*argv[])
 
 	// * Connect to nameserver * 
 	char * name = "default";
-	char* protocol = "1";
+	char* protocol = "0";
 	char* control_port = CONTROL_PORT_S;
 	if( argc >= 2)
 		name = argv[1];
