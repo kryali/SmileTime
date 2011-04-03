@@ -22,10 +22,10 @@ void establish_control_connection(){
 
 void init_gis(VideoState * global_video_state_in) {
   global_video_state = global_video_state_in;
-  printf("GIS: audio buf size: %d\n", global_video_state->audio_buf_size);
-  printf("GIS: PacketQueue size:%d\n", global_video_state->videoq.size);
-  printf("GIS: parse thread id:%d\n", global_video_state->parse_tid);
-  printf("GIS: video thread id:%d\n", global_video_state->parse_tid);
+//  printf("GIS: audio buf size: %d\n", global_video_state->audio_buf_size);
+//  printf("GIS: PacketQueue size:%d\n", global_video_state->videoq.size);
+//  printf("GIS: parse thread id:%d\n", global_video_state->parse_tid);
+//  printf("GIS: video thread id:%d\n", global_video_state->parse_tid);
 }
 
 void establish_peer_connections(){
@@ -52,9 +52,7 @@ void * listen_audio_packets(){
 	  //printf("APacket.size = %d\n", packet->av_data.size);
 	  //printf("APacket->data = 0x%x\n", &(packet->av_data));
 
-	  int temp = &(packet->av_data);
-	  //printf("temp= 0x%x\n\n", (AVPacket*) temp);
-      packet_queue_put(&(global_video_state->videoq), (AVPacket *)temp);// (AVPacket *)&(packet->av_data));
+      packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
   pthread_exit(NULL);
 }
@@ -63,9 +61,9 @@ void * listen_video_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_video_socket);
 	// This returns av_packet but this is AVPacket?
-	  printf("VPacket.pts = %d\n", packet->av_data.pts);
+	  printf("VPacket.pts = %d\n", (int)packet->av_data.pts);
 	  printf("VPacket.size = %d\n", packet->av_data.size);
-	  printf("APacket->data = 0x%x\n\n", &(packet->av_data));
+	  printf("APacket->data = 0x%x\n\n", (unsigned int)&(packet->av_data));
 
       packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
