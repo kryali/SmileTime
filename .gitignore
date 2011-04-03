@@ -5,6 +5,7 @@
 
 # remove swap
 *~
+*.swo
 
 # Compiled Dynamic libraries
 *.so
