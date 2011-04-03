@@ -404,6 +404,8 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
   //codecCtx = pFormatCtx->streams[stream_index]->codec;
 
   if(codecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
+    fprintf(stderr, "sample rate: %s\n", codecCtx->sample_rate);
+    fprintf(stderr, "channels: %s\n", codecCtx->channels);
     // Set audio settings from codec info
     wanted_spec.freq = codecCtx->sample_rate;
     wanted_spec.format = AUDIO_S16SYS;
