@@ -1,6 +1,6 @@
 INSTALLROOT=$(PWD)
 
-CC=gcc -pthread
+CC=gcc -pthread 
 
 FFMPEG_LIB = -lavformat -lavcodec -lavutil -lm -lswscale -lz -lbz2 -lx264 -lmp3lame
 
@@ -8,7 +8,7 @@ SDLLIBS = $(shell sdl-config --libs)
 SDLFLAGS = $(shell sdl-config --cflags)
 
 MATH_LIB=-lm 
-JPEG_LIB=-ljpeg
+#JPEG_LIB=-ljpeg
 
 CFLAGS = -O0 $(SDLFLAGS) -Wall -g -L/nmnt/work1/cs414/G6/x264/lib/ -I/nmnt/work1/cs414/G6/x264/include/
 
