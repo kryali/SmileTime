@@ -15,6 +15,9 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 
+#include <signal.h>
+#include <time.h>
+
 #include "network_packet.h"
 #include "helper.h"
 

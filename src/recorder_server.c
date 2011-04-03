@@ -45,6 +45,13 @@ int init_connection( int port, int protocol ){
   return conn_socket;
 }
 
+void start_stats_timer(){
+	printf("[RECORER] Starting bandwidth stats\n");
+	timer_t timer_id;
+	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
+//	timer_connect
+}
+
 int accept_connection(int socket, int protocol){
 	int fd;
 	if(protocol == SOCK_STREAM)
