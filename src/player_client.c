@@ -43,8 +43,8 @@ void establish_peer_connections(){
 
 void listen_packets(){
   printf("[PLAYER] Launching listen threads\n");
-  pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
- // pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
+//  pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
+  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
 
