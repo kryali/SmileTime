@@ -44,7 +44,7 @@ void establish_peer_connections(){
 void listen_packets(){
   printf("[PLAYER] Launching listen threads\n");
   pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
-//  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
+  pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
 
@@ -52,9 +52,9 @@ void * listen_audio_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_audio_socket);
 	// This returns av_packet but this is AVPacket?
-	  //printf("APacket.pts = %d\n", packet->av_data.pts);
-	  //printf("APacket.size = %d\n", packet->av_data.size);
-	  //printf("APacket->data = 0x%x\n", &(packet->av_data));
+	  printf("APacket.pts = %d\n", packet->av_data.pts);
+	  printf("APacket.size = %d\n", packet->av_data.size);
+	  printf("APacket->data = 0x%x\n\n", &(packet->av_data));
 
       packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
