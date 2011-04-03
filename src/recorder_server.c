@@ -45,16 +45,30 @@ int init_connection( int port, int protocol ){
   return conn_socket;
 }
 
-void start_stats_timer(){
-	printf("[RECORER] Starting bandwidth stats\n");
-	timer_t timer_id;
+void* calculate_stats(){
+	/*printf("[RECORER] Starting bandwidth stats\n");
+  int current_bandwidth;
+	while( stopRecording == 0)
+  {
+    current_bandwidth = bytes_sent*8/1024;
+    printf("[RECORER] Current Bandwidth = %dkbps\n", current_bandwidth);
+    bytes_sent = 0;
+    sleep(1);
+  }
+  */
+
+	pthread_exit(NULL);
+
+	/*timer_t timer_id;
 	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
 	struct itimerspec val;
 	memset(&val, 0, sizeof(struct itimerspec));
 	val.it_value.tv_sec = 1;
 	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, (int)NULL, &val, NULL);
+	timer_settime(timer_id, NULL, &val, NULL);
+  */
 }
+
 
 int accept_connection(int socket, int protocol){
 	int fd;
@@ -113,6 +127,9 @@ void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
   HTTP_packet* np = control_to_network_packet(&cp);
   printf("TYPE: %c\n", get_packet_type(np));
   xwrite(controlfd, np );
+
+  // Keep track of bandwidth
+  bytes_sent += np->length;
 }
 
 void establish_peer_connections(int protocol){

@@ -7,6 +7,10 @@
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
+
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex;
+
 char* camera_name = "/dev/video0";
 int enc_size;
 
@@ -128,6 +132,11 @@ void video_frame_write()
 		}
 		int writtenBits = xwrite(videofd, http);
 		printf("Wrote %d bytes\n", writtenBits);
+
+    // Track bandwidth
+    pthread_mutex_lock(&bytes_sent_mutex);
+    bytes_sent += http->length;
+    pthread_mutex_unlock(&bytes_sent_mutex);
 		destroy_HTTP_packet(http);
 	}
 }

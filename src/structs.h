@@ -43,7 +43,7 @@ typedef struct VideoPicture {
 typedef struct VideoState {
 
   AVFormatContext *pFormatCtx;
-  //int             videoStream, audioStream;
+  int             videoStream, audioStream;
 
   double          audio_clock;
   AVCodecContext  *audio_ctx;
@@ -70,7 +70,7 @@ typedef struct VideoState {
   SDL_Thread      *parse_tid;
   SDL_Thread      *video_tid;
 
-  //char            filename[1024];
+  char            filename[1024];
   int             quit;
 } VideoState;        
 

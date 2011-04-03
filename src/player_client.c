@@ -1,6 +1,10 @@
 #include "player_client.h"
 #include "player.h"
 #include "video_play.h"
+#include "player.h"
+
+extern int bytes_received;
+extern pthread_mutex_t bytes_received_mutex;
 
 
 extern VideoState * global_video_state;
@@ -253,6 +257,12 @@ av_packet * read_av_packet(int socket)
     int len = xread(socket, np);
 	printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,len);
 	av_packet* cp = to_av_packet(np);
+
+  // Keep track of incoming bandwidth
+  pthread_mutex_lock(&bytes_received_mutex);
+  bytes_received += np->length;
+  pthread_mutex_unlock(&bytes_received_mutex);
+  
 	printf("read_av_packet size: %d\n", cp->av_data.size);
 	destroy_HTTP_packet(np);
 	return cp;
@@ -262,10 +272,16 @@ control_packet * read_control_packet()
 {
 	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
   int len = 0;
-  len  = xread(player_control_socket, np);
+  len = xread(player_control_socket, np);
   if( len <= 0 )
     perror("xread == 0 :( :( :(");
 	control_packet* cp = to_control_packet(np);
+
+  // Keep track of incoming bandwidth
+  pthread_mutex_lock(&bytes_received_mutex);
+  bytes_received += np->length;
+  pthread_mutex_unlock(&bytes_received_mutex);
+
 	destroy_HTTP_packet(np);
 	return cp;
 }

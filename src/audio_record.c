@@ -2,6 +2,9 @@
 #include "recorder_server.h"
 #include "include.h"
 
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex;
+
 int microphone_fd = -1;
 char *microphone_name = "/dev/dsp";
 
@@ -106,6 +109,12 @@ void audio_segment_write()
 		}
 
 		xwrite(audiofd, http);
+
+    // Track bandwidth
+    pthread_mutex_lock(&bytes_sent_mutex);
+    bytes_sent += http->length;
+    pthread_mutex_unlock(&bytes_sent_mutex);
+
 		destroy_HTTP_packet(http);
 	}//yo dawg, do we have to free the avpacket's data here?
 }

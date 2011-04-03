@@ -30,6 +30,10 @@ pthread_t audio_network_thread_id;
 pthread_t video_thread_id;
 pthread_t audio_thread_id;
 pthread_t keyboard_thread_id;
+pthread_t stats_thread_id;
+
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int streaming;
 
@@ -119,7 +123,7 @@ int main(int argc, char*argv[])
 		fprintf(stderr, "Invalid output format parameters\n");
 		exit(1);
 	}
-  
+
 	// * Initializiations * 
 	video_record_init(fmt, oc);
 	video_play_init();
@@ -130,6 +134,7 @@ int main(int argc, char*argv[])
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_create(&stats_thread_id, NULL, calculate_stats, NULL);
 
 	// * Connect to nameserver * 
 	char * name = "default";
@@ -166,6 +171,8 @@ int main(int argc, char*argv[])
 	pthread_join(control_network_thread_id, NULL);
 	pthread_join(video_network_thread_id, NULL);
 	pthread_join(audio_network_thread_id, NULL);
+
+	pthread_join(stats_thread_id, NULL);
 
 	// * Exit *
 //	pthread_mutex_destroy(&fileMutex);

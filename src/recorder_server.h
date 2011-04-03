@@ -27,6 +27,9 @@ void stream_audio_packets();
 void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();
-void start_stats_timer();
+void * calculate_stats();
+
+int bytes_sent;
+pthread_mutex_t bytes_sent_mutex;
 
 #endif

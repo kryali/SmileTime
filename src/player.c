@@ -25,10 +25,12 @@
 #include "structs.h"
 #include "player.h"
 
+int bytes_received;
+pthread_mutex_t bytes_received_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 struct timeb startTime;
 struct timeb endTime;
 int frameCount;
-
 
 // Global variables
 PacketQueue audioq;
@@ -36,6 +38,7 @@ SDL_Surface     *screen;
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
 pthread_t keyboard_thread_id;
+pthread_t stats_thread_id;
 
 void onExit()
 {
@@ -81,7 +84,7 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
   return 0;
 }
 
-int quit = 0;
+//quit = 0;
 
 static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
   AVPacketList *pkt1;
@@ -389,20 +392,20 @@ int video_thread(void *arg) {
   return 0;
 }
 
-//int stream_component_open(VideoState *is, int stream_index) {
-int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
+int stream_component_open(VideoState *is, int stream_index) {
+//int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
 
-  //AVFormatContext *pFormatCtx = is->pFormatCtx;
-  //AVCodecContext *codecCtx;
+  AVFormatContext *pFormatCtx = is->pFormatCtx;
+  AVCodecContext *codecCtx;
   AVCodec *codec;
   SDL_AudioSpec wanted_spec, spec;
 
-  /*if(stream_index < 0 || stream_index >= pFormatCtx->nb_streams) {
+  if(stream_index < 0 || stream_index >= pFormatCtx->nb_streams) {
     return -1;
-  }*/
+  }
 
   // Get a pointer to the codec context for the video stream
-  //codecCtx = pFormatCtx->streams[stream_index]->codec;
+  codecCtx = pFormatCtx->streams[stream_index]->codec;
 
   if(codecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
     fprintf(stderr, "sample rate: %d\n", codecCtx->sample_rate);
@@ -441,9 +444,9 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
-      //is->audioStream = stream_index;
-      //is->audio_ctx = pFormatCtx->streams[stream_index];
-      is->audio_ctx = codecCtx;
+      is->audioStream = stream_index;
+      is->audio_ctx = pFormatCtx->streams[stream_index];
+      //is->audio_ctx = codecCtx;
       is->audio_buf_size = 0;
       is->audio_buf_index = 0;
       memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
@@ -452,9 +455,9 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       break;
 
     case CODEC_TYPE_VIDEO:
-      //is->videoStream = stream_index;
-      //is->video_ctx = pFormatCtx->streams[stream_index];
-      is->video_ctx = codecCtx;
+      is->videoStream = stream_index;
+      is->video_ctx = pFormatCtx->streams[stream_index];
+      //is->video_ctx = codecCtx;
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -484,10 +487,55 @@ int decode_thread( void *thread_arg )
   VideoState *is = (VideoState *) thread_arg;
   AVFormatContext *pFormatCtx;
   AVPacket pkt1, *packet = &pkt1;
+  //global_video_state = is;
   url_set_interrupt_cb(decode_interrupt_cb); // will interrupt blocking functions if we quit!
 
-  //stream_component_open( is, audioStream );
-  //stream_component_open( is, videoStream );
+  is->filename[0] = *"./foo.mkv";
+
+  int i;
+  //AVCodecContext *pCodecCtx;
+  //AVCodecContext *aCodecCtx;
+
+  // Open video file
+  if( av_open_input_file(&pFormatCtx, is->filename, NULL, 0, NULL) != 0 )
+    return -1; // Couldn't open file
+  is->pFormatCtx = pFormatCtx;
+
+  // Retrieve stream information
+  if(av_find_stream_info(pFormatCtx)<0)
+    return -1; // Couldn't find stream information
+
+  // Dump information about file onto standard error
+  //dump_format(pFormatCtx, 0, is->filename, 0);
+
+  // Find the video stream and audio stream
+  int videoStream = -1;
+  int audioStream = -1;
+  is->videoStream = -1;
+  is->audioStream = -1;
+  for( i=0; i<pFormatCtx->nb_streams; i++ )
+  {
+    if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO ) {
+      videoStream = i;
+    }
+    if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO && audioStream < 0 ) {
+      audioStream = i;
+    }
+  }
+
+  if(videoStream == -1)
+    return -1; // Didn't find a video stream
+  if(audioStream == -1)
+    printf( "No audio stream\n" );
+  else
+    stream_component_open( is, audioStream );
+
+  stream_component_open( is, videoStream );
+
+  if(is->videoStream < 0 ) {
+    fprintf(stderr, "%s: could not open codecs\n", is->filename);
+    goto fail;
+  } 
 
   // Decode loop
   for(;;) {
@@ -549,7 +597,7 @@ void alloc_picture(void *userdata) {
 
   // Allocate a place to put our YUV image on that screen
   if( !screen )
-    perror("screen is false wtfbbq");
+    perror("screen is false");
 
   vp->bmp = SDL_CreateYUVOverlay(is->video_ctx->width,
 				 is->video_ctx->height, SDL_YV12_OVERLAY, screen);
@@ -701,6 +749,23 @@ void * captureKeyboard(){
 	pthread_exit(NULL);
 }
 
+void* calculate_player_stats()
+{
+  /*int current_bandwidth;
+	while( global_video_state->quit == 0){
+
+    pthread_mutex_lock(&bytes_received_mutex);
+    current_bandwidth = bytes_received*8/1024;
+    bytes_received = 0;
+    pthread_mutex_unlock(&bytes_received_mutex);
+
+    printf("[PLAYER] Current Bandwidth = %dkbps\n", current_bandwidth);
+    sleep(1);
+	}
+  */
+	pthread_exit(NULL);
+}
+
 int main(int argc, char*argv[])
 {
   if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
@@ -754,12 +819,14 @@ int main(int argc, char*argv[])
   init_gis(is);
   establish_peer_connections();
 
-	control_packet* cp = read_control_packet();
+	//control_packet* cp = read_control_packet();
   // Initialize the audio & video streams
+  /*
   stream_component_open(global_video_state, &cp->audio_codec_ctx);
   printf("[PLAYER] Opened Audio stream\n");
   stream_component_open(global_video_state, &cp->video_codec_ctx);
   printf("[PLAYER] Opened Video stream\n");
+  */
 
 	is->quit = 0;
 
@@ -770,7 +837,7 @@ int main(int argc, char*argv[])
   schedule_refresh(is, 40);
 
   // Create the decode thread
-//  is->parse_tid = SDL_CreateThread(decode_thread, is);
+  is->parse_tid = SDL_CreateThread(decode_thread, is);
   printf("[PLAYER] SDL intialized\n");
 
 /*
@@ -781,9 +848,10 @@ int main(int argc, char*argv[])
   */
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_create(&stats_thread_id, NULL,  calculate_player_stats, NULL);
 //	printf("[PLAYER] Keyboard thread :%d\n", keyboard_thread_id);
 
-//  while(global_video_state->quit == 0) {
+//  while(global_video_state->quit == 0) 
   while(1) {
     SDL_WaitEvent(&event);
     switch(event.type)
