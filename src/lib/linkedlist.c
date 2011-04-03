@@ -1,4 +1,5 @@
 list * list_find(list * head, char * name){
+	printf("%d\n", head);
 	while(head != NULL){
 		if( strcmp(head->name, name) == 0){
 			return head;

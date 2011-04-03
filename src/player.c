@@ -59,6 +59,8 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
  /* if(av_dup_packet(pkt) < 0) {
     return -1;
   }*/
+  if(pkt == NULL)
+  	printf("Fuck cliff in the face\n");
   pkt1 = av_malloc(sizeof(AVPacketList));
   if (!pkt1)
     return -1;

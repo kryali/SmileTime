@@ -242,7 +242,7 @@ control_packet * read_control_packet()
 	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
   int len = 0;
   len  = xread(player_control_socket, np);
-  if( len == 0 )
+  if( len <= 0 )
     perror("xread == 0 :( :( :(");
 	control_packet* cp = to_control_packet(np);
 	destroy_HTTP_packet(np);

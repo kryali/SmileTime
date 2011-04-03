@@ -9,6 +9,7 @@ int main(){
 	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 	list_print(iplist);
 	*/
+	printf("FIND %s\n",	list_find(iplist, "aoisdf"));
 
 
 	init_server();
