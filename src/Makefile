@@ -16,7 +16,7 @@ REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o re
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o player_client.o network_packet.o helper.o
 NAMESERVER_OBJ= nameserver.o
 
-all:	recorder player nameserver
+all:	recorder player
 
 clean:
 	@echo "Cleaning up directory."
