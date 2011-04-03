@@ -3,6 +3,9 @@
 *.lo
 *.o
 
+# remove swap
+*~
+
 # Compiled Dynamic libraries
 *.so
 
