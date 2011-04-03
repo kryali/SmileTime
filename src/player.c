@@ -418,6 +418,7 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       return -1;
     }
   }
+  fprintf(stderr, "codec id = %d\n", codecCtx->codec_id);
   codec = avcodec_find_decoder(codecCtx->codec_id);
   if(!codec ) {
     fprintf(stderr, "Codec is false!\n");
