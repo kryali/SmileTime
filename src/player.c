@@ -490,7 +490,8 @@ int decode_thread( void *thread_arg )
   //global_video_state = is;
   url_set_interrupt_cb(decode_interrupt_cb); // will interrupt blocking functions if we quit!
 
-  is->filename[0] = *"./foo.mkv";
+//  is->filename[0] = *"./foo.mkv";
+  strcpy(is->filename, "./foo.mkv");
 
   int i;
   //AVCodecContext *pCodecCtx;
