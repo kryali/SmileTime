@@ -212,6 +212,7 @@ void listen_control_packets(){
 				break;
 			case PANTILT_PACKET:
 				;
+//				printf("Pan/tilt packet received\n");
 				pantilt_packet* pt = to_pantilt_packet(&packet);
 				if(pt->type == PAN)
 					pan_relative(pt->distance);

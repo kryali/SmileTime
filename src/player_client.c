@@ -270,6 +270,8 @@ av_packet * read_av_packet(int socket)
 
 control_packet * read_control_packet()
 {
+
+
 	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
   int len = 0;
   len = xread(player_control_socket, np);
