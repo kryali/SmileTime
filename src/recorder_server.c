@@ -53,7 +53,7 @@ void start_stats_timer(){
 	memset(&val, 0, sizeof(struct itimerspec));
 	val.it_value.tv_sec = 1;
 	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, NULL, &val, NULL);
+	timer_settime(timer_id, (int)NULL, &val, NULL);
 }
 
 int accept_connection(int socket, int protocol){

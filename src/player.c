@@ -23,6 +23,7 @@
 
 
 #include "structs.h"
+#include "player.h"
 
 struct timeb startTime;
 struct timeb endTime;
@@ -31,7 +32,6 @@ int frameCount;
 
 // Global variables
 PacketQueue audioq;
-VideoState *global_video_state;
 SDL_Surface     *screen;
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
@@ -430,8 +430,13 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     
   if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
-    return -1;
+//    return -1;
   }
+  printf("codec type: %d\n", codecCtx->codec_type);
+  if( codecCtx->codec_id  == 13)
+  	codecCtx->codec_type = CODEC_TYPE_VIDEO;
+  else if( codecCtx->codec_id == 86016)
+  	codecCtx->codec_type = AVMEDIA_TYPE_AUDIO;
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
@@ -449,7 +454,6 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       //is->videoStream = stream_index;
       //is->video_ctx = pFormatCtx->streams[stream_index];
       is->video_ctx = codecCtx;
-	  printf("Kill rabbits\n");
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -457,7 +461,6 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       
       packet_queue_init(&is->videoq);
       is->video_tid = SDL_CreateThread(video_thread, is);
-	  printf("GOD IS COOL\n");
 
       // Custom buffer allocation functions
       codecCtx->get_buffer = our_get_buffer;

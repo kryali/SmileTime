@@ -41,7 +41,7 @@ recorder_client.o: recorder_client.c recorder_client.h
 
 recorder.o:	recorder.c
 
-player.o:	player.c
+player.o:	player.c player.h
 
 video_play.o:	video_play.c video_play.h
 
