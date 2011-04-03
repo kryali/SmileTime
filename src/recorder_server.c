@@ -68,17 +68,14 @@ int accept_connection(int socket, int protocol){
 void establish_control_connection(){
 	recorder_control_socket = init_connection(CONTROL_PORT, SOCK_STREAM);
 	printf("Waiting for a peer connection...\n");
-	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
 }
 
 void establish_video_connection(){
 	recorder_video_socket = init_connection(VIDEO_PORT, av_protocol);
-	videofd = accept_connection(recorder_video_socket, av_protocol);
 }
 
 void establish_audio_connection(){
 	recorder_audio_socket = init_connection(AUDIO_PORT, av_protocol);
-	audiofd = accept_connection(recorder_audio_socket, av_protocol);
 }
 
 
@@ -102,6 +99,7 @@ void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
   cp.audio_codec_ctx = *audio_stream->codec;
   cp.video_codec_ctx = *video_stream->codec;
   HTTP_packet* np = control_to_network_packet(&cp);
+  printf("TYPE: %c\n", get_packet_type(np));
   xwrite(recorder_control_socket, np );
 }
 
@@ -110,6 +108,10 @@ void establish_peer_connections(int protocol){
 	establish_control_connection();
 	establish_video_connection();
 	establish_audio_connection();
+
+	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
+	videofd = accept_connection(recorder_video_socket, av_protocol);
+	audiofd = accept_connection(recorder_audio_socket, av_protocol);
 	
 	/*
 	struct timeb tp; 

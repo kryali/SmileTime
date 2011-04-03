@@ -26,7 +26,7 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
-#define CONTROL_PACKET 0
+#define CONTROL_PACKET 82
 #define PANTILT_PACKET 1
 #define AV_PACKET 2
 

@@ -225,7 +225,7 @@ void keyboard_send()
 av_packet * read_av_packet(int socket)
 {
 	HTTP_packet* np = create_HTTP_packet( 10000 );
-	xread( socket, np);
+  int len = xread(socket, np);
 	av_packet* cp = to_av_packet(np);
 	destroy_HTTP_packet(np);
 	return cp;
@@ -234,7 +234,10 @@ av_packet * read_av_packet(int socket)
 control_packet * read_control_packet()
 {
 	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
-	xread( player_control_socket, np);
+  int len = 0;
+  while(len <= 0){
+     len  = xread(player_control_socket, np);
+  }
 	control_packet* cp = to_control_packet(np);
 	destroy_HTTP_packet(np);
 	return cp;

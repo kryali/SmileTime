@@ -21,6 +21,8 @@ HTTP_packet* control_to_network_packet(control_packet* packet)
 	HTTP_packet* network_packet = create_HTTP_packet(length);
 	((char*)network_packet->message)[0] = CONTROL_PACKET;
 	memcpy((network_packet->message)+1, packet, length);
+  printf("Audio: %d\n", packet->audio_codec_ctx.codec_id);
+  printf("Video: %d\n", packet->video_codec_ctx.codec_id);
 	return network_packet;
 }
 
@@ -61,6 +63,8 @@ control_packet* to_control_packet(HTTP_packet* network_packet)
 	memcpy(cp, network_packet->message + 1, length);
   cp->audio_codec_ctx.codec = &cp->audio_codec;
   cp->video_codec_ctx.codec = &cp->video_codec;
+  printf("TO_PACKET Audio: %d\n", cp->audio_codec_ctx.codec_id);
+  printf("TO_PACKET Video: %d\n", cp->video_codec_ctx.codec_id);
 	return cp;
 }
 
