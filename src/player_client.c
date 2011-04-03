@@ -42,8 +42,9 @@ void * listen_audio_packets(){
 	// This returns av_packet but this is AVPacket?
 	  printf("APacket.pts = %d\n", packet->av_data.pts);
 	  printf("APacket.size = %d\n", packet->av_data.size);
-	  printf("APacket->data = 0x%x\n", packet->av_data);
-      packet_queue_put(global_video_state->audioq, &(packet->av_data));
+	  printf("APacket->data = 0x%x\n", &(packet->av_data));
+
+      packet_queue_put(global_video_state->videoq, &(packet->av_data));
   }
   pthread_exit(NULL);
 }
@@ -54,7 +55,8 @@ void * listen_video_packets(){
 	// This returns av_packet but this is AVPacket?
 	  printf("VPacket.pts = %d\n", packet->av_data.pts);
 	  printf("VPacket.size = %d\n", packet->av_data.size);
-	  printf("APacket->data = 0x%x\n", packet->av_data);
+	  printf("APacket->data = 0x%x\n", &(packet->av_data));
+
       packet_queue_put(global_video_state->videoq, &(packet->av_data));
   }
   pthread_exit(NULL);
