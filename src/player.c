@@ -428,10 +428,11 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     return -1;
   }
     
+	/*
   if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
 //    return -1;
-  }
+  } */
   printf("codec type: %d\n", codecCtx->codec_type);
   if( codecCtx->codec_id  == 13)
   	codecCtx->codec_type = CODEC_TYPE_VIDEO;
@@ -461,6 +462,8 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       
       packet_queue_init(&is->videoq);
       is->video_tid = SDL_CreateThread(video_thread, is);
+
+//	  printf("[PLAYER] launched video thread %d\n", is->video_tid);
 
       // Custom buffer allocation functions
       codecCtx->get_buffer = our_get_buffer;
@@ -753,9 +756,9 @@ int main(int argc, char*argv[])
 
 	control_packet* cp = read_control_packet();
   // Initialize the audio & video streams
-  stream_component_open(is, &cp->audio_codec_ctx);
+  stream_component_open(global_video_state, &cp->audio_codec_ctx);
   printf("[PLAYER] Opened Audio stream\n");
-  stream_component_open(is, &cp->video_codec_ctx);
+  stream_component_open(global_video_state, &cp->video_codec_ctx);
   printf("[PLAYER] Opened Video stream\n");
 
 	is->quit = 0;
@@ -778,6 +781,7 @@ int main(int argc, char*argv[])
   */
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+//	printf("[PLAYER] Keyboard thread :%d\n", keyboard_thread_id);
 
 //  while(global_video_state->quit == 0) {
   while(1) {
