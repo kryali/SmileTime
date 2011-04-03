@@ -427,10 +427,10 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     return -1;
   }
     
-  if( avcodec_open(codecCtx, codec) < 0) {
+  /*if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
     return -1;
-  }
+  }*/
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
