@@ -130,13 +130,13 @@ void video_frame_write()
 		} else if (len == 0){
 			printf("No bytes have been written!\n");
 		}
-		xwrite(videofd, http);
+		int writtenBits = xwrite(videofd, http);
+		printf("Wrote %d bytes\n", writtenBits);
 
     // Track bandwidth
     pthread_mutex_lock(&bytes_sent_mutex);
     bytes_sent += http->length;
     pthread_mutex_unlock(&bytes_sent_mutex);
-
 		destroy_HTTP_packet(http);
 	}
 }
