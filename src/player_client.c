@@ -238,6 +238,7 @@ void keyboard_send()
 			}
 			destroy_HTTP_packet(http);
 			free(pt);
+			pt = NULL;
 		}
 	}
 }
