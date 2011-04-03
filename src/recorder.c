@@ -24,10 +24,7 @@
 
 #include "include.h"
 
-
-char* defaultPath = "/nmnt/work1/cs414/G6/";
-FILE* output;
-pthread_mutex_t fileMutex;
+//pthread_mutex_t fileMutex;
 pthread_t control_network_thread_id;
 pthread_t video_network_thread_id;
 pthread_t audio_network_thread_id;
@@ -37,8 +34,7 @@ pthread_t keyboard_thread_id;
 
 void usage()
 {
-    printf("\n\
-    recorder USAGE:    ./recorder USERNAME PROTOCOL(TCP:0 UDP:1) PORT\n\
+    printf("[RECORDER] Usage: ./recorder USERNAME PROTOCOL(TCP:0 UDP:1) PORT\n\
     Press CTRL+C to exit\n\n");
 }
 
@@ -90,15 +86,14 @@ int main(int argc, char*argv[])
 		usage();
 		return 0;
 	} 
-	stopRecording = 0;
+
 	signal(SIGINT, &onExit);
 
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
-    
 	avcodec_init();
 	av_register_all();
-	
+
 	fmt = av_guess_format(NULL, ".mkv", NULL);
 	if (!fmt) {
 		fprintf(stderr, "Could not find suitable output format\n");
@@ -126,6 +121,7 @@ int main(int argc, char*argv[])
 	audio_record_init(fmt, oc);
 
 	// * Start recording and encoding audio and video * 
+	stopRecording = 0;
 	pthread_create(&video_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
@@ -168,8 +164,6 @@ int main(int argc, char*argv[])
 
 	// * Exit *
 //	pthread_mutex_destroy(&fileMutex);
-
-	av_write_trailer(oc);
 	sdl_quit();
 	video_close();
 	audio_close();

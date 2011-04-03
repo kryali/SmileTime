@@ -58,7 +58,7 @@ typedef struct VideoPicture {
 typedef struct VideoState {
 
   AVFormatContext *pFormatCtx;
-  int             videoStream, audioStream;
+  //int             videoStream, audioStream;
 
   double          audio_clock;
   AVCodecContext  *audio_ctx;
@@ -85,7 +85,7 @@ typedef struct VideoState {
   SDL_Thread      *parse_tid;
   SDL_Thread      *video_tid;
 
-  char            filename[1024];
+  //char            filename[1024];
   int             quit;
 } VideoState;        
 
@@ -314,8 +314,8 @@ int decode_interrupt_cb(void) {
 void usage()
 {
     printf("\n\
-    recorder USAGE:    player FILE_NAME\n\
-    Play the video and audio data saved in the FILE_NAME. Press CTRL+C to exit\n\n");
+    ./player USERNAME\n\
+    Connects to USERNAME. Press CTRL+C to exit\n\n");
 }
 
 int queue_picture(VideoState *is, AVFrame *pFrame, double pts) {
@@ -528,49 +528,8 @@ int decode_thread( void *thread_arg )
   global_video_state = is;
   url_set_interrupt_cb(decode_interrupt_cb); // will interrupt blocking functions if we quit!
 
-  int i;
-  //AVCodecContext *pCodecCtx;
-  //AVCodecContext *aCodecCtx;
-
-  // Open video file
-  //if( av_open_input_file(&pFormatCtx, is->filename, NULL, 0, NULL) != 0 )
-  //  return -1; // Couldn't open file
-
-  // Retrieve stream information
-  if(av_find_stream_info(pFormatCtx)<0)
-    return -1; // Couldn't find stream information
-
-  // Dump information about file onto standard error
-  //dump_format(pFormatCtx, 0, is->filename, 0);
-
-  // Find the video stream and audio stream
-  int videoStream = -1;
-  int audioStream = -1;
-  is->videoStream = -1;
-  is->audioStream = -1;
-  for( i=0; i<pFormatCtx->nb_streams; i++ )
-  {
-    if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO ) {
-      videoStream = i;
-    }
-    if( pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO && audioStream < 0 ) {
-      audioStream = i;
-    }
-  }
-
-  if(videoStream == -1)
-    return -1; // Didn't find a video stream
-  if(audioStream == -1)
-    printf( "No audio stream\n" );
-    //return -1; // Didn't find a audio stream
-
-  stream_component_open( is, audioStream );
-  stream_component_open( is, videoStream );
-
-  if(is->videoStream < 0 || is->audioStream < 0) {
-    fprintf(stderr, "%s: could not open codecs\n", is->filename);
-    goto fail;
-  }
+  //stream_component_open( is, audioStream );
+  //stream_component_open( is, videoStream );
 
   // Decode loop
   for(;;) {
@@ -784,15 +743,12 @@ void * captureKeyboard(){
 
 int main(int argc, char*argv[])
 {
-  if (argc != 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
+  if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
   {
     usage();
     return 0;
   }
-
-  signal( SIGINT, &onExit);
-
-  printf("[MAIN] I am going to play both video and audio data from file: %s\n", argv[1]);
+	signal( SIGINT, &onExit);
 
   ftime(&startTime);
 
@@ -817,19 +773,24 @@ int main(int argc, char*argv[])
     exit(1);
   }
 
-  printf("Enter target name of the server: ");
-  char * name = malloc(16);
-  scanf("%s", name);
+	char * name = malloc(16);
+	if(argc > 1){
+		strcpy(name, argv[1]);
+  	}
+	else
+	{
+	  printf("Enter target name of the server: ");
+	  scanf("%s", name);
+	}
   char * ip = nameserver_init(name);
   free(name);
 
   // Get the audio / video stream information
-  control_packet* cp = client_init(ip);
+  client_init(ip);
+	control_packet* cp = read_control_packet();
   is->audio_ctx = &cp->audio_codec_ctx;
   is->video_ctx = &cp->video_codec_ctx;
-
-  // Get the filename
-  av_strlcpy(is->filename, argv[1], sizeof(is->filename));
+	is->quit = 0;
 
   // Create thread locks
   is->pictq_mutex = SDL_CreateMutex();
@@ -846,8 +807,7 @@ int main(int argc, char*argv[])
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
-  //while(global_video_ctxate->quit != 1) {
-  while(1) {
+  while(global_video_state->quit == 0) {
     SDL_WaitEvent(&event);
     switch(event.type)
     {

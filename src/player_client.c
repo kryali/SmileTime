@@ -1,6 +1,28 @@
 #include "player_client.h"
 #include "video_play.h"
 
+
+
+
+void establish_video_connection(){
+	printf("[PLAYER] Connecting video socket\n");
+}
+
+void establish_audio_connection(){
+	printf("[PLAYER] Connecting audio socket\n");
+}
+
+void establish_control_connection(){
+	printf("[PLAYER] Connecting control socket\n");
+}
+
+void establish_peer_connections(int protocol){
+  
+  establish_video_connection();
+  establish_audio_connection();
+  establish_control_connection();
+}
+
 char * nameserver_init(char * name){
     struct addrinfo hints2, * res2;
     memset(&hints2, 0, sizeof hints2);
@@ -48,7 +70,7 @@ char * nameserver_init(char * name){
 	return ip;
 }
 
-control_packet* client_init(char * ip){
+void client_init(char * ip){
 
 	// Parse the message from the nameserver
 	int size = 0;
@@ -79,16 +101,12 @@ control_packet* client_init(char * ip){
 	}
 
 
-	printf("Client connecting to server...\n");
+	printf("Client connecting to recorder...\n");
 	if( connect(player_control_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
 			perror("connect");
 			exit(1);
 	}
   
-  HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
-  xread( player_control_socket, np);
-  control_packet* cp = to_control_packet(np);
-  return cp;
 /*
     printf("Conected client \n");
 	char * buf = malloc( 500 );
@@ -158,4 +176,13 @@ void keyboard_send()
 			free(pt);
 		}
 	}
+}
+
+control_packet * read_control_packet()
+{
+	HTTP_packet* np = create_HTTP_packet( sizeof(control_packet)+1 );
+	xread( player_control_socket, np);
+	control_packet* cp = to_control_packet(np);
+	destroy_HTTP_packet(np);
+	return cp;
 }
