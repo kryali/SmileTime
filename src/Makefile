@@ -12,7 +12,7 @@ JPEG_LIB=-ljpeg
 
 CFLAGS = -O0 $(SDLFLAGS) -Wall -g -L/nmnt/work1/cs414/G6/x264/lib/ -I/nmnt/work1/cs414/G6/x264/include/
 
-REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o
+REC_OBJECTS= recorder.o audio_record.o video_record.o video_play.o io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o packet_queue.o
 PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o player_client.o network_packet.o helper.o
 NAMESERVER_OBJ= nameserver.o
 
@@ -58,3 +58,5 @@ nameserver.o: nameserver.c nameserver.h
 network_packet.o: network_packet.c network_packet.h
 
 helper.o: helper.c helper.h
+
+packet_queue.o: packet_queue.c packet_queue.h

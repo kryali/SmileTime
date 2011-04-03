@@ -56,6 +56,9 @@ void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc)
 
   	audio_buf_size = audio_input_frame_size * sample_size;
 	audio_buf =  av_malloc(audio_buf_size);
+
+	audioq = malloc(sizeof(RecorderPacketQueue));
+	recorder_packet_queue_init(audioq);
 }
 
 void audio_segment_copy()
@@ -79,19 +82,31 @@ void audio_segment_compress()
 	audio_pkt.data= audio_outbuf;
 }
 
+void audio_segment_queue()
+{
+	recorder_packet_queue_put(audioq, &audio_pkt);
+}
+
+AVPacket net_pkt;
 void audio_segment_write()
 {
-  // Transmit the audio packet
-	av_packet av;
-	av.av_data = audio_pkt;
-	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(audiofd, http);
-	destroy_HTTP_packet(http);
+	//if(audioq->size > 0)
+		//printf("audioqsize: %d\n", audioq->size);
+
+	if(recorder_packet_queue_get(audioq, &net_pkt) == 1)
+	{
+		av_packet av;
+		av.av_data = net_pkt;
+		HTTP_packet* http = av_to_network_packet(&av);
+		xwrite(audiofd, http);
+		destroy_HTTP_packet(http);
+	}//yo dawg, do we have to free the avpacket's data here?
 }
 
 //Frees all memory and closes codecs.
 void audio_close()
 {
+	free(audioq);
 	free(audio_outbuf);	
 	free(audio_buf);
 	avcodec_close(audio_context);

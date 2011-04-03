@@ -38,8 +38,10 @@ void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc){
 	buffers = NULL;
 	print_Camera_Info();
 	set_format();	
-	mmap_init();	
-  //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
+	mmap_init();
+	
+	videoq = malloc(sizeof(RecorderPacketQueue));
+	recorder_packet_queue_init(videoq);
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
@@ -100,19 +102,31 @@ void video_frame_compress( int bufferIndex){
 	av_free(yuyv422_frame);
 }
 
+void video_frame_queue()
+{
+	recorder_packet_queue_put(videoq, &video_pkt);
+}
+
+
+AVPacket net_pkt;
 void video_frame_write()
 {
-  // Transmit the video packet
-	av_packet av;
-	av.av_data = video_pkt;
-	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(videofd, http);
-	destroy_HTTP_packet(http);
+	//if(videoq->size > 0)
+		//printf("vqsize: %d\n", videoq->size);
+
+	if(recorder_packet_queue_get(videoq, &net_pkt) == 1)
+	{
+		av_packet av;
+		av.av_data = net_pkt;
+		HTTP_packet* http = av_to_network_packet(&av);
+		xwrite(videofd, http);
+		destroy_HTTP_packet(http);
+	}
 }
 
 //Closes the camera and frees all memory
 void video_close(){
-
+	free(videoq);
 	av_free(yuv420_frame->data[0]);
 	av_free(yuv420_frame);
 	av_free(video_outbuf);

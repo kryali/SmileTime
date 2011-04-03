@@ -24,13 +24,14 @@
 
 #include "include.h"
 
-//pthread_mutex_t fileMutex;
 pthread_t control_network_thread_id;
 pthread_t video_network_thread_id;
 pthread_t audio_network_thread_id;
 pthread_t video_thread_id;
 pthread_t audio_thread_id;
 pthread_t keyboard_thread_id;
+
+int streaming;
 
 void usage()
 {
@@ -55,7 +56,8 @@ void * startVideoEncoding(){
 		bufferIndex = video_frame_copy();
 		video_frame_display( bufferIndex );
 		video_frame_compress( bufferIndex );
-
+		if(streaming == 1)
+			video_frame_queue();
 		/*frames++;
 		ftime(&currentTime);
 		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
@@ -70,6 +72,8 @@ void * startAudioEncoding(){
 	while( stopRecording == 0){
 		audio_segment_copy();
 		audio_segment_compress();
+		if(streaming == 1)
+			audio_segment_queue();
 	}
 	pthread_exit(NULL);
 }
@@ -89,7 +93,7 @@ int main(int argc, char*argv[])
 	} 
 
 	signal(SIGINT, &onExit);
-
+	streaming = 0;
 	AVOutputFormat *fmt;
 	AVFormatContext *oc;
 	avcodec_init();
@@ -150,10 +154,10 @@ int main(int argc, char*argv[])
   send_init_control_packet( oc->streams[0], oc->streams[1] );
 
 	// * Transmit data through the network *
-//	pthread_mutex_init(&fileMutex, NULL);
 	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
 	pthread_create(&video_network_thread_id, NULL, (void*)stream_video_packets, (void*)NULL);
 	pthread_create(&audio_network_thread_id, NULL, (void*)stream_audio_packets, (void*)NULL);
+	streaming = 1;
 
 	// * Wait for threads to exit * 
 	pthread_join(video_thread_id, NULL);
