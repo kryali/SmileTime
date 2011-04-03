@@ -23,6 +23,8 @@ void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 
 	while(curr->next != NULL){
 		// Increment to the end of the list
+		if( strcmp(curr->name, name) == 0)
+			return; // Already exists
 		curr = curr->next;
 	}
 	curr->next = malloc(sizeof(list));
