@@ -21,14 +21,16 @@ void init_gis(VideoState * global_video_state_in) {
 }
 
 void establish_peer_connections(){
-	printf("[PLAYER] Establishing peer connections\n");
+  printf("[PLAYER] Establishing peer connections\n");
   establish_control_connection();
   establish_video_connection();
   establish_audio_connection();
+
+  listen_packets();
 }
 
 void listen_packets(){
-	printf("[PLAYER] Launching listen threads\n");
+  printf("[PLAYER] Launching listen threads\n");
   pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
   pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
@@ -37,6 +39,8 @@ void listen_packets(){
 void * listen_audio_packets(){
   while(1){
       AVPacket *packet = read_av_packet(player_audio_socket);
+	  printf("APacket.pts = %d\n", packet->pts);
+	  printf("APacket.size = %d\n", packet->size);
       packet_queue_put(global_video_state->audioq, packet);
   }
   pthread_exit(NULL);
@@ -45,6 +49,8 @@ void * listen_audio_packets(){
 void * listen_video_packets(){
   while(1){
       AVPacket *packet = read_av_packet(player_video_socket);
+	  printf("VPacket.pts = %d\n", packet->pts);
+	  printf("VPacket.size = %d\n", packet->size);
       packet_queue_put(global_video_state->videoq, packet);
   }
   pthread_exit(NULL);

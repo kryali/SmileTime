@@ -56,9 +56,9 @@ void packet_queue_init(PacketQueue *q) {
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
   AVPacketList *pkt1;
-  if(av_dup_packet(pkt) < 0) {
+ /* if(av_dup_packet(pkt) < 0) {
     return -1;
-  }
+  }*/
   pkt1 = av_malloc(sizeof(AVPacketList));
   if (!pkt1)
     return -1;
@@ -404,8 +404,8 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
   //codecCtx = pFormatCtx->streams[stream_index]->codec;
 
   if(codecCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
-    fprintf(stderr, "sample rate: %s\n", codecCtx->sample_rate);
-    fprintf(stderr, "channels: %s\n", codecCtx->channels);
+    fprintf(stderr, "sample rate: %d\n", codecCtx->sample_rate);
+    fprintf(stderr, "channels: %d\n", codecCtx->channels);
     // Set audio settings from codec info
     wanted_spec.freq = codecCtx->sample_rate;
     wanted_spec.format = AUDIO_S16SYS;
@@ -427,10 +427,10 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     return -1;
   }
     
-  /*if( avcodec_open(codecCtx, codec) < 0) {
+  if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
     return -1;
-  }*/
+  }
 
   switch(codecCtx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
@@ -448,6 +448,7 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       //is->videoStream = stream_index;
       //is->video_ctx = pFormatCtx->streams[stream_index];
       is->video_ctx = codecCtx;
+	  printf("Kill rabbits\n");
 
       // Initialize timer stuff
       is->frame_timer = (double)av_gettime() / 1000000.0;
@@ -455,6 +456,7 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
       
       packet_queue_init(&is->videoq);
       is->video_tid = SDL_CreateThread(video_thread, is);
+	  printf("GOD IS COOL\n");
 
       // Custom buffer allocation functions
       codecCtx->get_buffer = our_get_buffer;
@@ -475,7 +477,6 @@ int decode_thread( void *thread_arg )
   VideoState *is = (VideoState *) thread_arg;
   AVFormatContext *pFormatCtx;
   AVPacket pkt1, *packet = &pkt1;
-  global_video_state = is;
   url_set_interrupt_cb(decode_interrupt_cb); // will interrupt blocking functions if we quit!
 
   //stream_component_open( is, audioStream );
@@ -491,6 +492,7 @@ int decode_thread( void *thread_arg )
       SDL_Delay(10);
       continue;
     }
+/*
     if( av_read_frame(is->pFormatCtx, packet) < 0 ) {
       if( url_ferror((ByteIOContext *)&pFormatCtx->pb) == 0 ) {
         SDL_Delay(100); // no error; wait for user input
@@ -500,7 +502,6 @@ int decode_thread( void *thread_arg )
       }
     }
 
-/*
     // Queue the packets into the right queue
     if(packet->stream_index == is->videoStream) {
       packet_queue_put(&is->videoq, packet);
@@ -712,6 +713,7 @@ int main(int argc, char*argv[])
 
   // Set up SDL window
   SDL_Event    event;
+  memset(&event, 0, sizeof(SDL_Event));
 
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
@@ -739,12 +741,17 @@ int main(int argc, char*argv[])
 
   // Get the audio & video stream information
   parse_nameserver_msg(ip);
+
+  global_video_state = is;
+  init_gis(global_video_state);
   establish_peer_connections();
 
 	control_packet* cp = read_control_packet();
   // Initialize the audio & video streams
   stream_component_open(is, &cp->audio_codec_ctx);
+  printf("[PLAYER] Opened Audio stream\n");
   stream_component_open(is, &cp->video_codec_ctx);
+  printf("[PLAYER] Opened Video stream\n");
 
 	is->quit = 0;
 
@@ -755,15 +762,20 @@ int main(int argc, char*argv[])
   schedule_refresh(is, 40);
 
   // Create the decode thread
-  is->parse_tid = SDL_CreateThread(decode_thread, is);
+//  is->parse_tid = SDL_CreateThread(decode_thread, is);
+  printf("[PLAYER] SDL intialized\n");
+
+/*
   if(!is->parse_tid) {
     av_free(is);
     return -1;
   }
+  */
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
-  while(global_video_state->quit == 0) {
+//  while(global_video_state->quit == 0) {
+  while(1) {
     SDL_WaitEvent(&event);
     switch(event.type)
     {
