@@ -46,15 +46,17 @@ int init_connection( int port, int protocol ){
 }
 
 void* calculate_stats(){
-	printf("[RECORER] Starting bandwidth stats\n");
+	/*printf("[RECORER] Starting bandwidth stats\n");
   int current_bandwidth;
 	while( stopRecording == 0)
   {
-    current_bandwidth = bytes_sent*8;
-    printf("[RECORER] Current Bandwidth = %dbps\n", current_bandwidth);
+    current_bandwidth = bytes_sent*8/1024;
+    printf("[RECORER] Current Bandwidth = %dkbps\n", current_bandwidth);
     bytes_sent = 0;
     sleep(1);
   }
+  */
+
 	pthread_exit(NULL);
 
 	/*timer_t timer_id;

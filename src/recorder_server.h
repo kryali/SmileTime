@@ -30,5 +30,6 @@ char * getIP();
 void * calculate_stats();
 
 int bytes_sent;
+pthread_mutex_t bytes_sent_mutex;
 
 #endif

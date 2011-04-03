@@ -33,6 +33,9 @@ pthread_t audio_thread_id;
 pthread_t keyboard_thread_id;
 pthread_t stats_thread_id;
 
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void usage()
 {
     printf("[RECORDER] Usage: ./recorder USERNAME PROTOCOL(TCP:0 UDP:1) PORT\n\
