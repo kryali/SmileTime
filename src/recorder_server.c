@@ -100,7 +100,7 @@ void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
   cp.video_codec_ctx = *video_stream->codec;
   HTTP_packet* np = control_to_network_packet(&cp);
   printf("TYPE: %c\n", get_packet_type(np));
-  xwrite(recorder_control_socket, np );
+  xwrite(controlfd, np );
 }
 
 void establish_peer_connections(int protocol){
