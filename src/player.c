@@ -55,6 +55,7 @@ void packet_queue_init(PacketQueue *q) {
 }
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
+	printf("Queue> AVPacket: 0x%x\n", pkt);
   AVPacketList *pkt1;
  /* if(av_dup_packet(pkt) < 0) {
     return -1;
@@ -743,7 +744,8 @@ int main(int argc, char*argv[])
   parse_nameserver_msg(ip);
 
   global_video_state = is;
-  init_gis(global_video_state);
+  //init_gis(global_video_state);
+  init_gis(is);
   establish_peer_connections();
 
 	control_packet* cp = read_control_packet();

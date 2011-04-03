@@ -1,5 +1,9 @@
 #include "player_client.h"
+#include "player.h"
 #include "video_play.h"
+
+
+extern VideoState * global_video_state;
 
 void establish_video_connection(){
 	printf("[PLAYER] Connecting video socket\n");
@@ -18,6 +22,10 @@ void establish_control_connection(){
 
 void init_gis(VideoState * global_video_state_in) {
   global_video_state = global_video_state_in;
+  printf("GIS: audio buf size: %d\n", global_video_state->audio_buf_size);
+  printf("GIS: PacketQueue size:%d\n", global_video_state->videoq.size);
+  printf("GIS: parse thread id:%d\n", global_video_state->parse_tid);
+  printf("GIS: video thread id:%d\n", global_video_state->parse_tid);
 }
 
 void establish_peer_connections(){
@@ -31,7 +39,7 @@ void establish_peer_connections(){
 
 void listen_packets(){
   printf("[PLAYER] Launching listen threads\n");
-  pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
+  //pthread_create(&video_thread_id, NULL, listen_video_packets, NULL);
   pthread_create(&audio_thread_id, NULL, listen_audio_packets, NULL);
   pthread_create(&control_thread_id, NULL, listen_control_packets, NULL);
 }
@@ -44,7 +52,9 @@ void * listen_audio_packets(){
 	  printf("APacket.size = %d\n", packet->av_data.size);
 	  printf("APacket->data = 0x%x\n", &(packet->av_data));
 
-      packet_queue_put(global_video_state->videoq, &(packet->av_data));
+	  int temp = &(packet->av_data);
+	  printf("temp= 0x%x\n", (AVPacket*) temp);
+      packet_queue_put(&(global_video_state->videoq), (AVPacket *)temp);// (AVPacket *)&(packet->av_data));
   }
   pthread_exit(NULL);
 }
@@ -57,7 +67,7 @@ void * listen_video_packets(){
 	  printf("VPacket.size = %d\n", packet->av_data.size);
 	  printf("APacket->data = 0x%x\n", &(packet->av_data));
 
-      packet_queue_put(global_video_state->videoq, &(packet->av_data));
+      packet_queue_put(&(global_video_state->videoq), (AVPacket *)&(packet->av_data));
   }
   pthread_exit(NULL);
 }
@@ -239,6 +249,7 @@ av_packet * read_av_packet(int socket)
 	HTTP_packet* np = create_HTTP_packet( 10000 );
     int len = xread(socket, np);
 	av_packet* cp = to_av_packet(np);
+	printf("read_av_packet size: %d\n", cp->av_data.size);
 	destroy_HTTP_packet(np);
 	return cp;
 }
