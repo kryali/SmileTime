@@ -41,6 +41,7 @@ HTTP_packet* av_to_network_packet(av_packet* packet)
 {
 	int length1 = sizeof(av_packet);
 	int length2 = sizeof(packet->av_data.data);
+	printf("Length2: %d\n", length2);
 	HTTP_packet* network_packet = create_HTTP_packet(length1 + length2);
 	((char*)network_packet->message)[0] = AV_PACKET;
 	memcpy((network_packet->message)+1, packet, length1);
@@ -78,8 +79,11 @@ pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet)
 
 av_packet* to_av_packet(HTTP_packet* network_packet)
 {
-	av_packet* av = (av_packet*) (network_packet->message + 1);
-	av->av_data.data = (uint8_t*) (network_packet->message + 1 + sizeof(av_packet));
+	av_packet* av = (av_packet*) malloc(sizeof(av_packet));
+	av->av_data.data = malloc(av->av_data.size);
+	memcpy(av, network_packet->message + 1, sizeof(av_packet));
+	memcpy(av->av_data.data, network_packet->message + 1 + sizeof(av_packet), av->av_data.size);
+	printf("PLEASE BE THE SAME: %d\n", av->av_data.size);
 	return av;
 }
 

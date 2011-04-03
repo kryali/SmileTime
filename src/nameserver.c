@@ -115,6 +115,9 @@ char * nameServerMsg(char * name, char * ip, char * port, char protocol, int * s
 char * server_find(char * name){
 	int size = 0;
 	list * f = list_find(iplist, name);
+	if( strcmp(f->name, "NULL") == 0){
+		return "(null)";
+	}
 	return nameServerMsg(f->name, f->ip, f->port,f->protocol, &size);
 }
 

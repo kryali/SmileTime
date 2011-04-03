@@ -231,7 +231,7 @@ void keyboard_send()
 av_packet * read_av_packet(int socket)
 {
 	HTTP_packet* np = create_HTTP_packet( 10000 );
-  int len = xread(socket, np);
+    int len = xread(socket, np);
 	av_packet* cp = to_av_packet(np);
 	destroy_HTTP_packet(np);
 	return cp;
