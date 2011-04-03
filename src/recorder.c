@@ -42,6 +42,7 @@ void onExit()
 {
     printf("[RECORDER] Quitting\n");
     stopRecording = 1;
+    exit(0);
 }
 
 void * startVideoEncoding(){
