@@ -253,9 +253,26 @@ av_packet * read_av_packet(int socket)
 	if( read( socket, &size, sizeof(int))==0){
 		perror("read");
 	}
+
 	HTTP_packet* np = create_HTTP_packet(size);
-    int len = xread(socket, np);
-	printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,len);
+
+	int ret = 0;
+	//ret = read(fd, np->message, np->length);
+	int toread = np->length;
+	void * buf = malloc(toread);
+	void * counter = buf;
+	while( toread > 0){
+		ret = recv(socket, counter, toread, (int)NULL);
+		if(ret == -1){
+			perror("write");
+			exit(1);
+		}
+		toread -= ret;
+		counter += ret;
+	}
+	np->message = buf;	
+
+	printf("Packet Type: %d, %d=%d\n", get_packet_type(np), size,toread);
 	av_packet* cp = to_av_packet(np);
 
   // Keep track of incoming bandwidth
