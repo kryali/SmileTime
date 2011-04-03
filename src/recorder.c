@@ -151,9 +151,9 @@ int main(int argc, char*argv[])
 
 	// * Transmit data through the network *
 //	pthread_mutex_init(&fileMutex, NULL);
-	pthread_create(&control_network_thread_id, NULL, listen_control_packets, NULL);
-	pthread_create(&video_network_thread_id, NULL, stream_video_packets, NULL);
-	pthread_create(&audio_network_thread_id, NULL, stream_audio_packets, NULL);
+	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
+	pthread_create(&video_network_thread_id, NULL, (void*)stream_video_packets, (void*)NULL);
+	pthread_create(&audio_network_thread_id, NULL, (void*)stream_audio_packets, (void*)NULL);
 
 	// * Wait for threads to exit * 
 	pthread_join(video_thread_id, NULL);
