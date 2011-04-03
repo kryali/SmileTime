@@ -1,0 +1,72 @@
+#include "network_packet.h"
+
+HTTP_packet* create_HTTP_packet(int length)
+{
+	HTTP_packet* p = malloc(sizeof(HTTP_packet));
+	p->length = length;
+	p->message = malloc(1+length);
+}
+
+void destroy_HTTP_packet(HTTP_packet* packet)
+{
+	free(packet->message);
+	free(packet);
+}
+
+// converts a control_packet into a HTTP_packet
+HTTP_packet* control_to_network_packet(control_packet* packet)
+{
+	int length = sizeof(control_packet);
+	HTTP_packet* network_packet = create_HTTP_packet(length);
+	network_packet->message[0] = CONTROL_PACKET;
+	memcpy((network_packet->message)+1, packet, length);
+	return network_packet;
+}
+
+// converts a pantilt_packet into a HTTP_packet
+HTTP_packet* pantilt_to_network_packet(pantilt_packet* packet);
+{
+	int length = sizeof(pantilt_packet);
+	HTTP_packet* network_packet = create_HTTP_packet(length);
+	network_packet->message[0] = PANTILT_PACKET;
+	memcpy((network_packet->message)+1, packet, length);
+	return network_packet;
+}
+
+// converts a av_packet into a HTTP_packet
+HTTP_packet* to_network_packet(av_packet* packet);
+{
+	int length1 = sizeof(av_packet);
+	int length2 = sizeof(packet->data);
+	HTTP_packet* network_packet = create_HTTP_packet(length1 + length2);
+	network_packet->message[0] = AV_PACKET;
+	memcpy((network_packet->message)+1, packet, length1);
+	memcpy((network_packet->message)+1+length1, packet->data, length2);
+	return network_packet;
+}
+
+
+//network packets -> data structs
+char get_packet_type(HTTP_packet* network_packet)
+{
+	return network_packet->message[0];
+}
+
+control_packet* to_control_packet(HTTP_packet* network_packet)
+{
+	control_packet* cp = ((void*)network_packet)+1;
+	return cp;
+}
+
+pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet)
+{
+	pantilt_packet* pt = ((void*)network_packet)+1;
+	return pt;
+}
+
+av_packet* to_av_packet(HTTP_packet* network_packet)
+{
+	av_packet* av = ((void*)network_packet)+1;
+	av->data = ((void*)av_packet)+sizeof(av_packet);
+	return av;
+}
