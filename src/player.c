@@ -419,7 +419,12 @@ int stream_component_open(VideoState *is, AVCodecContext* codecCtx) {
     }
   }
   codec = avcodec_find_decoder(codecCtx->codec_id);
-  if(!codec || (avcodec_open(codecCtx, codec) < 0)) {
+  if(!codec ) {
+    fprintf(stderr, "Codec is false!\n");
+    return -1;
+  }
+    
+  if( avcodec_open(codecCtx, codec) < 0) {
     fprintf(stderr, "Unsupported codec!\n");
     return -1;
   }
