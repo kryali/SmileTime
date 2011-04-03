@@ -14,6 +14,7 @@ char * hostname;
 char * port;
 int protocol;
 
+void listen_packets();
 
 void * listen_audio_packets();
 void * listen_video_packets();

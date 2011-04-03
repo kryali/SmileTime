@@ -49,7 +49,11 @@ void start_stats_timer(){
 	printf("[RECORER] Starting bandwidth stats\n");
 	timer_t timer_id;
 	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
-//	timer_connect
+	struct itimerspec val;
+	memset(&val, 0, sizeof(struct itimerspec));
+	val.it_value.tv_sec = 1;
+	val.it_value.tv_nsec = 0;
+	timer_settime(timer_id, NULL, &val, NULL);
 }
 
 int accept_connection(int socket, int protocol){
