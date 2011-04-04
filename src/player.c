@@ -25,6 +25,9 @@
 #include "structs.h"
 #include "player.h"
 
+int seconds_elapsed;
+int paused;
+
 int bytes_received;
 pthread_mutex_t bytes_received_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -744,18 +747,21 @@ void * captureKeyboard(){
 
 void* calculate_player_stats()
 {
-  /*int current_bandwidth;
-	while( global_video_state->quit == 0){
-
+  int current_bandwidth;
+  int current_latency;
+	while( global_video_state->quit == 0)
+  {
+    seconds_elapsed++;
     pthread_mutex_lock(&bytes_received_mutex);
-    current_bandwidth = bytes_received*8/1024;
+    current_bandwidth = bytes_received*8;
     bytes_received = 0;
     pthread_mutex_unlock(&bytes_received_mutex);
 
-    printf("[PLAYER] Current Bandwidth = %dkbps\n", current_bandwidth);
+    printf("[%ds] Incoming Bandwidth: %dbps\n", seconds_elapsed, current_bandwidth);
+    if( !paused )
+      printf("[%ds] Display Latency: %dms\n", seconds_elapsed, current_latency);
     sleep(1);
 	}
-  */
 	pthread_exit(NULL);
 }
 
@@ -771,6 +777,8 @@ int main(int argc, char*argv[])
   ftime(&startTime);
 
   av_register_all();
+
+  paused = 0;
 
   // Create space for all the video data
   VideoState      *is;

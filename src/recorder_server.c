@@ -1,5 +1,7 @@
 #include "recorder_server.h"
 
+int seconds_elapsed;
+
 int init_connection( int port, int protocol ){
 	// Open up a socket
 	int conn_socket = socket( AF_INET, protocol, 0 );
@@ -46,16 +48,17 @@ int init_connection( int port, int protocol ){
 }
 
 void* calculate_stats(){
-	/*printf("[RECORER] Starting bandwidth stats\n");
+	printf("[RECORER] Starting bandwidth stats\n");
   int current_bandwidth;
 	while( stopRecording == 0)
   {
-    current_bandwidth = bytes_sent*8/1024;
-    printf("[RECORER] Current Bandwidth = %dkbps\n", current_bandwidth);
+    seconds_elapsed++;
+    pthread_mutex_lock(&bytes_sent_mutex);
+    current_bandwidth = bytes_sent*8;
+    printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, current_bandwidth);
     bytes_sent = 0;
     sleep(1);
   }
-  */
 
 	pthread_exit(NULL);
 

@@ -5,6 +5,7 @@
 
 extern int bytes_received;
 extern pthread_mutex_t bytes_received_mutex;
+extern paused;
 
 
 extern VideoState * global_video_state;
@@ -221,14 +222,20 @@ void keyboard_send()
 				case SDLK_LEFT:
 					pt = generate_pan_packet(-250);
 				break;
-      		case SDLK_RIGHT:
+        case SDLK_RIGHT:
 					pt = generate_pan_packet(250);
 				break;
-      		case SDLK_UP:
+        case SDLK_UP:
 					pt = generate_tilt_packet(-150);
 				break;
-      		case SDLK_DOWN:
+        case SDLK_DOWN:
 					pt = generate_tilt_packet(150);
+				break;
+        case SDLK_SPACE:
+					if( paused )
+            paused = 0;
+          else
+            paused = 1;
 				break;
 				default:
 				break;
