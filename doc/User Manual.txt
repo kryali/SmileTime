@@ -31,9 +31,6 @@ Usage
   Change directories into the /src for the project and then compile it:
     make
 
-  To start the nameserver issue first change directories into /src where the
-  program was compiled:
-    ./nameserver
 
   Now start the recorder program:
     ./recorder HANDLE
@@ -42,12 +39,15 @@ Usage
     ./player HANDLE
 
   Note: The HANDLE must be the same for both programs
+  
+  The nameserver should be running at a remote IP (email group if down)
 
   To quit, use CTRL+C.
 
 Features
   1. Video & Audio Streaming: The recorder captures video frames from the camera and
-  displays them in the recorder window. The video resolution is 640x480. We
+  displays them in the recorder window. The video resolution is 640x480.
+  Though we were able to send the packet data, we
   were unable to get the player to successfully display the packets sent from
   the recorder.
 
@@ -69,7 +69,8 @@ Features
 
   6. Nameserver: The nameserver manages connections and connects users by
   matching usernames. This establishes the connection between the recorder and
-  the player.
+  the player. It is being currently run on one of our servers with the ip
+  address hardcoded in. (email group if nameserver isn't running)
 
   7. Remote Control: The player can control the recorder's camera by using the
   arrow keys. When the player window has focus, the user can press the 
