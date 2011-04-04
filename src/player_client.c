@@ -4,6 +4,7 @@
 #include "player.h"
 #include <pthread.h>
 
+extern int frameCount;
 extern int bytes_received;
 extern pthread_mutex_t bytes_received_mutex;
 extern paused;
@@ -57,6 +58,8 @@ void listen_packets(){
 void * listen_audio_packets(){
   while(1){
       av_packet *packet = read_av_packet(player_audio_socket);
+      free(packet->av_data.data);
+      free(packet);
 	// This returns av_packet but this is AVPacket?
 	  //printf("APacket.pts = %d\n", packet->av_data.pts);
 	  //printf("APacket.size = %d\n", packet->av_data.size);
@@ -70,7 +73,10 @@ void * listen_audio_packets(){
 
 void * listen_video_packets(){
   while(1){
+      frameCount++;
       av_packet *packet = read_av_packet(player_video_socket);
+      free(packet->av_data.data);
+      free(packet);
 	// This returns av_packet but this is AVPacket?
 	  //printf("VPacket.pts = %d\n", (int)packet->av_data.pts);
 	  //printf("VPacket.size = %d\n", packet->av_data.size);

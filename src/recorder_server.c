@@ -1,4 +1,5 @@
 #include "recorder_server.h"
+pthread_t stats_thread_id;
 
 int seconds_elapsed;
 
@@ -145,6 +146,10 @@ void establish_peer_connections(int protocol){
 	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
 	videofd = accept_connection(recorder_video_socket, av_protocol);
 	audiofd = accept_connection(recorder_audio_socket, av_protocol);
+
+  // Start bandwidth stats
+	pthread_create(&stats_thread_id, NULL, calculate_stats, NULL);
+	pthread_join(stats_thread_id, NULL);
 	
 }
 
