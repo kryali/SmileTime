@@ -89,23 +89,16 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 
 //quit = 0;
 
-static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
+int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
 
 	//printf("-1 Size: %d\n", q->nb_packets);
   AVPacketList *pkt1;
-  int ret;
+  int ret = 0;
   
   SDL_LockMutex(q->mutex);
   
-  for(;;) {
-    
-    if(global_video_state->quit) {
-      ret = -1;
-      break;
-    }
-
     pkt1 = q->first_pkt;
-    if (pkt1) {
+	if (pkt1) {
 	  printf("TRUE\n");
       q->first_pkt = pkt1->next;
 	  printf("next = %x\n", pkt1->next);
@@ -116,15 +109,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
       *pkt = pkt1->pkt;
       av_free(pkt1);
       ret = 1;
-      break;
-    } else if (!block) {
-      ret = 0;
-      break;
-    } else {
-	  printf("waiting.... \n");
-      SDL_CondWait(q->cond, q->mutex);
     }
-  }
   SDL_UnlockMutex(q->mutex);
   return ret;
 }
@@ -365,8 +350,7 @@ int video_thread(void *arg) {
 
   for(;;) {
     // if we stopped getting packets
-    if( packet_queue_get(&is->videoq, packet, 1) < 0 ) {
-      break;
+    while( packet_queue_get(&is->videoq, packet, 1) == 0 ) {
     }
 
     pts = 0;

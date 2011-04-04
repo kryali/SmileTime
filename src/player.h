@@ -1,5 +1,6 @@
 #include "structs.h"
 int packet_queue_put(PacketQueue *q, AVPacket *pkt);
+int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block);
 /*void onExit()
 void packet_queue_init(PacketQueue *q);
 int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block);
