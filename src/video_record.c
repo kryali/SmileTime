@@ -125,7 +125,7 @@ void video_frame_write()
 		HTTP_packet* http = av_to_network_packet(&av);
 		int size = http->length-1;
 		int len = write(videofd, &size, sizeof(size));
-		if(  len <0){
+		if( len < 0 ){
 			perror("write");
 		} else if (len == 0){
 			printf("No bytes have been written!\n");
