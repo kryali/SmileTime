@@ -46,6 +46,7 @@ pthread_t stats_thread_id;
 void onExit()
 {
   global_video_state->quit = 1;
+  ftime(&endTime);
   float fps = frameCount / (float)(endTime.time - startTime.time);
   printf("Playback Frame Rate: %.2f fps\n", fps);
   printf("[MAIN] CTRL+C has been received. Add logic here before the program exits\n");
@@ -361,7 +362,7 @@ int video_thread(void *arg) {
     global_video_pkt_pts = packet->pts;
 
     // Decode video frame
-    frameCount++;
+    //frameCount++;
     len1 = avcodec_decode_video2(is->video_ctx, pFrame, &frameFinished, packet );
 
     if(packet->dts != AV_NOPTS_VALUE) {

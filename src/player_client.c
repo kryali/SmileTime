@@ -3,6 +3,7 @@
 #include "video_play.h"
 #include "player.h"
 
+extern int frameCount;
 extern int bytes_received;
 extern pthread_mutex_t bytes_received_mutex;
 extern paused;
@@ -65,6 +66,7 @@ void * listen_audio_packets(){
 
 void * listen_video_packets(){
   while(1){
+      frameCount++;
       av_packet *packet = read_av_packet(player_video_socket);
 	// This returns av_packet but this is AVPacket?
 	  //printf("VPacket.pts = %d\n", (int)packet->av_data.pts);
