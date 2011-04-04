@@ -2,10 +2,13 @@
 #include "player.h"
 #include "video_play.h"
 #include "player.h"
+#include <pthread.h>
 
 extern int bytes_received;
 extern pthread_mutex_t bytes_received_mutex;
 extern paused;
+
+pthread_mutex_t control_mutex_t = PTHREAD_MUTEX_INITIALIZER;
 
 
 extern VideoState * global_video_state;
@@ -34,6 +37,8 @@ void init_gis(VideoState * global_video_state_in) {
 }
 
 void establish_peer_connections(){
+
+
   printf("[PLAYER] Establishing peer connections\n");
   establish_control_connection();
   establish_video_connection();
@@ -77,10 +82,45 @@ void * listen_video_packets(){
 }
 
 void * listen_control_packets(){
+	t1 = -1;
+	t2 = -1;
   while(1){
     // read_control_packet();
+	pthread_mutex_lock(&control_mutex_t);
+	 client_calculate_rtt();
+	pthread_mutex_unlock(&control_mutex_t);
+	sleep(1);
   }
   pthread_exit(NULL);
+}
+
+void client_calculate_rtt(){
+	if (t1 == -1 || t2 == -1){
+//		printf("no data yet\n");
+		return;	
+	};
+	printf("%d v %d\n", t1, t2);
+	struct timeb tp;
+	int t1, t2;
+
+	ftime(&tp);
+	t1 = (tp.time * 1000) + tp.millitm;
+	char buf = 82;//CONTROL_PACKET;
+	// Send the packet to the client
+	if( write(player_control_socket, &buf, 1) == -1){
+		perror("write");
+		exit(1);
+	}
+	//printf("Start: %d\n", tp.millitm);
+	ftime(&tp);
+	t2 = (tp.time * 1000) + tp.millitm;
+	printf("Elapsed Time: %d\n", t2-t1);
+
+	int t3 = t2-t1;
+	if( write(player_control_socket, &t3, sizeof(int))== -1 ){
+		perror("write");
+		exit(1);
+	}
 }
 
 char * nameserver_init(char * name){
@@ -177,38 +217,6 @@ void parse_nameserver_msg(char * ip){
 	printf("TARGET: %s:%s [%s]\n", hostname, port, ip);
 
   
-/*
-    printf("Conected client \n");
-	char * buf = malloc( 500 );
-	memset(buf, 0 , 500);
-	
-	struct timeb tp;
-	int t1, t2;
-
-	ftime(&tp);
-	t1 = (tp.time * 1000) + tp.millitm;
-	//printf("Start: %d\n", tp.millitm);
-
-	int dataread = 0;
-	if( ( dataread = read(player_control_socket, buf, 25)) == -1){
-		perror("read");
-		exit(1);
-	}
-
-	ftime(&tp);
-	t2 = (tp.time * 1000) + tp.millitm;
-	printf("Elapsed Time: %d\n", t2-t1);
-
-
-	int * t3 = malloc(sizeof(int));
-	*t3 = t2-t1;
-	if( write(player_control_socket, t3, sizeof(int))== -1 ){
-		perror("write");
-		exit(1);
-	}
-
-	printf("Received %d bytes: %s\n", dataread, buf);
-*/
 }
 
 void keyboard_send()
@@ -243,11 +251,16 @@ void keyboard_send()
 		}
 		if(pt != NULL)
 		{
+
 			HTTP_packet* http = pantilt_to_network_packet(pt);
+
+			pthread_mutex_lock(&control_mutex_t);
 			if( write(player_control_socket, http->message, http->length)== -1 ){
 				perror("player_client.c keyboard send write error");
 				exit(1);
 			}
+			pthread_mutex_unlock(&control_mutex_t);
+
 			destroy_HTTP_packet(http);
 			free(pt);
 			pt = NULL;
