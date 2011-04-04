@@ -55,6 +55,7 @@ void* calculate_stats(){
     seconds_elapsed++;
     pthread_mutex_lock(&bytes_sent_mutex);
     current_bandwidth = bytes_sent*8;
+    pthread_mutex_unlock(&bytes_sent_mutex);
     printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, current_bandwidth);
     bytes_sent = 0;
     sleep(1);
