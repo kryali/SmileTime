@@ -28,6 +28,7 @@ void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();
 void * calculate_stats();
+void calculate_rtt();
 
 int bytes_sent;
 pthread_mutex_t bytes_sent_mutex;

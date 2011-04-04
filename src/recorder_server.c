@@ -146,23 +146,26 @@ void establish_peer_connections(int protocol){
 	videofd = accept_connection(recorder_video_socket, av_protocol);
 	audiofd = accept_connection(recorder_audio_socket, av_protocol);
 	
-	/*
+}
+
+void calculate_rtt(){
 	struct timeb tp; 
 	int t1, t2;
-	printf("Connection recieved!\n");
-	char * buf = malloc(25);
-	memset(buf, 0, 25);
-	strcpy(buf, "Hello World!\0");
 
 	ftime(&tp);
 	t1 = (tp.time * 1000) + tp.millitm;
 	//printf("Start: %d\n", tp.millitm);
+	/*
+	char * buf = malloc(25);
+	memset(buf, 0, 25);
+	strcpy(buf, "Hello World!\0");
+
 	
 	// Send the packet to the client
 	if( write(controlfd, buf, 25) == -1){
 		perror("write");
 		exit(1);
-	}
+	}*/
 
 	// Get the time elapsed on the client
 	int * t3 = malloc(sizeof(int));
@@ -178,7 +181,6 @@ void establish_peer_connections(int protocol){
 
 	printf("Message Sent!\n");
 	printf("RTT:%ds\n", t2-t1-*t3);
-	*/
 }
 
 void stream_video_packets(){
