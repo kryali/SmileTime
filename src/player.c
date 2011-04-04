@@ -59,6 +59,7 @@ void packet_queue_init(PacketQueue *q) {
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 	//printf("Queue> AVPacket: 0x%x\n", pkt);
+//	printf("+1 Size: %d\n", q->nb_packets);
   AVPacketList *pkt1;
  /* if(av_dup_packet(pkt) < 0) {
     return -1;
@@ -78,7 +79,9 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
   q->last_pkt = pkt1;
   q->nb_packets++;
   q->size += pkt1->pkt.size;
-  SDL_CondSignal(q->cond);
+  if( SDL_CondSignal(q->cond) == -1){
+ 	perror("SDL_SIGNAL"); 
+  }
   
   SDL_UnlockMutex(q->mutex);
   return 0;
@@ -87,6 +90,8 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 //quit = 0;
 
 static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
+
+	//printf("-1 Size: %d\n", q->nb_packets);
   AVPacketList *pkt1;
   int ret;
   
@@ -101,7 +106,9 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
 
     pkt1 = q->first_pkt;
     if (pkt1) {
+	  printf("TRUE\n");
       q->first_pkt = pkt1->next;
+	  printf("next = %x\n", pkt1->next);
       if (!q->first_pkt)
         q->last_pkt = NULL;
       q->nb_packets--;
@@ -114,6 +121,7 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
       ret = 0;
       break;
     } else {
+	  printf("waiting.... \n");
       SDL_CondWait(q->cond, q->mutex);
     }
   }
