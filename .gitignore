@@ -17,6 +17,8 @@
 # Executables
 src/recorder
 src/player
+SmileTime/bin/*
+bin/*
 
 # Video Files
 *.mkv
