@@ -1,10 +1,17 @@
 #include "video_record.h"
+#include "recorder_server.h"
+#include "include.h"
+#include "player.h"
 
 //SOURCES:
 /*
 http://v4l2spec.bytesex.org/spec/book1.htm
 http://v4l2spec.bytesex.org/spec/capture-example.html
 */
+
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex;
+
 char* camera_name = "/dev/video0";
 int enc_size;
 
@@ -36,8 +43,10 @@ void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc){
 	buffers = NULL;
 	print_Camera_Info();
 	set_format();	
-	mmap_init();	
-  //printf("[V_REC] This function initialize the camera device and V4L2 interface\n");
+	mmap_init();
+	
+	videoq = malloc(sizeof(RecorderPacketQueue));
+	recorder_packet_queue_init(videoq);
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
@@ -50,6 +59,10 @@ int video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
 		perror("VIDIOC_DQBUF");
 	}
+
+	struct timeb tp;
+	ftime(&tp);
+	t1 = (tp.time * 1000) + tp.millitm;
 
 	// ENQUEUE frame into buffer
 	struct v4l2_buffer bufQ;
@@ -98,19 +111,48 @@ void video_frame_compress( int bufferIndex){
 	av_free(yuyv422_frame);
 }
 
+void video_frame_queue()
+{
+	recorder_packet_queue_put(videoq, &video_pkt);
+}
+
+
+AVPacket net_pkt;
 void video_frame_write()
 {
-	// write the compressed frame in the media file
-	if (av_interleaved_write_frame(output_context, &video_pkt) != 0) {
-		perror("video frame write");
-		fprintf(stderr, "Error while writing video frame\n");
-		//exit(1);
+	//if(videoq->size > 0)
+		//printf("vqsize: %d\n", videoq->size);
+
+	if(recorder_packet_queue_get(videoq, &net_pkt) == 1)
+	{
+		struct timeb tp;
+		ftime(&tp);
+		t2 = (tp.time * 1000) + tp.millitm;
+
+		av_packet av;
+		av.av_data = net_pkt;
+		HTTP_packet* http = av_to_network_packet(&av);
+		int size = http->length-1;
+		int len = write(videofd, &size, sizeof(size));
+		if( len < 0 ){
+			perror("write");
+		} else if (len == 0){
+			printf("No bytes have been written!\n");
+		}
+		int writtenBits = xwrite(videofd, http);
+//		printf("Wrote %d bytes\n", writtenBits);
+
+    // Track bandwidth
+    pthread_mutex_lock(&bytes_sent_mutex);
+    bytes_sent += http->length;
+    pthread_mutex_unlock(&bytes_sent_mutex);
+		destroy_HTTP_packet(http);
 	}
 }
 
 //Closes the camera and frees all memory
 void video_close(){
-
+	free(videoq);
 	av_free(yuv420_frame->data[0]);
 	av_free(yuv420_frame);
 	av_free(video_outbuf);
@@ -212,10 +254,6 @@ void open_video()
     }
 }
 
-
-
-
-
 void mmap_init(){
 	// Request that the device start using the buffers
 	// - Find the number of support buffers
@@ -276,7 +314,6 @@ void print_Camera_Info(){
                 return;
         }
 	// Print out basic statistics
-	printf("File Descriptor: %d\n", camera_fd);
 	printf("Driver: %s\n", cap.driver);
 	printf("Device: %s\n", cap.card);
 	printf("bus_info: %s\n", cap.bus_info);

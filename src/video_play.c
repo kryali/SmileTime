@@ -22,7 +22,6 @@ const int SCREEN_HEIGHT = 480;
 const int SCREEN_BPP = 16;
 const int CAM_WIDTH = 320;
 const int CAM_HEIGHT = 240;
-SDL_Event event;
 
 int sdl_init(){
 	//SDL_Event event;
@@ -96,8 +95,9 @@ void video_frame_display(int bufferIndex)
 		exit(EXIT_FAILURE);
 	}
 //	if(overlay->pixels[0] == NULL)
-	overlay->pixels[0] = malloc(buffers[bufferIndex].length);
-	memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
+	//overlay->pixels[0] = malloc(buffers[bufferIndex].length);
+	//memcpy(overlay->pixels[0], buffers[bufferIndex].start, buffers[bufferIndex].length);
+	overlay->pixels[0] = buffers[bufferIndex].start;
 //	overlay->pixels[bufferIndex] = buffers[bufferIndex].start;
 
 	SDL_UnlockYUVOverlay(overlay);
@@ -138,10 +138,12 @@ void xioctl(int ctrl, int value){
 
 
 void pan_relative(int pan){
+	//printf("pan:%d\n", pan);
 	xioctl(V4L2_CID_PAN_RELATIVE, pan);
 }
 
 void tilt_relative(int tilt){
+	//printf("tilt:%d\n", tilt);
 	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
 }
 

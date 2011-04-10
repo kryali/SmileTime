@@ -3,6 +3,10 @@
 *.lo
 *.o
 
+# remove swap
+*~
+*.swo
+
 # Compiled Dynamic libraries
 *.so
 
@@ -19,6 +23,7 @@ src/recorder
 src/player
 SmileTime/bin/*
 bin/*
+src/nameserver
 
 # Video Files
 *.mkv

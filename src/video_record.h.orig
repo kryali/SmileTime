@@ -23,8 +23,6 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
-#include "packet_queue.h"
-
 #ifndef BUFFERCOUNT
 #define BUFFERCOUNT 10
 #endif
@@ -65,15 +63,8 @@
 #define V4L2_CID_TILT_RESET 0x009A0907
 #endif
 
-
-#ifndef FRAMES_ENCODED
-#define FRAMES_ENCODED 4797
-#endif
-#ifndef TIME_TOTAL
-#define TIME_TOTAL 320967
-#endif
 #ifndef STREAM_FRAME_RATE
-#define STREAM_FRAME_RATE 25 //frames per second
+#define STREAM_FRAME_RATE 13 //frames per second
 #endif
 #ifndef STREAM_PIX_FMT
 #define STREAM_PIX_FMT PIX_FMT_YUV420P // Encode to YUV420 pixel format
@@ -94,8 +85,6 @@
 AVCodec *video_codec;
 AVCodecContext *video_context;
 AVStream *video_st;
-int camera_fd;
-RecorderPacketQueue *videoq;
 
 struct buffer {
     void * start;
@@ -116,7 +105,6 @@ float framesps;
 void video_record_init(AVOutputFormat *fmt, AVFormatContext *oc);
 int video_frame_copy();
 void video_frame_compress(int bufferIndex);
-void video_frame_queue();
 void video_frame_write();
 void video_close();
 void add_video_stream(enum CodecID codec_id);
@@ -125,4 +113,10 @@ void open_video();
 void print_Camera_Info();
 void mmap_init();
 void set_format();
+void xioctl(int ctrl, int value);
+void pan_relative(int pan);
+void tilt_relative(int tilt);
+void pan_reset();
+void tilt_reset();
+void panTilt_reset();
 #endif

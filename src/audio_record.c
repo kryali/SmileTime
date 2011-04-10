@@ -1,4 +1,9 @@
 #include "audio_record.h"
+#include "recorder_server.h"
+#include "include.h"
+
+extern int bytes_sent;
+extern pthread_mutex_t bytes_sent_mutex;
 
 int microphone_fd = -1;
 char *microphone_name = "/dev/dsp";
@@ -54,6 +59,9 @@ void audio_record_init(AVOutputFormat *fmt, AVFormatContext *oc)
 
   	audio_buf_size = audio_input_frame_size * sample_size;
 	audio_buf =  av_malloc(audio_buf_size);
+
+	audioq = malloc(sizeof(RecorderPacketQueue));
+	recorder_packet_queue_init(audioq);
 }
 
 void audio_segment_copy()
@@ -77,18 +85,44 @@ void audio_segment_compress()
 	audio_pkt.data= audio_outbuf;
 }
 
+void audio_segment_queue()
+{
+	recorder_packet_queue_put(audioq, &audio_pkt);
+}
+
+AVPacket net_pkt;
 void audio_segment_write()
 {
-	/* write the compressed frame in the media file */
-	if (av_interleaved_write_frame(output_context, &audio_pkt) != 0) {
-		fprintf(stderr, "Error while writing audio frame\n");
-		//exit(1);
-	}
+	//if(audioq->size > 0)
+		//printf("audioqsize: %d\n", audioq->size);
+
+	if(recorder_packet_queue_get(audioq, &net_pkt) == 1)
+	{
+	  // Transmit the audio packet
+		av_packet av;
+		av.av_data = net_pkt;
+		HTTP_packet* http = av_to_network_packet(&av);
+
+		int size = http->length-1;
+		if( write(audiofd, &size, sizeof(size)) ==0){
+			perror("audio:write");
+		}
+
+		xwrite(audiofd, http);
+
+    // Track bandwidth
+    pthread_mutex_lock(&bytes_sent_mutex);
+    bytes_sent += http->length;
+    pthread_mutex_unlock(&bytes_sent_mutex);
+
+		destroy_HTTP_packet(http);
+	}//yo dawg, do we have to free the avpacket's data here?
 }
 
 //Frees all memory and closes codecs.
 void audio_close()
 {
+	free(audioq);
 	free(audio_outbuf);	
 	free(audio_buf);
 	avcodec_close(audio_context);
