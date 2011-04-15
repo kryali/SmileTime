@@ -1,6 +1,7 @@
 #include "video_record.h"
 #include "recorder_server.h"
 #include "include.h"
+#include "player.h"
 
 //SOURCES:
 /*
@@ -58,6 +59,10 @@ int video_frame_copy(){
 	if( ioctl(camera_fd, VIDIOC_DQBUF, &buf) == -1){
 		perror("VIDIOC_DQBUF");
 	}
+
+	struct timeb tp;
+	ftime(&tp);
+	t1 = (tp.time * 1000) + tp.millitm;
 
 	// ENQUEUE frame into buffer
 	struct v4l2_buffer bufQ;
@@ -120,18 +125,22 @@ void video_frame_write()
 
 	if(recorder_packet_queue_get(videoq, &net_pkt) == 1)
 	{
+		struct timeb tp;
+		ftime(&tp);
+		t2 = (tp.time * 1000) + tp.millitm;
+
 		av_packet av;
 		av.av_data = net_pkt;
 		HTTP_packet* http = av_to_network_packet(&av);
 		int size = http->length-1;
 		int len = write(videofd, &size, sizeof(size));
-		if(  len <0){
+		if( len < 0 ){
 			perror("write");
 		} else if (len == 0){
 			printf("No bytes have been written!\n");
 		}
 		int writtenBits = xwrite(videofd, http);
-		printf("Wrote %d bytes\n", writtenBits);
+//		printf("Wrote %d bytes\n", writtenBits);
 
     // Track bandwidth
     pthread_mutex_lock(&bytes_sent_mutex);

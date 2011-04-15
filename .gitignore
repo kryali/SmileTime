@@ -21,6 +21,8 @@
 # Executables
 src/recorder
 src/player
+SmileTime/bin/*
+bin/*
 src/nameserver
 
 # Video Files

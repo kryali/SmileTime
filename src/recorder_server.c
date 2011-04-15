@@ -1,4 +1,7 @@
 #include "recorder_server.h"
+pthread_t stats_thread_id;
+
+int seconds_elapsed;
 
 int init_connection( int port, int protocol ){
 	// Open up a socket
@@ -46,16 +49,18 @@ int init_connection( int port, int protocol ){
 }
 
 void* calculate_stats(){
-	/*printf("[RECORER] Starting bandwidth stats\n");
+	printf("[RECORER] Starting bandwidth stats\n");
   int current_bandwidth;
 	while( stopRecording == 0)
   {
-    current_bandwidth = bytes_sent*8/1024;
-    printf("[RECORER] Current Bandwidth = %dkbps\n", current_bandwidth);
+    seconds_elapsed++;
+    pthread_mutex_lock(&bytes_sent_mutex);
+    current_bandwidth = bytes_sent*8;
+    pthread_mutex_unlock(&bytes_sent_mutex);
+    printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, current_bandwidth);
     bytes_sent = 0;
     sleep(1);
   }
-  */
 
 	pthread_exit(NULL);
 
@@ -141,40 +146,40 @@ void establish_peer_connections(int protocol){
 	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
 	videofd = accept_connection(recorder_video_socket, av_protocol);
 	audiofd = accept_connection(recorder_audio_socket, av_protocol);
+
+  // Start bandwidth stats
+	pthread_create(&stats_thread_id, NULL, calculate_stats, NULL);
+	pthread_join(stats_thread_id, NULL);
 	
-	/*
+}
+
+void calculate_rtt(int * time){
 	struct timeb tp; 
 	int t1, t2;
-	printf("Connection recieved!\n");
-	char * buf = malloc(25);
-	memset(buf, 0, 25);
-	strcpy(buf, "Hello World!\0");
 
 	ftime(&tp);
 	t1 = (tp.time * 1000) + tp.millitm;
-	//printf("Start: %d\n", tp.millitm);
-	
-	// Send the packet to the client
-	if( write(controlfd, buf, 25) == -1){
-		perror("write");
-		exit(1);
-	}
+	printf("Start: %d\n", tp.millitm);
 
 	// Get the time elapsed on the client
-	int * t3 = malloc(sizeof(int));
-	if( read(controlfd, t3, sizeof(int)) == -1 ){
-		perror("read");
-		exit(1);
+//	int * t3 = malloc(sizeof(int));
+	int t3 = 0;
+	if( time == 0){
+		if( read(controlfd, &t3, sizeof(int)) == -1 ){
+			perror("read");
+			exit(1);
+		}
+	} else {
+		t3 = *time;
 	}
-	//printf("Elapsed time from client: %d\n", *t3);
+	printf("Elapsed time from client: %d\n", t3);
 
 	ftime(&tp);
 	t2 = (tp.time * 1000) + tp.millitm;
-	//printf("End: %d\n", tp.millitm);
+	printf("End: %d\n", tp.millitm);
 
 	printf("Message Sent!\n");
-	printf("RTT:%ds\n", t2-t1-*t3);
-	*/
+	printf("RTT:%ds\n", t2-t1-t3);
 }
 
 void stream_video_packets(){
@@ -195,12 +200,13 @@ void listen_control_packets(){
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
 	while(stopRecording == 0){
+		memset(buffer, 0, 100);
 		int size = read(controlfd, buffer, 100);
 		if( size == -1 || size == 0 ){
 			perror("read");
 			exit(1);
 		}
-		//printf("read packet of size: %d\n",size);
+		printf("read packet of size: %d\n",size);
 		HTTP_packet packet;
 		packet.message = buffer;
 		packet.length = size;
@@ -209,6 +215,7 @@ void listen_control_packets(){
 		{
 			case CONTROL_PACKET:
 				printf("received control packet\n");
+				calculate_rtt((int*)(buffer+1));
 				break;
 			case PANTILT_PACKET:
 				;
@@ -220,7 +227,7 @@ void listen_control_packets(){
 					tilt_relative(pt->distance);
 				break;
 			default:
-				printf("received INVALID packet\n");
+				printf("received INVALID packet, %d\n", packet_type);
 				break;
 		}
 	}

@@ -40,6 +40,9 @@ pthread_t control_thread_id;
 char * nameserver_init(char*name);
 
 
+static int rtt;
+void client_calculate_rtt();
+
 
 
 
