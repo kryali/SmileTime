@@ -337,6 +337,8 @@ void set_format(){
 	format.fmt.pix.field = V4L2_FIELD_INTERLACED;
 	format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 
+	printf("%d, %d\n", v4l2_fourcc('4', '2', '2', 'P'), V4L2_PIX_FMT_YUYV);
+
 	if(ioctl(camera_fd, VIDIOC_S_FMT, &format) == -1){
 		perror("VIDIOC_S_FMT");
 		exit( EXIT_FAILURE );
