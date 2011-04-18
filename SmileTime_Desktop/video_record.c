@@ -1,6 +1,7 @@
 #include "video_record.h"
 #include "recorder_server.h"
 #include "include.h"
+#include <jpeglib.h>
 
 //SOURCES:
 /*
@@ -63,13 +64,14 @@ int video_frame_copy()
 // This function should compress the raw image to JPEG image.
 void video_frame_compress( int bufferIndex)
 {
-	jpeg_start_compress(&cinfo, TRUE);
+	void* raw_image = buffers[bufferIndex].start;
+	/*jpeg_start_compress(&cinfo, TRUE);
 	while( cinfo.next_scanline < cinfo.image_height )
 	{
 		row_pointer[0] = &raw_image[ cinfo.next_scanline * cinfo.image_width *  cinfo.input_components];
 		jpeg_write_scanlines( &cinfo, row_pointer, 1 );
 	}
-	jpeg_finish_compress(&cinfo);
+	jpeg_finish_compress(&cinfo);*/
 	//buffers[bufferIndex];
 	//video_pkt = ;
 }
