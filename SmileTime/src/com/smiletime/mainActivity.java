@@ -3,6 +3,7 @@ package com.smiletime;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,9 +13,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.Toast;
 
 public class mainActivity extends Activity implements SurfaceHolder.Callback {
     /** Called when the activity is first created. */
@@ -33,6 +32,8 @@ public class mainActivity extends Activity implements SurfaceHolder.Callback {
         setContentView(R.layout.main);
         
         
+        
+        setUpButtons();
         mPreview = (SurfaceView) findViewById(R.id.sv);
         holder = mPreview.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -44,6 +45,18 @@ public class mainActivity extends Activity implements SurfaceHolder.Callback {
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
         mFileName += "/test.mp4";
                 
+    }
+    
+    public void setUpButtons(){
+    	Button connect = (Button) findViewById(R.id.connect);
+    	connect.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// Launch new activity
+				startActivity(new Intent(mainActivity.this, AVConnect.class));
+			}
+		});
     }
     
     public void startVideoRecording(){
