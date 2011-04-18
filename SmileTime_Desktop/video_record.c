@@ -1,7 +1,4 @@
 #include "video_record.h"
-#include "recorder_server.h"
-#include "include.h"
-#include <jpeglib.h>
 
 //SOURCES:
 /*
@@ -11,7 +8,9 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 char* camera_name = "/dev/video0";
 Buffer video_pkt;
 struct jpeg_compress_struct cinfo;
+struct jpeg_destination_mgr mgr;
 JSAMPROW row_pointer[1];
+JOCTET * compressed_data;
 
 //This function initialize the camera device and V4L2 interface
 void video_record_init(){
@@ -29,14 +28,39 @@ void video_record_init(){
 	//Set up video packet queue
 	videoq = malloc(sizeof(BufferQueue));
 	buffer_queue_init(videoq);
+}
+
+void video_compress_init(){
 	//create jpeg compressor
 	jpeg_create_compress(&cinfo);
+
+//TEST
+
+	char* filename = "test.jpg";
+	FILE *outfile = fopen( filename, "wb" );
+	
+	if ( !outfile )
+	{
+		printf("Error opening output jpeg file %s\n!", filename );
+		exit(1);
+	}
+	jpeg_stdio_dest(&cinfo, outfile);
+
+//TEST
+
+
+	//set destination manager to an output buffer
+	/*mgr.init_destination = init_destination;
+	mgr.empty_output_buffer = empty_output_buffer;
+	mgr.term_destination = term_destination;
+	cinfo.dest = &mgr;*/
+
+	//set image info
 	cinfo.image_width = VIDEO_WIDTH; 	/* image width and height, in pixels */
 	cinfo.image_height = VIDEO_HEIGHT;
 	cinfo.input_components = 3;	/* # of color components per pixel */
 	cinfo.in_color_space = JCS_YCbCr; /* colorspace of input image */
 	jpeg_set_defaults(&cinfo);
-
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
@@ -64,16 +88,19 @@ int video_frame_copy()
 // This function should compress the raw image to JPEG image.
 void video_frame_compress( int bufferIndex)
 {
-	void* raw_image = buffers[bufferIndex].start;
-	/*jpeg_start_compress(&cinfo, TRUE);
+	char* raw_image = buffers[bufferIndex].start;
+	printf("Compression start!\n");
+	jpeg_start_compress(&cinfo, FALSE);
 	while( cinfo.next_scanline < cinfo.image_height )
 	{
+		printf("while!\n");
 		row_pointer[0] = &raw_image[ cinfo.next_scanline * cinfo.image_width *  cinfo.input_components];
 		jpeg_write_scanlines( &cinfo, row_pointer, 1 );
 	}
-	jpeg_finish_compress(&cinfo);*/
+	jpeg_finish_compress(&cinfo);
 	//buffers[bufferIndex];
 	//video_pkt = ;
+	printf("Compression success!\n");
 }
 
 void video_frame_queue()
@@ -193,4 +220,32 @@ void print_Camera_Info(){
 	if( !(cap.capabilities & V4L2_CAP_STREAMING) ){
 		printf("No streaming capabilities!\n");
 	}
+}
+
+void init_destination(j_compress_ptr cinfo){ 
+  struct jpeg_destination_mgr*dmgr = (struct jpeg_destination_mgr*)(cinfo->dest);
+  compressed_data = (JOCTET*)malloc(OUTBUFFER_SIZE);
+  if(!compressed_data) {
+      perror("malloc");
+      printf("Out of memory!\n");
+      exit(1);
+  }
+  dmgr->next_output_byte = compressed_data;
+  dmgr->free_in_buffer = OUTBUFFER_SIZE;
+}
+
+boolean empty_output_buffer(j_compress_ptr cinfo){ 
+  struct jpeg_destination_mgr*dmgr = (struct jpeg_destination_mgr*)(cinfo->dest);
+	//memcpy to output buffer?
+  dmgr->next_output_byte = compressed_data;
+  dmgr->free_in_buffer = OUTBUFFER_SIZE;
+  return 1;
+}
+
+void term_destination(j_compress_ptr cinfo){ 
+	struct jpeg_destination_mgr*dmgr = (struct jpeg_destination_mgr*)(cinfo->dest);
+	//memcpy to output buffer?
+  free(compressed_data);
+  compressed_data = 0;
+  dmgr->free_in_buffer = 0;
 }
