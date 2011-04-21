@@ -32,6 +32,7 @@
 #define FIND 0
 #define ADD  1
 #define EXIT 2
+#define LIST 3
 
 
 void init_server();

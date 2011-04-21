@@ -173,6 +173,10 @@ void handle_connection(int fd){
 		case EXIT:
 			printf("[NAMESERVER] EXIT received!\n");
 			break;
+      case LIST:
+			printf("[NAMESERVER] FIND received!\n");
+         list_print(iplist);
+         break;
 		default:
 			printf("[NAMESERVER] Invalid header code\n");
 			break;
