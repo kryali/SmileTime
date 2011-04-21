@@ -15,7 +15,9 @@
 #include <linux/videodev2.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
-
+#include <jpeglib.h>
+#include "recorder_server.h"
+#include "include.h"
 #include "buffer_queue.h"
 
 #ifndef BUFFERCOUNT
@@ -53,14 +55,20 @@
 #ifndef CAMERA_PIX_FMT
 #define CAMERA_PIX_FMT V4L2_PIX_FMT_YUYV422 //read from camera
 #endif
+
 #ifndef VIDEO_WIDTH
 #define VIDEO_WIDTH 320
 #endif
+
 #ifndef VIDEO_HEIGHT
 #define VIDEO_HEIGHT 240
 #endif
+
+#define OUTBUFFER_SIZE 100000
+
 #ifndef VIDEO_RECORDER_H
 #define VIDEO_RECORDER_H
+
 
 int camera_fd;
 BufferQueue *videoq;
@@ -74,6 +82,7 @@ int stopRecording;
 float framesps;
 
 void video_record_init();
+void video_compress_init();
 int video_frame_copy();
 void video_frame_compress(int bufferIndex);
 void video_frame_queue();
@@ -82,4 +91,9 @@ void video_close();
 void print_Camera_Info();
 void mmap_init();
 void set_camera_output_format();
+
+void init_destination(j_compress_ptr cinfo);
+boolean empty_output_buffer(j_compress_ptr cinfo);
+void term_destination(j_compress_ptr cinfo);
+
 #endif

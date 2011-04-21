@@ -42,8 +42,8 @@ void * startVideoEncoding(){
 	int bufferIndex = 0;
 	int elapsedTime = 0;
 	int frames = 0;
+	video_compress_init();
 	ftime(&startTime);
-
 	while( stopRecording == 0){
 		bufferIndex = video_frame_copy();
 		video_frame_display( bufferIndex );
@@ -54,6 +54,7 @@ void * startVideoEncoding(){
 		ftime(&currentTime);
 		elapsedTime =  ((currentTime.time-startTime.time) * 1000 ) + ((currentTime.millitm-startTime.millitm) ); 
 		framesps = (float)elapsedTime / 1000;*/
+		break;
 	}
 	//printf("frames: %d\n", frames);
 	//printf("time ms: %d\n", elapsedTime);
