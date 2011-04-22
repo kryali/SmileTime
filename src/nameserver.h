@@ -41,6 +41,7 @@ void handle_connection(int fd);
 void add_server(char * msg);
 char * server_find(char * name);
 char * nameServerMsg(char * name, char * ip, char * port, char protocol, int * size);
+void populate();
 //char* strstp(char * str, char * stp, int * size);
 
 int nameserver_socket;

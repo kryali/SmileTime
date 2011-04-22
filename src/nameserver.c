@@ -2,16 +2,20 @@
 
 int main(){
 	iplist = NULL;
-	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
-	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
-	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
-	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
+	populate();
 	/*
 	list_print(iplist);
 	*/
 	init_server();
 	message_listen();
 	return 0;
+}
+
+void populate(){
+	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
+	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
+	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
+	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 }
 
 
