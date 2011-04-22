@@ -137,11 +137,15 @@ void handle_connection(int fd){
 				perror("read");
 				exit(1);
 			}
-			
+			printf("Size received %d\n", size);
+			size += 1;	
 			msg = malloc(size);
 			// Read the name
 			memset(msg, 0, size);
 			read(fd, msg, size);
+			msg[size-1] = '\0';
+	
+			printf("Message read, %s\n", msg);
 
 			// return the found name
 			char * ip = server_find(msg);
@@ -150,6 +154,7 @@ void handle_connection(int fd){
 			write(fd, &size, sizeof(int));
 			printf("Size: %d\n", size);
 			write(fd, ip, size);
+			printf("Message sent\n");
 			break;
 		case ADD:
 			printf("[NAMESERVER] ADD received!\n");
@@ -207,7 +212,7 @@ void handle_connection(int fd){
 			if (write( fd, retStr, strlen(retStr)+1) == -1){
 				perror("write");	
 			}
-			free(retStr);
+//			free(retStr);
 			break;
 		default:
 			printf("[NAMESERVER] Invalid header code\n");
