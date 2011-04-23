@@ -20,5 +20,8 @@
 char* strstp(char * str, char * stp, int * size);
 int xwrite(int fd, HTTP_packet* np);
 int xread(int fd, HTTP_packet* np);
+int strToInt(char* str);
+int toProtocol(char* protocol);
+int mjpeg2Jpeg(char ** jpg, const char *buffer, const int size);
 
 #endif

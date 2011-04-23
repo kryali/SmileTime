@@ -15,6 +15,7 @@ typedef struct BufferQueue BufferQueue;
 struct Buffer{
     void * start;
     int length;
+	int timestamp;
 };
 
 struct BufferList{
@@ -31,6 +32,7 @@ struct BufferQueue{
 
 void buffer_queue_init(BufferQueue *q);
 int buffer_queue_put(BufferQueue *q, Buffer *buff);
+int buffer_queue_peek(BufferQueue *q, Buffer *buff);
 int buffer_queue_get(BufferQueue *q, Buffer *buff);
 
 #endif

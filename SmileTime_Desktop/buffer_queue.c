@@ -7,9 +7,6 @@ void buffer_queue_init(BufferQueue *q) {
 
 int buffer_queue_put(BufferQueue *q, Buffer *buff) {
   BufferList *buff1;
-  //if(av_dup_packet(buff) < 0) {
-   // return -1;
-  //}
   buff1 = malloc(sizeof(BufferList));
   if (!buff1)
     return -1;
@@ -29,6 +26,23 @@ int buffer_queue_put(BufferQueue *q, Buffer *buff) {
 	pthread_mutex_unlock( &q->mutex );
   return 0;
 }
+
+int buffer_queue_peek(BufferQueue *q, Buffer *buff) {
+  BufferList *buff1;
+  int ret = 0;
+   
+  pthread_mutex_lock( &q->mutex );
+
+    buff1 = q->first_buff;
+    if (buff1) {
+      *buff = buff1->buff;
+      ret = 1;
+    }
+
+  pthread_mutex_unlock( &q->mutex );
+  return ret;
+}
+
 
 int buffer_queue_get(BufferQueue *q, Buffer *buff) {
   BufferList *buff1;

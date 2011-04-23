@@ -1,6 +1,12 @@
 #include "recorder_server.h"
 
-int init_connection( int port, int protocol ){
+int listen_peer_connections( int port, int protocol ){
+	av_protocol = protocol;
+	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
+	recorder_av_socket = listen_on_port(port+1, protocol);
+}
+
+int listen_on_port( int port, int protocol ){
 	// Open up a socket
 	int conn_socket = socket( AF_INET, protocol, 0 );
 	if( conn_socket == -1 ){
@@ -29,100 +35,18 @@ int init_connection( int port, int protocol ){
 		exit(1);
 	}
 
-	if(protocol == SOCK_STREAM)
-	{
-		// Listen on the socket for connections
-		if( listen( conn_socket, BACKLOG ) == -1) {
-			perror("listen");
-			exit(1);
-		}
-	}
-	else if(protocol == SOCK_DGRAM)
-	{
-		;//?
+	// Listen on the socket for connections
+	if( listen( conn_socket, BACKLOG ) == -1) {
+		perror("listen");
+		exit(1);
 	}
 
   return conn_socket;
 }
 
-void start_stats_timer(){
-	printf("[RECORER] Starting bandwidth stats\n");
-	timer_t timer_id;
-	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
-	struct itimerspec val;
-	memset(&val, 0, sizeof(struct itimerspec));
-	val.it_value.tv_sec = 1;
-	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, (int)NULL, &val, NULL);
-}
-
-int accept_connection(int socket, int protocol){
-	int fd;
-	if(protocol == SOCK_STREAM)
-	{
-		int addr_size = sizeof(struct sockaddr_storage);
-		struct sockaddr_storage their_addr;
-		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
-		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
-		if(fd == -1 ){
-			perror("accept connection");
-			exit(1);
-		}
-	}
-	else if(protocol == SOCK_DGRAM)
-	{
-		;//?
-	}
-	return fd;
-}
-
-void establish_control_connection(){
-	recorder_control_socket = init_connection(CONTROL_PORT, SOCK_STREAM);
-	printf("Waiting for a peer connection...\n");
-}
-
-void establish_video_connection(){
-	recorder_video_socket = init_connection(VIDEO_PORT, av_protocol);
-}
-
-void establish_audio_connection(){
-	recorder_audio_socket = init_connection(AUDIO_PORT, av_protocol);
-}
-
-/*
-void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
-  AVStream* audio_stream;
-  AVStream* video_stream;
-  if( stream0->codec->codec_type == AVMEDIA_TYPE_AUDIO )
-  {
-    audio_stream = stream0;
-    video_stream = stream1;
-  }
-  else
-  {
-    audio_stream = stream1;
-    video_stream = stream0;
-  }
-
-  control_packet cp;
-  cp.audio_codec = *audio_stream->codec->codec;
-  cp.video_codec = *video_stream->codec->codec;
-  cp.audio_codec_ctx = *audio_stream->codec;
-  cp.video_codec_ctx = *video_stream->codec;
-  HTTP_packet* np = control_to_network_packet(&cp);
-  printf("TYPE: %c\n", get_packet_type(np));
-  xwrite(controlfd, np );
-}*/
-
-void establish_peer_connections(int protocol){
-	av_protocol = protocol;
-	establish_control_connection();
-	establish_video_connection();
-	establish_audio_connection();
-
+void accept_peer_connection(){
 	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
-	videofd = accept_connection(recorder_video_socket, av_protocol);
-	audiofd = accept_connection(recorder_audio_socket, av_protocol);
+	avfd = accept_connection(recorder_av_socket, av_protocol);
 	
 	/*
 	struct timeb tp; 
@@ -159,19 +83,63 @@ void establish_peer_connections(int protocol){
 	*/
 }
 
-void stream_video_packets(){
-	while(stopRecording == 0){
-		video_frame_write();
+int accept_connection(int socket, int protocol){
+	int fd;
+	if(protocol == SOCK_STREAM)
+	{
+		int addr_size = sizeof(struct sockaddr_storage);
+		struct sockaddr_storage their_addr;
+		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
+		if(fd == -1 ){
+			perror("accept connection");
+			exit(1);
+		}
 	}
-	pthread_exit(NULL);
+	else if(protocol == SOCK_DGRAM)
+	{
+		;//?
+	}
+	return fd;
 }
 
-void stream_audio_packets(){
-	while(stopRecording == 0){
-		audio_segment_write();
-	}
-	pthread_exit(NULL);
+void start_stats_timer(){
+	printf("[smiletime] Starting bandwidth stats\n");
+	timer_t timer_id;
+	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
+	struct itimerspec val;
+	memset(&val, 0, sizeof(struct itimerspec));
+	val.it_value.tv_sec = 1;
+	val.it_value.tv_nsec = 0;
+	timer_settime(timer_id, (int)NULL, &val, NULL);
 }
+
+
+
+/*
+void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
+  AVStream* audio_stream;
+  AVStream* video_stream;
+  if( stream0->codec->codec_type == AVMEDIA_TYPE_AUDIO )
+  {
+    audio_stream = stream0;
+    video_stream = stream1;
+  }
+  else
+  {
+    audio_stream = stream1;
+    video_stream = stream0;
+  }
+
+  control_packet cp;
+  cp.audio_codec = *audio_stream->codec->codec;
+  cp.video_codec = *video_stream->codec->codec;
+  cp.audio_codec_ctx = *audio_stream->codec;
+  cp.video_codec_ctx = *video_stream->codec;
+  HTTP_packet* np = control_to_network_packet(&cp);
+  printf("TYPE: %c\n", get_packet_type(np));
+  xwrite(controlfd, np );
+}*/
 
 void listen_control_packets(){
 	//listen for control and pantilt packets.
@@ -212,7 +180,7 @@ void listen_control_packets(){
 //______________NAME SERVER_______________
 
 void register_nameserver(char * name, char * protocol, char * control_port){
-	printf("[RECORDER] registering IP with nameserver\n");
+	printf("[smiletime] registering IP with nameserver\n");
 
 	// Connect to nameserver
     struct addrinfo hints2, * res2;
@@ -236,16 +204,16 @@ void register_nameserver(char * name, char * protocol, char * control_port){
 	}
 
 	
-	printf("[RECORDER] connecting to nameserver...\n");
+	printf("[smiletime] connecting to nameserver...\n");
 	if( connect(nameserver_socket, res2->ai_addr, res2->ai_addrlen) == -1 ){
-		perror("connect");
+		perror("nameserver connect");
 		exit(1);
 	}
-	printf("[RECORDER] nameserver connected!...\n");
+	printf("[smiletime] nameserver connected!...\n");
 
 	char headerCode = ADD;
 	if( write( nameserver_socket, &headerCode, 1) == -1){
-		perror("write");
+		perror("nameserver write1");
 		exit(1);
 	}
 
@@ -257,15 +225,14 @@ void register_nameserver(char * name, char * protocol, char * control_port){
 	
 	// Send size );of message
 	if( write( nameserver_socket, &size, sizeof(int)) == -1){
-		perror("write");
+		perror("nameserver write2");
 		exit(1);
 	}
 
 	if( write( nameserver_socket, msg, size) == -1){
-		perror("write");
+		perror("nameserver write3");
 		exit(1);
 	}
-
 	free(msg);
 }
 
@@ -310,5 +277,6 @@ char *  getIP() {
         } 
         ifAddrStruct=ifAddrStruct->ifa_next;
     }
+
     return "(null)";
 }

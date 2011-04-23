@@ -39,7 +39,7 @@ int sdl_init(){
 	}
 
 	//Set the window caption
-	SDL_WM_SetCaption( "Logitech View", NULL );
+	SDL_WM_SetCaption( "smiletime!", NULL );
 
 
 	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
@@ -51,15 +51,10 @@ int sdl_init(){
   return 0;
 }
 
+//[V_PLAY] This function initiates the libraries used to display video on screen
 void video_play_init()
 {
-    printf("[V_PLAY] This function initiates the libraries used to display video on screen\n");
     sdl_init();
-}
-
-void video_frame_decompress()
-{
-    printf("[V_PLAY] This function decompresses the video frame read from media file\n");
 }
 
 void print_overlay_info(){
@@ -77,7 +72,7 @@ void video_frame_display(int bufferIndex)
 		exit(EXIT_FAILURE);
 	}
 
-	overlay->pixels[0] = buffers[bufferIndex].start;
+	overlay->pixels[0] = decompressed_frame;
 	SDL_UnlockYUVOverlay(overlay);
 
 	SDL_Rect video_rect;
