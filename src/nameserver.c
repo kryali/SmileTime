@@ -2,16 +2,20 @@
 
 int main(){
 	iplist = NULL;
+	populate();
 	/*
-	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
-	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
-	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
-	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 	list_print(iplist);
 	*/
 	init_server();
 	message_listen();
 	return 0;
+}
+
+void populate(){
+	list_add(&iplist, "Kiran", "127.0.0.1", "1337", TCP);
+	list_add(&iplist, "John", "127.0.0.2","1337", TCP);
+	list_add(&iplist, "Cliff", "127.0.0.3", "1337", TCP);
+	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 }
 
 
@@ -120,6 +124,7 @@ char * server_find(char * name){
 }
 
 void handle_connection(int fd){
+	printf("[NAMESERVER] reading header code..\n");
 	char headerCode = 10; //Hardcode some value that isn't any of the defined properties
 	if( read (fd, &headerCode, 1) != 1){
 		perror("read");
@@ -136,11 +141,15 @@ void handle_connection(int fd){
 				perror("read");
 				exit(1);
 			}
-			
+			printf("Size received %d\n", size);
+			size += 1;	
 			msg = malloc(size);
 			// Read the name
 			memset(msg, 0, size);
 			read(fd, msg, size);
+			msg[size-1] = '\0';
+	
+			printf("Message read, %s\n", msg);
 
 			// return the found name
 			char * ip = server_find(msg);
@@ -149,6 +158,7 @@ void handle_connection(int fd){
 			write(fd, &size, sizeof(int));
 			printf("Size: %d\n", size);
 			write(fd, ip, size);
+			printf("Message sent\n");
 			break;
 		case ADD:
 			printf("[NAMESERVER] ADD received!\n");
@@ -172,6 +182,41 @@ void handle_connection(int fd){
 			break;
 		case EXIT:
 			printf("[NAMESERVER] EXIT received!\n");
+			break;
+      	case LIST:
+			printf("[NAMESERVER] LIST received!\n");
+			list * temp = iplist;			
+			int size = 0;
+			int count = 0;
+			while(temp != NULL){
+				printf("%s\n", temp->name);
+				size += strlen(temp->name);
+				temp = temp->next;
+				count++;
+			}
+			size += count + 1;
+			char * retStr = malloc(size);
+			retStr[0] = '\0';
+			memset(retStr, 0, size);
+
+			temp = iplist;			
+			int i = 0;
+			while(temp != NULL){
+				strcat(retStr, temp->name);
+				if( i != count-1)
+					strcat(retStr, "#");
+				printf("Count: %d/%d\n", i,count);
+				temp = temp->next;
+				i++;
+			}
+			char retSize = size;	
+			write(fd, &retSize, 1); 
+
+			printf("Sending string: %s\n", retStr);
+			if (write( fd, retStr, strlen(retStr)+1) == -1){
+				perror("write");	
+			}
+//			free(retStr);
 			break;
 		default:
 			printf("[NAMESERVER] Invalid header code\n");

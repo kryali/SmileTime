@@ -10,7 +10,6 @@ list * list_find(list * head, char * name){
 }
 
 
-/*
 char* strstp(char * str, char * stp, int * size){
 	char * loc = strstr(str, stp);
 	*size = loc-str+1;
@@ -19,7 +18,7 @@ char* strstp(char * str, char * stp, int * size){
 	strncpy(retstr, str, *size-1);
 	retstr[*size-1] = '\0';
 	return retstr;
-}*/
+}
 void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	if(*head == NULL){
 		list * newnode = malloc(sizeof(list));
