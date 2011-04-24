@@ -19,7 +19,8 @@
 pthread_t control_network_thread_id;
 pthread_t video_capture_thread_id;
 pthread_t audio_capture_thread_id;
-pthread_t AV_stream_thread_id;
+pthread_t AV_send_thread_id;
+pthread_t AV_recv_thread_id;
 pthread_t keyboard_thread_id;
 
 int streaming;
@@ -41,7 +42,6 @@ void onExit()
 
 // Thread function to encode video and queue for sending
 void * startVideoEncoding(){
-video_frame_decompress();
 	while( stopRecording == 0){
 		video_frame_copy();
 		if(streaming == 1)
@@ -63,11 +63,23 @@ void * startAudioEncoding(){
 }
 
 // Thread function to dequeue audio and video and send through the network
-void * startAVStreaming(){
+void * startAVSending(){
 	while(stopRecording == 0){
 		if(streaming == 1){
 			video_frame_send();
 			audio_segment_send();
+		}
+	}
+	pthread_exit(NULL);
+}
+
+// Thread function to receive and play audio and video.
+void * startAVReceiving(){
+	video_frame_decompress();
+	while(stopRecording == 0){
+		if(streaming == 1){
+			//Check with kiran to see about 1 UDP stream.  I think this will work
+			//PLAY A and V packets here
 		}
 	}
 	pthread_exit(NULL);
@@ -115,14 +127,14 @@ int main(int argc, char*argv[])
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
-	pthread_create(&AV_stream_thread_id, NULL,  startAVStreaming, NULL);
+	pthread_create(&AV_send_thread_id, NULL,  startAVSending, NULL);
+	pthread_create(&AV_recv_thread_id, NULL,  startAVReceiving, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
 
-	sleep(1);
-//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
+	// * Start listening for peer connections. *
 	listen_peer_connections(strToInt(peer_port));
 
 	// * Establish control, audio, and video connections for multiple users. * 
@@ -135,9 +147,12 @@ int main(int argc, char*argv[])
 	// * Wait for threads to exit * 
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
-	pthread_join(AV_stream_thread_id, NULL);	
+	pthread_join(AV_send_thread_id, NULL);
+	pthread_join(AV_recv_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
-	pthread_join(control_network_thread_id, NULL);
+
+//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
+//pthread_join(control_network_thread_id, NULL);
 
 	// * Exit *
 	sdl_quit();

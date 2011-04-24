@@ -106,9 +106,8 @@ void video_frame_decompress()
 	void* buffe = malloc(fileSize);
 	rewind(jpgfile);
 	fread(buffe, fileSize, 1, jpgfile);
-	printf("jpeg decode %d\n", jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1));
+	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
 	fclose(jpgfile);
-	printf("decoded file\n");
 }
 
 void sdl_quit(){
@@ -168,10 +167,10 @@ void keyboard_capture()
 			case SDL_KEYDOWN:
 				switch(event.key.keysym.sym) {
 					case SDLK_LEFT:
-						pan_relative(-250);
+						pan_relative(250);
 					break;
 	      		case SDLK_RIGHT:
-						pan_relative(250);
+						pan_relative(-250);
 					break;
 	      		case SDLK_UP:
 						tilt_relative(-150);

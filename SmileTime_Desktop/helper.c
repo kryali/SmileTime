@@ -10,6 +10,7 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
+//sends to multiple peers
 int xwrite(HTTP_packet* np){
 	int ret = 0;
 	int i = 0;
@@ -24,6 +25,7 @@ int xwrite(HTTP_packet* np){
 	return ret;
 }
 
+//reads from multiple peers (this probably won't work.)
 int xread(HTTP_packet* np){
 	int ret = 0;
 	int i = 0;
@@ -50,8 +52,7 @@ int strToInt(char* str){
 	return ret;
 }
 
-int mjpeg2Jpeg(char **jpg, const char *mjpg, const int size)
-{
+
   char jpgHdr[] =
   {
 	0xff,0xd8,				  // SOI
@@ -96,6 +97,8 @@ int mjpeg2Jpeg(char **jpg, const char *mjpg, const int size)
 	0xF9,0xFA
   };
 
+int mjpeg2Jpeg(char **jpg, const char *mjpg, const int size)
+{
   //removing avi header
   int tmp = *(mjpg + 4);
   tmp <<= 8;
