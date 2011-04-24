@@ -13,9 +13,9 @@ typedef struct BufferList BufferList;
 typedef struct BufferQueue BufferQueue;
 
 struct Buffer{
-    void * start;
-    int length;
+	int length;
 	int timestamp;
+   void * start;
 };
 
 struct BufferList{

@@ -8,9 +8,11 @@ http://v4l2spec.bytesex.org/spec/capture-example.html
 char* camera_name = "/dev/video0";
 int width = VIDEO_WIDTH;
 int height = VIDEO_HEIGHT;
+
 Buffer video_pkt;
+av_packet av;
+
 struct timeb time_of_copy;
-int last_length;
 
 int bufferIndex;
 
@@ -26,10 +28,6 @@ void video_record_init(){
 	set_camera_output_format();
 	buffers = NULL;
 	mmap_init();
-	
-	//Set up video packet queue
-	videoq = malloc(sizeof(BufferQueue));
-	buffer_queue_init(videoq);
 }
 
 //This function copies the raw image from webcam frame buffer to program memory through V4L2 interface
@@ -53,7 +51,14 @@ void video_frame_copy()
 	}
 	ftime(&time_of_copy);
 	bufferIndex = bufQ.index;
-	last_length = buf.bytesused;
+
+	char* jpegStart;
+	int jpegSize = mjpeg2Jpeg(&jpegStart, buffers[bufferIndex].start, buf.bytesused);
+	video_pkt.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
+	video_pkt.length = jpegSize;
+	video_pkt.start = jpegStart;
+	av.packetType = VIDEO_PACKET;
+	av.buff = video_pkt;
 }
 
 // This function should decompress the captured MJPG image to a yuv image.
@@ -65,35 +70,16 @@ void video_frame_mjpg_to_yuv()
 	}
 }
 
-void video_frame_queue()
-{
-	char* jpegStart;
-	int jpegSize = mjpeg2Jpeg(&jpegStart, buffers[bufferIndex].start, last_length);
-	video_pkt.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
-	video_pkt.length = jpegSize;
-	video_pkt.start = jpegStart;
-
-	buffer_queue_put(videoq, &video_pkt);
-}
-
-
-Buffer net_pkt;
 void video_frame_send()
 {
-	if(videoq->nb_packets > 0 && buffer_queue_get(videoq, &net_pkt) == 1)
-	{
-		av_packet av;
-		av.buff = net_pkt;
-		HTTP_packet* http = av_to_network_packet(&av);
-		xwrite(http);
-		destroy_HTTP_packet(http);
-		free(net_pkt.start);
-	}
+	HTTP_packet* http = av_to_network_packet(&av);
+	xwrite(http);
+	destroy_HTTP_packet(http);
+	free(video_pkt.start);
 }
 
 //Closes the camera and frees all memory
 void video_close(){
-	free(videoq);
 	int closed = close(camera_fd);
 	if(closed == 0)
 		camera_fd = -1;

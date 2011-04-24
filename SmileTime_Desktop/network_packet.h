@@ -23,6 +23,8 @@
 
 #define CONTROL_PACKET 0
 #define PANTILT_PACKET 1
+#define AUDIO_PACKET 2
+#define VIDEO_PACKET 3
 
 #define PAN 0
 #define TILT 1
@@ -39,16 +41,17 @@ typedef struct __control_packet{
 } control_packet;
 
 typedef struct __pantilt_packet{
-	int type;//pan or tilt
+	char packetType;
+	char type;//pan or tilt
 	int distance;
 } pantilt_packet;
 
 typedef struct __av_packet{
+	char packetType;
 	Buffer buff;
 } av_packet;
 
 HTTP_packet* create_HTTP_packet(int length);
-HTTP_packet* create_HTTP_AV_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
 
 //data structs -> network packets

@@ -28,20 +28,19 @@ HTTP_packet* control_to_network_packet(control_packet* packet)
 HTTP_packet* pantilt_to_network_packet(pantilt_packet* packet)
 {
 	int length = sizeof(pantilt_packet);
-	HTTP_packet* network_packet = create_HTTP_packet(1+length);
-	((char*)network_packet->message)[0] = PANTILT_PACKET;
-	memcpy((network_packet->message)+1, packet, length);
+	HTTP_packet* network_packet = create_HTTP_packet(length);
+	memcpy(network_packet->message, packet, length);
 	return network_packet;
 }
 
 // converts a av_packet into a HTTP_packet
 HTTP_packet* av_to_network_packet(av_packet* packet)
 {
-	int length1 = sizeof(av_packet);
-	int length2 = packet->buff.length;
-	HTTP_packet* network_packet = create_HTTP_packet(length1 + length2);
-	memcpy((network_packet->message), packet, length1);
-	memcpy((network_packet->message)+length1, packet->buff.start, length2);
+	int length0 = sizeof(av_packet);
+	int length1 = packet->buff.length;
+	HTTP_packet* network_packet = create_HTTP_packet(length0 + length1);
+	memcpy((network_packet->message), packet, length0);
+	memcpy((network_packet->message)+length0, packet->buff.start, length1);
 	return network_packet;
 }
 
@@ -81,6 +80,7 @@ av_packet* to_av_packet(HTTP_packet* network_packet)
 pantilt_packet* generate_pantilt_packet(int type, int distance)
 {
 	pantilt_packet* pt = malloc(sizeof(pantilt_packet));
+	pt->packetType = PANTILT_PACKET;
 	pt->type = type;
 	pt->distance = distance;
 	return pt;

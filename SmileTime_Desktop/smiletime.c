@@ -19,7 +19,6 @@
 pthread_t control_network_thread_id;
 pthread_t video_capture_thread_id;
 pthread_t audio_capture_thread_id;
-pthread_t AV_send_thread_id;
 pthread_t AV_recv_thread_id;
 pthread_t keyboard_thread_id;
 
@@ -45,7 +44,7 @@ void * startVideoEncoding(){
 	while( stopRecording == 0){
 		video_frame_copy();
 		if(streaming == 1)
-			video_frame_queue();
+			video_frame_send();
 		video_frame_mjpg_to_yuv();
 		video_frame_display();
 	}
@@ -57,18 +56,7 @@ void * startAudioEncoding(){
 	while( stopRecording == 0){
 		audio_segment_copy();
 		if(streaming == 1)
-			audio_segment_queue();
-	}
-	pthread_exit(NULL);
-}
-
-// Thread function to dequeue audio and video and send through the network
-void * startAVSending(){
-	while(stopRecording == 0){
-		if(streaming == 1){
-			video_frame_send();
 			audio_segment_send();
-		}
 	}
 	pthread_exit(NULL);
 }
@@ -127,7 +115,6 @@ int main(int argc, char*argv[])
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
-	pthread_create(&AV_send_thread_id, NULL,  startAVSending, NULL);
 	pthread_create(&AV_recv_thread_id, NULL,  startAVReceiving, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
@@ -147,7 +134,6 @@ int main(int argc, char*argv[])
 	// * Wait for threads to exit * 
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
-	pthread_join(AV_send_thread_id, NULL);
 	pthread_join(AV_recv_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
 

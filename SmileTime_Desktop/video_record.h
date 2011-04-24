@@ -70,7 +70,6 @@
 
 
 int camera_fd;
-BufferQueue *videoq;
 unsigned char* decompressed_frame_camera;
 unsigned char* decompressed_frame_phone;
 
@@ -84,9 +83,8 @@ float framesps;
 
 void video_record_init();
 void video_frame_copy();
-void video_frame_mjpg_to_yuv();
-void video_frame_queue();
 void video_frame_send();
+void video_frame_mjpg_to_yuv();
 void video_close();
 void print_Camera_Info();
 void mmap_init();

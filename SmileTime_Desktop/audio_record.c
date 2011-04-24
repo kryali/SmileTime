@@ -10,6 +10,7 @@ int audio_buf_size;
 struct timeb time_of_copy;
 
 Buffer audio_pkt;
+av_packet av;
 
 int channels = 1;
 int sample_bits = 16; //bits per sample
@@ -43,9 +44,6 @@ void audio_record_init()
 
   	audio_buf_size = audio_input_frame_size * sample_size;
 	audio_buf =  malloc(audio_buf_size);
-
-	audioq = malloc(sizeof(BufferQueue));
-	buffer_queue_init(audioq);
 }
 
 void audio_segment_copy()
@@ -53,36 +51,24 @@ void audio_segment_copy()
 	if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
 		perror("audio_segment_copy read: ");
 	ftime(&time_of_copy);
-}
 
-void audio_segment_queue()
-{
 	audio_pkt.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
 	audio_pkt.length = audio_buf_size;
-	audio_pkt.start = malloc(audio_pkt.length);
-	memcpy(audio_pkt.start, audio_buf, audio_pkt.length);
-
-	buffer_queue_put(audioq, &audio_pkt);
+	audio_pkt.start = audio_buf;
+	av.packetType = AUDIO_PACKET;
+	av.buff = audio_pkt;
 }
 
-Buffer net_pkt;
 void audio_segment_send()
 {
-	if(audioq->nb_packets > 0 && buffer_queue_get(audioq, &net_pkt) == 1)
-	{
-		av_packet av;
-		av.buff = net_pkt;
-		HTTP_packet* http = av_to_network_packet(&av);
-		xwrite(http);
-		destroy_HTTP_packet(http);
-		free(net_pkt.start);
-	}
+	HTTP_packet* http = av_to_network_packet(&av);
+	xwrite(http);
+	destroy_HTTP_packet(http);
 }
 
 //Frees all memory and closes codecs.
 void audio_close()
 {
-	free(audioq);
 	free(audio_buf);
 	close(microphone_fd);
 }
