@@ -39,7 +39,7 @@ void onExit()
     exit(0);
 }
 
-// Thread function to encode video and queue for sending
+// Thread function to encode and send video
 void * startVideoEncoding(){
 	while( stopRecording == 0){
 		video_frame_copy();
@@ -51,7 +51,7 @@ void * startVideoEncoding(){
 	pthread_exit(NULL);
 }
 
-// Thread function to encode audio and queue for sending
+// Thread function to encode and send audio
 void * startAudioEncoding(){
 	while( stopRecording == 0){
 		audio_segment_copy();
@@ -66,8 +66,11 @@ void * startAVReceiving(){
 	video_frame_decompress();
 	while(stopRecording == 0){
 		if(streaming == 1){
-			//Check with kiran to see about 1 UDP stream.  I think this will work
-			//PLAY A and V packets here
+			//Check with kiran to see about 1 UDP stream.
+			//1  Receive a packet
+			//2  check packet type
+			//3a play audio packets
+			//3b decode and display video packets
 		}
 	}
 	pthread_exit(NULL);
@@ -124,7 +127,7 @@ int main(int argc, char*argv[])
 	// * Start listening for peer connections. *
 	listen_peer_connections(strToInt(peer_port));
 
-	// * Establish control, audio, and video connections for multiple users. * 
+	// * Establish control and audio/video connections for multiple users. * 
 	while(stopRecording == 0){
 		printf("[smiletime] waiting for a peer connection.\n");
 		accept_peer_connection();
