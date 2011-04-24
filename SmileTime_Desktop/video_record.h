@@ -71,7 +71,8 @@
 
 int camera_fd;
 BufferQueue *videoq;
-unsigned char* decompressed_frame;
+unsigned char* decompressed_frame_camera;
+unsigned char* decompressed_frame_phone;
 
 struct Buffer * buffers;
 

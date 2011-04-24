@@ -41,6 +41,7 @@ void onExit()
 
 // Thread function to encode video and queue for sending
 void * startVideoEncoding(){
+video_frame_decompress();
 	while( stopRecording == 0){
 		video_frame_copy();
 		if(streaming == 1)
@@ -120,8 +121,8 @@ int main(int argc, char*argv[])
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
 
-	sleep(2);
-			//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
+	sleep(1);
+//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
 	listen_peer_connections(strToInt(peer_port));
 
 	// * Establish control, audio, and video connections for multiple users. * 

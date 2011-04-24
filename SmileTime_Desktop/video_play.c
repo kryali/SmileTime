@@ -1,10 +1,5 @@
 #include "video_play.h"
 
-#define SDL_YV12_OVERLAY  0x32315659  /* Planar mode: Y + V + U */
-#define SDL_IYUV_OVERLAY  0x56555949  /* Planar mode: Y + U + V */
-#define SDL_YUY2_OVERLAY  0x32595559  /* Packed mode: Y0+U0+Y1+V0 */
-#define SDL_UYVY_OVERLAY  0x59565955  /* Packed mode: U0+Y0+V0+Y1 */
-
 // Super helpful link: http://sdl.beuc.net/sdl.wiki/SDL_Overlay
 
 //The surfaces that will be used
@@ -13,7 +8,8 @@ SDL_Surface *background = NULL;
 SDL_Surface *screen = NULL;
 SDL_Surface *cam_surface = NULL;
 
-SDL_Overlay * overlay = NULL;
+SDL_Overlay * overlay_camera = NULL;
+SDL_Overlay * overlay_phone = NULL;
 
 //The attributes of the screen
 const int SCREEN_WIDTH = VIDEO_WIDTH;
@@ -29,7 +25,7 @@ int sdl_init(){
 	}
 
 	//Set up the screen
-	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP, SDL_SWSURFACE | SDL_ANYFORMAT );
+	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT*2, SCREEN_BPP, SDL_SWSURFACE | SDL_ANYFORMAT );
 
 	//If there was in error in setting up the screen
 	if( screen == NULL )
@@ -42,8 +38,14 @@ int sdl_init(){
 	SDL_WM_SetCaption( "smiletime!", NULL );
 
 
-	overlay = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
-	if(overlay == NULL){
+	overlay_camera = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
+	if(overlay_camera == NULL){
+		printf("Failed to create Overlay\n");
+		exit(EXIT_FAILURE);
+	}
+
+	overlay_phone = SDL_CreateYUVOverlay(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_YUY2_OVERLAY, screen);
+	if(overlay_phone == NULL){
 		printf("Failed to create Overlay\n");
 		exit(EXIT_FAILURE);
 	}
@@ -58,30 +60,50 @@ void video_play_init()
 }
 
 void print_overlay_info(){
-	printf("Planes :%d\n", overlay->planes);
+	/*printf("Planes :%d\n", overlay->planes);
 	printf("WIDTH: %d HEIGHT: %d\n", overlay->w, overlay->h);
 	printf("HARDWARE ACCELERATION: %d\n", overlay->hw_overlay);
-	printf("Format: 0x%x\n", overlay->format);
+	printf("Format: 0x%x\n", overlay->format);*/
 }
 
 void video_frame_display(int bufferIndex)
 {
   //printf("[V_PLAY] This function displays the video frame on the screen\n");
-	SDL_LockYUVOverlay(overlay);
+	SDL_LockYUVOverlay(overlay_camera);
 	if(buffers == NULL){
 		exit(EXIT_FAILURE);
 	}
 
-	overlay->pixels[0] = decompressed_frame;
-	SDL_UnlockYUVOverlay(overlay);
+	overlay_camera->pixels[0] = decompressed_frame_camera;
+	SDL_UnlockYUVOverlay(overlay_camera);
+
+	SDL_LockYUVOverlay(overlay_phone);
+	overlay_phone->pixels[0] = decompressed_frame_phone;
+	SDL_UnlockYUVOverlay(overlay_phone);
 
 	SDL_Rect video_rect;
 	video_rect.x = 0;
 	video_rect.y = 0;
 	video_rect.w = SCREEN_WIDTH;
 	video_rect.h = SCREEN_HEIGHT;
-	SDL_DisplayYUVOverlay(overlay, &video_rect);
+	SDL_DisplayYUVOverlay(overlay_camera, &video_rect);
+	video_rect.y = SCREEN_HEIGHT;
+	SDL_DisplayYUVOverlay(overlay_phone, &video_rect);
+}
 
+int width1 = VIDEO_WIDTH;
+int height1 = VIDEO_HEIGHT;
+void video_frame_decompress()
+{
+	FILE* jpgfile = fopen("kiran.jpg", "r");
+	fseek(jpgfile, 0, SEEK_END);
+	int fileSize = ftell(jpgfile);
+	void* buffe = malloc(fileSize);
+	rewind(jpgfile);
+	fread(buffe, fileSize, 1, jpgfile);
+	printf("jpeg decode %d\n", jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1));
+	fclose(jpgfile);
+	printf("decoded file\n");
 }
 
 void sdl_quit(){

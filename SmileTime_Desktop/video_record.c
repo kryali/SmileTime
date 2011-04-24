@@ -59,7 +59,7 @@ void video_frame_copy()
 // This function should decompress the captured MJPG image to a yuv image.
 void video_frame_mjpg_to_yuv()
 {
-	if(jpeg_decode(&decompressed_frame, buffers[bufferIndex].start, &width, &height) < 0){
+	if(jpeg_decode(&decompressed_frame_camera, buffers[bufferIndex].start, &width, &height) < 0){
 		printf("jpeg decode failure\n");
 		exit(1);
 	}

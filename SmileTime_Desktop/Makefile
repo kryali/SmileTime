@@ -5,7 +5,7 @@ CC=gcc -pthread
 SDLLIBS = $(shell sdl-config --libs) 
 SDLFLAGS = $(shell sdl-config --cflags)
 
-MATH_LIB=-lm 
+MATHJPG_LIB=-lm
 
 CFLAGS = -O0 $(SDLFLAGS) -Wall -g
 
@@ -23,9 +23,6 @@ clean:
 # Applications:
 smiletime:	$(SMILETIME_OBJECTS)
 	$(CC)	$(CFLAGS) $(SMILETIME_OBJECTS) $(LUVCVIEW_OBJECTS) $(MATH_LIB) $(SDLLIBS) -o $@
-
-#player:	$(PLAY_OBJECTS)
-#	$(CC)	$(CFLAGS) $(PLAY_OBJECTS) $(MATH_LIB) $(SDLLIBS) -o $@
 
 nameserver:	$(NAMESERVER_OBJ)
 	$(CC)   $(NAMESERVER_OBJ) -o $@
