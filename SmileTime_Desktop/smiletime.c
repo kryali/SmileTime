@@ -43,9 +43,9 @@ void onExit()
 void * startVideoEncoding(){
 	while( stopRecording == 0){
 		video_frame_copy();
-		//if(streaming == 1)
+		if(streaming == 1)
 			video_frame_queue();
-		video_frame_decompress();
+		video_frame_mjpg_to_yuv();
 		video_frame_display();
 	}
 	pthread_exit(NULL);
@@ -122,11 +122,12 @@ int main(int argc, char*argv[])
 
 	sleep(2);
 			//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
-	//listen_peer_connections(strToInt(peer_port), toProtocol(protocol));
+	listen_peer_connections(strToInt(peer_port));
 
 	// * Establish control, audio, and video connections for multiple users. * 
 	while(stopRecording == 0){
-		//accept_peer_connection();
+		printf("[smiletime] waiting for a peer connection.\n");
+		accept_peer_connection();
 		streaming = 1;
 	}
 

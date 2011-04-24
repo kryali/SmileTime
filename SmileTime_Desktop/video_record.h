@@ -83,7 +83,7 @@ float framesps;
 
 void video_record_init();
 void video_frame_copy();
-void video_frame_decompress();
+void video_frame_mjpg_to_yuv();
 void video_frame_queue();
 void video_frame_send();
 void video_close();

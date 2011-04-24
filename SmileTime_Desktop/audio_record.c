@@ -73,7 +73,7 @@ void audio_segment_send()
 		av_packet av;
 		av.buff = net_pkt;
 		HTTP_packet* http = av_to_network_packet(&av);
-		xwrite(avfd, http);
+		xwrite(AV_OFFSET, http);
 		destroy_HTTP_packet(http);
 		free(net_pkt.start);
 	}

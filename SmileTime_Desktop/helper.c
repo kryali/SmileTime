@@ -10,24 +10,31 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
-int xwrite(int fd, HTTP_packet* np){
+int xwrite(int peer_fd_offset, HTTP_packet* np){
 	int ret = 0;
-	//ret = write(fd, np->message, np->length);
-  ret = send(fd, np->message, np->length, NULL);
-	if(ret == -1){
-		perror("write");
-		exit(1);
+	int i = peer_fd_offset;
+	for(; i < numPeers; i ++)
+	{
+  		ret = sendto(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_storage));
+		if(ret == -1){
+			perror("write");
+			exit(1);
+		}
 	}
 	return ret;
 }
 
-int xread(int fd, HTTP_packet* np){
+int xread(int peer_fd_offset, HTTP_packet* np){
 	int ret = 0;
-	//ret = read(fd, np->message, np->length);
-	ret = recv(fd, np->message, np->length, NULL);
-	if(ret == -1){
-		perror("write");
-		exit(1);
+	int i = peer_fd_offset;
+	int sockaddr_storage_size = sizeof(struct sockaddr_storage);
+	for(; i < numPeers; i ++)
+	{
+		ret = recvfrom(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], &sockaddr_storage_size);
+		if(ret == -1){
+			perror("write");
+			exit(1);
+		}
 	}
 	return ret;
 }
@@ -41,13 +48,6 @@ int strToInt(char* str){
 		i++;
 	}
 	return ret;
-}
-
-int toProtocol(char* protocol){
-	if(protocol[0] == '0')
-		return SOCK_STREAM;
-	if(protocol[0] == '0')
-		return SOCK_DGRAM;
 }
 
 int mjpeg2Jpeg(char **jpg, const char *mjpg, const int size)

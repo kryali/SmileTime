@@ -6,21 +6,26 @@
 #include "video_record.h"
 #include "audio_record.h"
 
-int recorder_control_socket;
-int recorder_av_socket;
-int controlfd;
-int avfd;
-int av_protocol;
+#define MAX_PEERS 4
+#define SOCKETS_PER_PEER 2
+#define CONTROL_OFFSET 0
+#define AV_OFFSET 1
 
-int listen_peer_connections( int port, int protocol );
-int listen_on_port(int port, int protocol);
+int recorder_control_socket;
+
+int numPeers;
+int * peer_fd;
+struct sockaddr_storage * peer_info;
+
+void listen_peer_connections( int port );
+int listen_on_port(int port);
 void accept_peer_connection();
-int accept_connection(int socket, int protocol);
+void accept_connection(int socket, int peerIndex);
 void establish_video_connection();
 void establish_audio_connection();
 void establish_control_connection();
 
-void listen_control_packets();
+//void listen_control_packets();
 void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();

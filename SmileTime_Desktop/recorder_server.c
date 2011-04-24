@@ -1,14 +1,16 @@
 #include "recorder_server.h"
 
-int listen_peer_connections( int port, int protocol ){
-	av_protocol = protocol;
-	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
-	recorder_av_socket = listen_on_port(port+1, protocol);
+
+void listen_peer_connections( int port){
+	recorder_control_socket = listen_on_port(port);
+	numPeers = 0;
+	peer_fd = malloc(MAX_PEERS * sizeof(int));
+	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_storage));
 }
 
-int listen_on_port( int port, int protocol ){
+int listen_on_port( int port){
 	// Open up a socket
-	int conn_socket = socket( AF_INET, protocol, 0 );
+	int conn_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	if( conn_socket == -1 ){
 		perror("socket");
 		exit(1);
@@ -45,9 +47,8 @@ int listen_on_port( int port, int protocol ){
 }
 
 void accept_peer_connection(){
-	controlfd = accept_connection(recorder_control_socket, SOCK_STREAM);
-	avfd = accept_connection(recorder_av_socket, av_protocol);
-	
+	accept_connection(recorder_control_socket, numPeers);
+	numPeers++;
 	/*
 	struct timeb tp; 
 	int t1, t2;
@@ -83,24 +84,18 @@ void accept_peer_connection(){
 	*/
 }
 
-int accept_connection(int socket, int protocol){
+void accept_connection(int socket, int peerIndex){
 	int fd;
-	if(protocol == SOCK_STREAM)
-	{
-		int addr_size = sizeof(struct sockaddr_storage);
-		struct sockaddr_storage their_addr;
-		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
-		fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
-		if(fd == -1 ){
-			perror("accept connection");
-			exit(1);
-		}
+	int addr_size = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
+	if(fd == -1 ){
+		perror("accept connection");
+		exit(1);
 	}
-	else if(protocol == SOCK_DGRAM)
-	{
-		;//?
-	}
-	return fd;
+	peer_fd[peerIndex] = fd;
+	peer_info[peerIndex] = their_addr;
 }
 
 void start_stats_timer(){
@@ -140,7 +135,7 @@ void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
   printf("TYPE: %c\n", get_packet_type(np));
   xwrite(controlfd, np );
 }*/
-
+/*
 void listen_control_packets(){
 	//listen for control and pantilt packets.
 	void* buffer = malloc(100);
@@ -175,7 +170,7 @@ void listen_control_packets(){
 	}
 	free(buffer);
 	pthread_exit(NULL);
-}
+}*/
 
 //______________NAME SERVER_______________
 

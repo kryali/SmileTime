@@ -57,7 +57,7 @@ void video_frame_copy()
 }
 
 // This function should decompress the captured MJPG image to a yuv image.
-void video_frame_decompress()
+void video_frame_mjpg_to_yuv()
 {
 	if(jpeg_decode(&decompressed_frame, buffers[bufferIndex].start, &width, &height) < 0){
 		printf("jpeg decode failure\n");
@@ -85,7 +85,7 @@ void video_frame_send()
 		av_packet av;
 		av.buff = net_pkt;
 		HTTP_packet* http = av_to_network_packet(&av);
-		xwrite(avfd, http);
+		xwrite(AV_OFFSET, http);
 		destroy_HTTP_packet(http);
 		free(net_pkt.start);
 	}
