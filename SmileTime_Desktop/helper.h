@@ -19,8 +19,8 @@
 #include "network_packet.h"
 
 char* strstp(char * str, char * stp, int * size);
-int xwrite(int peer_fd_offset, HTTP_packet* np);
-int xread(int peer_fd_offset, HTTP_packet* np);
+int xwrite(HTTP_packet* np);
+int xread(HTTP_packet* np);
 int strToInt(char* str);
 int mjpeg2Jpeg(char ** jpg, const char *buffer, const int size);
 

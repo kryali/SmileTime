@@ -10,9 +10,9 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
-int xwrite(int peer_fd_offset, HTTP_packet* np){
+int xwrite(HTTP_packet* np){
 	int ret = 0;
-	int i = peer_fd_offset;
+	int i = 0;
 	for(; i < numPeers; i ++)
 	{
   		ret = sendto(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_storage));
@@ -24,9 +24,9 @@ int xwrite(int peer_fd_offset, HTTP_packet* np){
 	return ret;
 }
 
-int xread(int peer_fd_offset, HTTP_packet* np){
+int xread(HTTP_packet* np){
 	int ret = 0;
-	int i = peer_fd_offset;
+	int i = 0;
 	int sockaddr_storage_size = sizeof(struct sockaddr_storage);
 	for(; i < numPeers; i ++)
 	{

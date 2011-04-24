@@ -5,7 +5,13 @@ void listen_peer_connections( int port){
 	recorder_control_socket = listen_on_port(port);
 	numPeers = 0;
 	peer_fd = malloc(MAX_PEERS * sizeof(int));
+	
 	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_storage));
+	int i = 0;
+	for(; i < MAX_PEERS; i++){
+		peer_fd[i] = -1;
+		memset(&peer_info[i], 0, sizeof(struct sockaddr_storage));
+	}
 }
 
 int listen_on_port( int port){

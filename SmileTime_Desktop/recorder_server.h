@@ -8,8 +8,6 @@
 
 #define MAX_PEERS 4
 #define SOCKETS_PER_PEER 2
-#define CONTROL_OFFSET 0
-#define AV_OFFSET 1
 
 int recorder_control_socket;
 
