@@ -24,6 +24,11 @@ int sdl_init(){
 		return 1;    
 	}
 
+	//set up the icon
+	SDL_Surface *icon;
+	icon = IMG_Load("icon.png");
+	SDL_WM_SetIcon(icon, NULL);
+
 	//Set up the screen
 	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT*2, SCREEN_BPP, SDL_SWSURFACE | SDL_ANYFORMAT );
 

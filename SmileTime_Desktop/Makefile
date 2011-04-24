@@ -2,10 +2,10 @@ INSTALLROOT=$(PWD)
 
 CC=gcc -pthread
 
-SDLLIBS = $(shell sdl-config --libs) 
+SDLLIBS = $(shell sdl-config --libs) -lSDL_image
 SDLFLAGS = $(shell sdl-config --cflags)
 
-MATHJPG_LIB=-lm
+MATHJPG_LIB= -lm 
 
 CFLAGS = -O0 $(SDLFLAGS) -Wall -g
 
