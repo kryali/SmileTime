@@ -70,7 +70,7 @@ void * startAVReceiving(){
 			//1  Receive a packet
 			//2  check packet type
 			//3a play audio packets
-			//3b decode and display video packets
+			//3b decode and display video packets.  Possibly use a queue for video packets, probably unnecessary.
 		}
 	}
 	pthread_exit(NULL);
