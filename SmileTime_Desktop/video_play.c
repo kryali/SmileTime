@@ -126,23 +126,31 @@ void init_av_socket(){
 }
 
 void init_udp_av(){
-	int s, i, slen=sizeof(si_me);
+	int slen=sizeof(si_me);
 
-	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+	if ((video_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
 		perror("socket");
 
 	memset((char *) &si_me, 0, sizeof(si_me));
 	si_me.sin_family = AF_INET;
 	si_me.sin_port = htons(VIDEO_PORT);
 	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(s, &si_me, sizeof(si_me))==-1)
+	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
 		perror("bind");
 	printf("[VIDEO] UDP Socket is bound\n");
 }
 
 
 void * read_jpg(int fd){
-
+	struct sockaddr_in si_other;
+	int jpgSize = 0;
+	int sLen = sizeof(si_other);
+	int readbytes = 0;
+	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), 0, &si_other, &sLen))== -1){
+		perror("recvfrom");
+	}
+	printf("Received %d from %s\n: %d bytes", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
+/*
     char * buf = malloc(10);
     printf("Waiting for data...\n");
     int readSize;
@@ -170,7 +178,7 @@ void * read_jpg(int fd){
 	printf("File of %db written\n", jpgSize);
 	free(buf);
 	return jpg_buffer;
-
+*/
 }
 
 int width1 = VIDEO_WIDTH;
@@ -188,6 +196,7 @@ void video_frame_decompress()
 //	void * buffe = read_jpg(fd);
 //	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
 //	fclose(jpgfile);
+	read_jpg(video_socket);
 }
 
 void sdl_quit(){
