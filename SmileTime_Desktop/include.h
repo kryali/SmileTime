@@ -31,6 +31,8 @@ int stopRecording;
 #define AUDIO_PORT_S "1338"
 #define VIDEO_PORT 1339
 #define VIDEO_PORT_S "1339"
+#define AV_PORT 1339
+#define AV_PORT_S "1339"
 #define BACKLOG 20
 
 #define NAMESERVER_IP "173.230.140.232"

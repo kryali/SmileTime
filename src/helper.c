@@ -1,5 +1,6 @@
 #include "helper.h"
 
+/*
 char* strstp(char * str, char * stp, int * size){
 	char * loc = strstr(str, stp);
 	*size = loc-str+1;
@@ -8,7 +9,7 @@ char* strstp(char * str, char * stp, int * size){
 	strncpy(retstr, str, *size-1);
 	retstr[*size-1] = '\0';
 	return retstr;
-}
+}*/
 
 int xwrite(int fd, HTTP_packet* np){
 	int ret = 0;

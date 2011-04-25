@@ -82,9 +82,11 @@ void video_frame_display(int bufferIndex)
 	overlay_camera->pixels[0] = decompressed_frame_camera;
 	SDL_UnlockYUVOverlay(overlay_camera);
 
-	SDL_LockYUVOverlay(overlay_phone);
-	overlay_phone->pixels[0] = decompressed_frame_phone;
-	SDL_UnlockYUVOverlay(overlay_phone);
+	if((decompressed_frame_phone) != NULL){
+		SDL_LockYUVOverlay(overlay_phone);
+		overlay_phone->pixels[0] = decompressed_frame_phone;
+		SDL_UnlockYUVOverlay(overlay_phone);
+	}
 
 	SDL_Rect video_rect;
 	video_rect.x = 0;
@@ -96,18 +98,80 @@ void video_frame_display(int bufferIndex)
 	SDL_DisplayYUVOverlay(overlay_phone, &video_rect);
 }
 
+int accept_connection_s(int socket, int protocol){
+    int fd;
+    if(protocol == SOCK_STREAM)
+    {
+        socklen_t addr_size = (socklen_t)sizeof(struct sockaddr_storage);
+
+        struct sockaddr_storage their_addr;
+        memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+        fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
+        if(fd == -1 ){
+            perror("accept connection");
+            exit(1);
+        }
+    }
+    else if(protocol == SOCK_DGRAM)
+    {
+        ;//?
+    }
+    return fd;
+}
+
+
+// This function listens on a port and sets up accepting a connection
+void init_av_socket(){
+	int listenfd = listen_on_port(VIDEO_PORT);
+}
+
+void * read_jpg(int fd){
+
+    char * buf = malloc(10);
+    printf("Waiting for data...\n");
+    int readSize;
+    int writeSize;
+    int packetSize = 0;
+	int jpgSize = 0;
+    if( (readSize = read(fd, &packetSize, sizeof(int))) == -1){
+        perror("read");
+        exit(0);
+    }
+    printf("Size of the image file: %d\n", packetSize);
+	void * jpg_buffer = malloc(packetSize);
+	memset(jpg_buffer, 0, packetSize);
+    while(jpgSize < (packetSize-4)){
+        memset(buf, 0, 10);
+        if( (readSize = read(fd, jpg_buffer, packetSize)) == -1){
+            perror("read");
+        }
+		printf("Read %d bytes\n", readSize);
+        if(readSize == 0){
+			break;
+        }
+		jpgSize += readSize;
+    }
+	printf("File of %db written\n", jpgSize);
+	free(buf);
+	return jpg_buffer;
+
+}
+
 int width1 = VIDEO_WIDTH;
 int height1 = VIDEO_HEIGHT;
-void video_frame_decompress()
+void video_frame_decompress(int fd)
 {
+/*
 	FILE* jpgfile = fopen("kiran.jpg", "r");
 	fseek(jpgfile, 0, SEEK_END);
 	int fileSize = ftell(jpgfile);
 	void* buffe = malloc(fileSize);
 	rewind(jpgfile);
 	fread(buffe, fileSize, 1, jpgfile);
+*/
+	void * buffe = read_jpg(fd);
 	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
-	fclose(jpgfile);
+//	fclose(jpgfile);
 }
 
 void sdl_quit(){
@@ -172,7 +236,6 @@ void keyboard_capture()
 	      		case SDLK_RIGHT:
 						pan_relative(-250);
 					break;
-	      		case SDLK_UP:
 						tilt_relative(-150);
 					break;
 	      		case SDLK_DOWN:

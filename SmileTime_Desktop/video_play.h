@@ -13,15 +13,19 @@
 #define SDL_UYVY_OVERLAY  0x59565955  /* Packed mode: U0+Y0+V0+Y1 */
 
 	SDL_Event event;
+	int video_socket;
 
 	void print_overlay_info();
+	int accept_connection_s(int socket, int protocol);
 	void video_play_init();
 	void video_frame_display();
-	void video_frame_decompress();
+	void video_frame_decompress(int fd);
+	void * read_jpg(int fd);
 	int sdl_init();
 	void sdl_quit();
 	void keyboard_capture();
 	void xioctl(int ctrl, int value);
+	void init_av_socket();
 	void pan_relative(int pan);
 	void tilt_relative(int tilt);
 	void pan_reset();

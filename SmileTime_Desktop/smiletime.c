@@ -63,7 +63,12 @@ void * startAudioEncoding(){
 
 // Thread function to receive and play audio and video.
 void * startAVReceiving(){
-	video_frame_decompress();
+	printf("[VIDEO] Opening up port..\n");
+	int listen = listen_on_port(VIDEO_PORT);
+	printf("[VIDEO] Listening for a connection..\n");
+	video_socket = accept_connection_s(listen, SOCK_STREAM);
+	printf("[VIDEO] connection accepted..\n");
+	video_frame_decompress(video_socket);
 	while(stopRecording == 0){
 		if(streaming == 1){
 			//Check with kiran to see about 1 UDP stream.
