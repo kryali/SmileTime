@@ -14,12 +14,14 @@
 
 	SDL_Event event;
 	int video_socket;
+	struct sockaddr_in si_me; // UDP Sock_addr used for recv data
 
 	void print_overlay_info();
+	void init_udp_av();
 	int accept_connection_s(int socket, int protocol);
 	void video_play_init();
 	void video_frame_display();
-	void video_frame_decompress(int fd);
+	void video_frame_decompress();
 	void * read_jpg(int fd);
 	int sdl_init();
 	void sdl_quit();

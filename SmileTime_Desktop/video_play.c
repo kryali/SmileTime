@@ -125,6 +125,22 @@ void init_av_socket(){
 	int listenfd = listen_on_port(VIDEO_PORT);
 }
 
+void init_udp_av(){
+	int s, i, slen=sizeof(si_me);
+
+	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		perror("socket");
+
+	memset((char *) &si_me, 0, sizeof(si_me));
+	si_me.sin_family = AF_INET;
+	si_me.sin_port = htons(VIDEO_PORT);
+	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(s, &si_me, sizeof(si_me))==-1)
+		perror("bind");
+	printf("[VIDEO] UDP Socket is bound\n");
+}
+
+
 void * read_jpg(int fd){
 
     char * buf = malloc(10);
@@ -159,7 +175,7 @@ void * read_jpg(int fd){
 
 int width1 = VIDEO_WIDTH;
 int height1 = VIDEO_HEIGHT;
-void video_frame_decompress(int fd)
+void video_frame_decompress()
 {
 /*
 	FILE* jpgfile = fopen("kiran.jpg", "r");
@@ -169,8 +185,8 @@ void video_frame_decompress(int fd)
 	rewind(jpgfile);
 	fread(buffe, fileSize, 1, jpgfile);
 */
-	void * buffe = read_jpg(fd);
-	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
+//	void * buffe = read_jpg(fd);
+//	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
 //	fclose(jpgfile);
 }
 
