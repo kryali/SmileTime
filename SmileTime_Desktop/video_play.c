@@ -143,13 +143,21 @@ void init_udp_av(){
 
 void * read_jpg(int fd){
 	struct sockaddr_in si_other;
-	int jpgSize = 0;
+	int jpgSize = -1;
 	int sLen = sizeof(si_other);
 	int readbytes = 0;
 	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
-	printf("Received %d from %s\n: %d bytes", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
+	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
+	void * jpgBuffer = malloc(jpgSize);
+	memset(jpgBuffer, 0, jpgSize);
+	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize, 0, &si_other, &sLen))== -1){
+		perror("recvfrom");
+	}
+	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
+	return jpgBuffer;
+
 /*
     char * buf = malloc(10);
     printf("Waiting for data...\n");
@@ -193,10 +201,9 @@ void video_frame_decompress()
 	rewind(jpgfile);
 	fread(buffe, fileSize, 1, jpgfile);
 */
-//	void * buffe = read_jpg(fd);
-//	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
+	void * buffe = read_jpg(video_socket);
+	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
 //	fclose(jpgfile);
-	read_jpg(video_socket);
 }
 
 void sdl_quit(){
