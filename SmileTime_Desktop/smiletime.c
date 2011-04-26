@@ -50,7 +50,7 @@ void * startVideoDecoding(){
 	pthread_exit(NULL);
 }
 // Thread function to receive and play audio and video.
-void * startAVReceiving(){
+void startAVReceiving(){
 /*
 	printf("[VIDEO] Opening up port..\n");
 	int listen = listen_on_port(VIDEO_PORT);
@@ -76,7 +76,6 @@ void * startAVReceiving(){
 		}
 	}
 	*/
-	pthread_exit(NULL);
 }
 
 // Thread function to capture and handle keyboard input
@@ -122,7 +121,7 @@ int main(int argc, char*argv[])
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
 	//pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
-	pthread_create(&AV_recv_thread_id, NULL,  startAVReceiving, NULL);
+	startAVReceiving();
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
 	// * Connect to nameserver * 
@@ -141,7 +140,6 @@ int main(int argc, char*argv[])
 	// * Wait for threads to exit * 
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
-	pthread_join(AV_recv_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
 
 //pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);

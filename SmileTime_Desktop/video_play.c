@@ -54,7 +54,7 @@ int sdl_init(){
 		printf("Failed to create Overlay\n");
 		exit(EXIT_FAILURE);
 	}
-
+  pthread_mutex_init(&jpg_mutex, NULL);
   return 0;
 }
 
@@ -75,18 +75,21 @@ void video_frame_display(int bufferIndex)
 {
   //printf("[V_PLAY] This function displays the video frame on the screen\n");
 	SDL_LockYUVOverlay(overlay_camera);
+	SDL_LockYUVOverlay(overlay_phone);
 	if(buffers == NULL){
 		exit(EXIT_FAILURE);
 	}
 
 	overlay_camera->pixels[0] = decompressed_frame_camera;
-	SDL_UnlockYUVOverlay(overlay_camera);
+	
 
 	if((decompressed_frame_phone) != NULL){
-		SDL_LockYUVOverlay(overlay_phone);
+    pthread_mutex_lock(&jpg_mutex);		
 		overlay_phone->pixels[0] = decompressed_frame_phone;
-		SDL_UnlockYUVOverlay(overlay_phone);
+    pthread_mutex_unlock(&jpg_mutex);		
 	}
+	SDL_UnlockYUVOverlay(overlay_phone);
+	SDL_UnlockYUVOverlay(overlay_camera);
 
 	SDL_Rect video_rect;
 	video_rect.x = 0;
@@ -167,7 +170,9 @@ void video_frame_decompress()
 	fread(buffe, fileSize, 1, jpgfile);
 */
 	void * buffe = read_jpg(video_socket);
+  pthread_mutex_lock(&jpg_mutex);		
 	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
+  pthread_mutex_unlock(&jpg_mutex);		
 //	fclose(jpgfile);
 }
 

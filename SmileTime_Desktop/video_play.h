@@ -21,6 +21,8 @@
 	void * jpgBuffer;
 	void * audioBuffer;
 
+  pthread_mutex_t jpg_mutex;
+
 	void print_overlay_info();
 	int accept_connection_s(int socket, int protocol);
 	void video_play_init();
