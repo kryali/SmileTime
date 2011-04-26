@@ -119,34 +119,6 @@ int accept_connection_s(int socket, int protocol){
     return fd;
 }
 
-void init_udp_audio(){
-	struct sockaddr_in si;
-	if ((audio_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-		perror("socket");
-
-	memset((char *) &si, 0, sizeof(si));
-	si.sin_family = AF_INET;
-	si.sin_port = htons(AUDIO_PORT);
-	si.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(audio_socket, &si, sizeof(si))==-1)
-		perror("bind");
-	printf("[AUDIO] UDP Socket is bound\n");
-	audioBuffer = malloc(AUDIO_PACKET_SIZE);
-	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
-}
-
-void * read_audio_packet(int fd){
-	int readbytes = 0;
-	struct sockaddr_in si;
-	unsigned int sLen = sizeof(si);
-	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
-	if( (readbytes = recvfrom(fd, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
-		perror("recvfrom");
-	}
-	printf("[AUDIO] Read %d bytes from the audio packet\n", readbytes);
-	return audioBuffer;
-}
-
 void init_udp_av(){
 	int slen=sizeof(si_me);
 
