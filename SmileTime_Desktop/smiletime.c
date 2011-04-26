@@ -108,6 +108,7 @@ int main(int argc, char*argv[])
 		usage();
 		return 0;
 	} 
+  audio_play_init();
 
 	signal(SIGINT, &onExit);
 	streaming = 0;
@@ -116,12 +117,11 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-	audio_record_init();
-  audio_play_init();
+	//audio_record_init();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
-	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
+	//pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&AV_recv_thread_id, NULL,  startAVReceiving, NULL);
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
@@ -151,6 +151,7 @@ int main(int argc, char*argv[])
 	sdl_quit();
 	video_close();
 	audio_close();
+	audio_play_close();
 	printf("[RECORDER] Quit Successfully\n");
 	return 0;
 }

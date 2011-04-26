@@ -97,9 +97,34 @@ void * read_audio_packet(){
 	int readbytes = 0;
 	struct sockaddr_in si;
 	unsigned int sLen = sizeof(si);
+  int frames = AUDIO_PACKET_SIZE/2/channels; // Each frame is 2 bytes
+  int rc;
 	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
 	if( (readbytes = recvfrom(audio_socket, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
 		perror("recvfrom");
 	}
+
+  rc = snd_pcm_writei(handle, audioBuffer, frames);
+
+  /* EPIPE means underrun */
+  if (rc == -EPIPE)
+  {
+    fprintf(stderr, "underrun occurred\n");
+    snd_pcm_prepare(handle);
+  }
+  else if (rc < 0)
+  {
+    fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
+  }
+  else if (rc != (int)frames)
+  {
+    fprintf(stderr, "short write, write %d frames\n", rc);
+  }
+
 	return audioBuffer;
+}
+
+void audio_play_close() {
+  snd_pcm_drain(handle);
+  snd_pcm_close(handle);
 }
