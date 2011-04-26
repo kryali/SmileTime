@@ -25,6 +25,27 @@ int xwrite(HTTP_packet* np){
 	return ret;
 }
 
+// This function should add a users sockaddr_in if we don't have it already
+// and also add it
+// Jon, should peer_info be sockaddr_in?
+void add_user(struct sockaddr_in user){
+/*
+	int i = 0;
+	for(; i < numPeers; i ++)
+	{
+		if(peer_fd[i] != -1){
+			if(strcmp(inet_ntoa(peer_info[i].sin_addr),inet_ntoa(user.sin_addr))==0){
+				// Here, we've found the user already collected
+				return
+			}
+		} else {
+			// At this point we should open up a udp socket for the user and save the sockaddr_in info
+
+		}
+	}
+*/
+}
+
 //reads from multiple peers (this probably won't work.)
 int xread(HTTP_packet* np){
 	int ret = 0;

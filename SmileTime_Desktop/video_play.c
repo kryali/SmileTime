@@ -149,6 +149,7 @@ void * read_jpg(int fd){
 	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
+	add_user(si_other);
 //	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
 	return (jpgBuffer+sizeof(int));
 }
