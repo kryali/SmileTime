@@ -40,7 +40,6 @@ void add_user(struct sockaddr_in user){
 			}
 		} else {
 			// At this point we should open up a udp socket for the user and save the sockaddr_in info
-
 		}
 	}
 */

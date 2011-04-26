@@ -109,7 +109,7 @@ void * read_audio_packet(){
   /* EPIPE means underrun */
   if (rc == -EPIPE)
   {
-    fprintf(stderr, "underrun occurred\n");
+//    fprintf(stderr, "underrun occurred\n");
     snd_pcm_prepare(handle);
   }
   else if (rc < 0)
