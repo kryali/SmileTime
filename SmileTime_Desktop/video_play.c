@@ -138,6 +138,8 @@ void init_udp_av(){
 	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
 		perror("bind");
 	printf("[VIDEO] UDP Socket is bound\n");
+	jpgBuffer = malloc(UDP_MAX);
+	memset(jpgBuffer, 0, UDP_MAX);
 }
 
 
@@ -146,17 +148,17 @@ void * read_jpg(int fd){
 	int jpgSize = -1;
 	int sLen = sizeof(si_other);
 	int readbytes = 0;
-	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), 0, &si_other, &sLen))== -1){
+	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), MSG_PEEK, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
-	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
-	void * jpgBuffer = malloc(jpgSize);
-	memset(jpgBuffer, 0, jpgSize);
-	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize, 0, &si_other, &sLen))== -1){
+//	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
+//	void * jpgBuffer = malloc(jpgSize);
+	memset(jpgBuffer, 0, UDP_MAX);
+	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
-	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
-	return jpgBuffer;
+//	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
+	return (jpgBuffer+sizeof(int));
 
 /*
     char * buf = malloc(10);

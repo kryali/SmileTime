@@ -12,9 +12,12 @@
 #define SDL_YUY2_OVERLAY  0x32595559  /* Packed mode: Y0+U0+Y1+V0 */
 #define SDL_UYVY_OVERLAY  0x59565955  /* Packed mode: U0+Y0+V0+Y1 */
 
+#define UDP_MAX 15000
+
 	SDL_Event event;
 	int video_socket;
 	struct sockaddr_in si_me; // UDP Sock_addr used for recv data
+	void * jpgBuffer;
 
 	void print_overlay_info();
 	void init_udp_av();
