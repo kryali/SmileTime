@@ -23,7 +23,6 @@
 	void * audioBuffer;
 
 	void print_overlay_info();
-	void init_udp_av();
 	void init_udp_audio();
 	int accept_connection_s(int socket, int protocol);
 	void video_play_init();

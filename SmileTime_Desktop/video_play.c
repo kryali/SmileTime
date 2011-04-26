@@ -119,12 +119,6 @@ int accept_connection_s(int socket, int protocol){
     return fd;
 }
 
-
-// This function listens on a port and sets up accepting a connection
-void init_av_socket(){
-	int listenfd = listen_on_port(VIDEO_PORT);
-}
-
 void init_udp_audio(){
 	struct sockaddr_in si;
 	if ((audio_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)

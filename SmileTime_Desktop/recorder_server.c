@@ -2,7 +2,7 @@
 
 
 void listen_peer_connections( int port){
-	recorder_control_socket = listen_on_port(port);
+	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
 	numPeers = 0;
 	peer_fd = malloc(MAX_PEERS * sizeof(int));
 	
@@ -14,7 +14,7 @@ void listen_peer_connections( int port){
 	}
 }
 
-int listen_on_port( int port){
+int listen_on_port( int port, int protocol){
 	// Open up a socket
 	int conn_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	if( conn_socket == -1 ){
@@ -52,8 +52,8 @@ int listen_on_port( int port){
   return conn_socket;
 }
 
-void accept_peer_connection(){
-	accept_connection(recorder_control_socket, numPeers);
+void accept_peer_connection(int protocol){
+	accept_connection(recorder_control_socket, numPeers, protocol);
 	numPeers++;
 	/*
 	struct timeb tp; 
@@ -90,7 +90,7 @@ void accept_peer_connection(){
 	*/
 }
 
-void accept_connection(int socket, int peerIndex){
+void accept_connection(int socket, int peerIndex, int protocol){
 	int fd;
 	int addr_size = sizeof(struct sockaddr_storage);
 	struct sockaddr_storage their_addr;
