@@ -16,7 +16,6 @@
 
 	SDL_Event event;
 	int video_socket;
-	int audio_socket;
 	struct sockaddr_in si_me; // UDP Sock_addr used for recv data
 	struct sockaddr_in si_audio; // UDP Sock_addr used for recv data
 	void * jpgBuffer;

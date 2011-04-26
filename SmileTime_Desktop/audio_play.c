@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "audio_play.h"
 
 void audio_play_init()
 {
