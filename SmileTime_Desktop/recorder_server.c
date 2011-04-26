@@ -52,7 +52,7 @@ int listen_on_port( int port, int protocol){
   return conn_socket;
 }
 
-void accept_peer_connection(int protocol){
+void accept_peer_connection(int socket, int protocol){
 	accept_connection(recorder_control_socket, numPeers, protocol);
 	numPeers++;
 	/*
