@@ -22,6 +22,7 @@ char* strstp(char * str, char * stp, int * size);
 int xwrite(HTTP_packet* np);
 int xread(HTTP_packet* np);
 int strToInt(char* str);
+void add_user(struct sockaddr_in user);
 int mjpeg2Jpeg(char ** jpg, const char *buffer, const int size);
 
 #endif

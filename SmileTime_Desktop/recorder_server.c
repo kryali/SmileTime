@@ -53,7 +53,7 @@ int listen_on_port( int port, int protocol){
 }
 
 void accept_peer_connection(int socket, int protocol){
-	accept_connection(recorder_control_socket, numPeers, protocol);
+	accept_connection(socket, numPeers, protocol);
 	numPeers++;
 	/*
 	struct timeb tp; 

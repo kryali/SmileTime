@@ -108,7 +108,6 @@ int main(int argc, char*argv[])
 		usage();
 		return 0;
 	} 
-  audio_play_init();
 
 	signal(SIGINT, &onExit);
 	streaming = 0;
@@ -117,6 +116,7 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
+  audio_play_init();
 	//audio_record_init();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
