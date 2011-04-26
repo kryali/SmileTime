@@ -145,43 +145,12 @@ void * read_jpg(int fd){
 		perror("recvfrom");
 	}
 //	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
-//	void * jpgBuffer = malloc(jpgSize);
 	memset(jpgBuffer, 0, UDP_MAX);
 	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
 //	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
 	return (jpgBuffer+sizeof(int));
-
-/*
-    char * buf = malloc(10);
-    printf("Waiting for data...\n");
-    int readSize;
-    int writeSize;
-    int packetSize = 0;
-	int jpgSize = 0;
-    if( (readSize = read(fd, &packetSize, sizeof(int))) == -1){
-        perror("read");
-        exit(0);
-    }
-    printf("Size of the image file: %d\n", packetSize);
-	void * jpg_buffer = malloc(packetSize);
-	memset(jpg_buffer, 0, packetSize);
-    while(jpgSize < (packetSize-4)){
-        memset(buf, 0, 10);
-        if( (readSize = read(fd, jpg_buffer, packetSize)) == -1){
-            perror("read");
-        }
-		printf("Read %d bytes\n", readSize);
-        if(readSize == 0){
-			break;
-        }
-		jpgSize += readSize;
-    }
-	printf("File of %db written\n", jpgSize);
-	free(buf);
-	return jpg_buffer;
-*/
 }
 
 int width1 = VIDEO_WIDTH;
