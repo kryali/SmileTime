@@ -39,6 +39,6 @@ void * read_audio_packet(){
 	if( (readbytes = recvfrom(audio_socket, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
 		perror("recvfrom");
 	}
-	printf("[AUDIO] Read %d bytes from the audio packet\n", readbytes);
+//	printf("[AUDIO] Read %d bytes from the audio packet\n", readbytes);
 	return audioBuffer;
 }

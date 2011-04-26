@@ -35,6 +35,20 @@ void * startAudioEncoding(){
 	pthread_exit(NULL);
 }
 
+void * startAudioDecoding(){
+
+	while(stopRecording == 0){
+		read_audio_packet();
+	}
+	pthread_exit(NULL);
+}
+
+void * startVideoDecoding(){
+	while(stopRecording == 0){
+		video_frame_decompress();
+	}
+	pthread_exit(NULL);
+}
 // Thread function to receive and play audio and video.
 void * startAVReceiving(){
 /*
@@ -46,6 +60,10 @@ void * startAVReceiving(){
 */
 	init_udp_av();
 	init_udp_audio();
+
+	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
+	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
+	/*
 	while(stopRecording == 0){
 		video_frame_decompress();
 		read_audio_packet();
@@ -57,6 +75,7 @@ void * startAVReceiving(){
 			//3b decode and display video packets.  Possibly use a queue for video packets, probably unnecessary.
 		}
 	}
+	*/
 	pthread_exit(NULL);
 }
 
@@ -114,7 +133,7 @@ int main(int argc, char*argv[])
 	// * Establish control and audio/video connections for multiple users. * 
 	while(stopRecording == 0){
 		printf("[smiletime] waiting for a peer connection.\n");
-		accept_peer_connection();
+		accept_peer_connection(recorder_control_socket, SOCK_STREAM);
 		streaming = 1;
 	}
 
