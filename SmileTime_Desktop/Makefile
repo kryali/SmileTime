@@ -27,7 +27,7 @@ smiletime:	$(SMILETIME_OBJECTS)
 nameserver:	$(NAMESERVER_OBJ)
 	$(CC)   $(NAMESERVER_OBJ) -o $@
 
-smiletime.o:	smiletime.c
+smiletime.o:	smiletime.c smiletime.h
 audio_record.o:	audio_record.c audio_record.h
 audio_play.o:	audio_play.c audio_play.h
 video_record.o:	video_record.c video_record.h
