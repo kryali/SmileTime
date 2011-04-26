@@ -1,6 +1,6 @@
 INSTALLROOT=$(PWD)
 
-CC=gcc -pthread
+CC=gcc -pthread -lasound
 
 SDLLIBS = $(shell sdl-config --libs) -lSDL_image
 SDLFLAGS = $(shell sdl-config --cflags)
