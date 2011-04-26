@@ -38,14 +38,12 @@ Program Flow:
   current incoming bandwidth and prints it to the screen every 1 second.
   
   Finally the decode thread launches. This thread opens the foo.mkv dummy file which 
-  provides the AVCodecContext information.
-
-  gets the codecs for the audio and video stream, initializes the queues, and creates 
-  buffers for the decoder. The decode thread then enters a loop and starts reading frames 
-  consecutively and decoding them. After decoding, the thread adjusts the presentation
-  timestamp in order ensure that the audio and video are synchronized. The decoded audio 
-  and video packets are added to their respective queues. These packet queues are 
-  consumed by the video display loop on a FIFO basis.
+  provides the AVCodecContext information. It also initializes the queues, and creates 
+  buffers for the decoder. The decode thread then enters a loop and starts reading packets 
+  consecutively from the network and putting them in the respective video or audio queue.
+  The video thread reads from the queue and decodes the packets.
+  After decoding, the thread adjusts the presentation timestamp in order 
+  ensure that the audio and video are synchronized.
 
   The main loop launches into its main event loop after launching the decode loop. The
   event loop waits for events. The main events it waits for are  FF_ALLOC_EVENT and 
@@ -56,6 +54,5 @@ Program Flow:
   is refreshed about every 50 ms. The actual refresh of any given frame can vary by a
   few ms because it may be adjusted in order to keep the audio and video in sync.
 
-  The video stops playing when it reaches the end of a file. To close the window, press
-  CTRL + C and the playback fps is printed into the terminal. The quit flag is set high
-  and everything is closed.
+  The video stops playing when the user presses CTRL+C. The playback fps 
+  is printed into the terminal. The quit flag is set high and everything is closed.

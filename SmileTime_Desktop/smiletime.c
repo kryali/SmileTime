@@ -71,8 +71,10 @@ void * startAVReceiving(){
 	printf("[VIDEO] connection accepted..\n");
 */
 	init_udp_av();
+	init_udp_audio();
 	while(stopRecording == 0){
 		video_frame_decompress();
+		read_audio_packet();
 		if(streaming == 1){
 			//Check with kiran to see about 1 UDP stream.
 			//1  Receive a packet

@@ -125,6 +125,34 @@ void init_av_socket(){
 	int listenfd = listen_on_port(VIDEO_PORT);
 }
 
+void init_udp_audio(){
+	struct sockaddr_in si;
+	if ((audio_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		perror("socket");
+
+	memset((char *) &si, 0, sizeof(si));
+	si.sin_family = AF_INET;
+	si.sin_port = htons(AUDIO_PORT);
+	si.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(audio_socket, &si, sizeof(si))==-1)
+		perror("bind");
+	printf("[AUDIO] UDP Socket is bound\n");
+	audioBuffer = malloc(AUDIO_PACKET_SIZE);
+	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
+}
+
+void * read_audio_packet(int fd){
+	int readbytes = 0;
+	struct sockaddr_in si;
+	unsigned int sLen = sizeof(si);
+	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
+	if( (readbytes = recvfrom(fd, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
+		perror("recvfrom");
+	}
+	printf("[AUDIO] Read %d bytes from the audio packet\n", readbytes);
+	return audioBuffer;
+}
+
 void init_udp_av(){
 	int slen=sizeof(si_me);
 
@@ -141,7 +169,6 @@ void init_udp_av(){
 	jpgBuffer = malloc(UDP_MAX);
 	memset(jpgBuffer, 0, UDP_MAX);
 }
-
 
 void * read_jpg(int fd){
 	struct sockaddr_in si_other;
@@ -267,14 +294,19 @@ void keyboard_capture()
 					case SDLK_LEFT:
 						pan_relative(250);
 					break;
-	      		case SDLK_RIGHT:
+
+          case SDLK_RIGHT:
 						pan_relative(-250);
 					break;
+
+          case SDLK_UP:
 						tilt_relative(-150);
 					break;
-	      		case SDLK_DOWN:
+
+          case SDLK_DOWN:
 						tilt_relative(150);
 					break;
+
 					default:
 					break;
 			}

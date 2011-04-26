@@ -29,6 +29,7 @@ int stopRecording;
 #define NAMESERVER_LISTEN_PORT_S "1337"
 #define AUDIO_PORT 1338
 #define AUDIO_PORT_S "1338"
+#define AUDIO_PACKET_SIZE 4160
 #define VIDEO_PORT 1339
 #define VIDEO_PORT_S "1339"
 #define AV_PORT 1339
