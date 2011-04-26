@@ -120,11 +120,6 @@ int accept_connection_s(int socket, int protocol){
 }
 
 
-// This function listens on a port and sets up accepting a connection
-void init_av_socket(){
-	int listenfd = listen_on_port(VIDEO_PORT);
-}
-
 void init_udp_av(){
 	int slen=sizeof(si_me);
 

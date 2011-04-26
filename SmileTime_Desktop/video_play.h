@@ -20,7 +20,6 @@
 	void * jpgBuffer;
 
 	void print_overlay_info();
-	void init_udp_av();
 	int accept_connection_s(int socket, int protocol);
 	void video_play_init();
 	void video_frame_display();
