@@ -1,7 +1,10 @@
 queue_push( struct queue *queue, void* data )
 {
+  // Create the new node for the data
   newNode = malloc(sizeof(queue_node));
   newNode->data = data;
+
+  // Create queue if it does not exist
   if( queue == NULL )
   {
     queue = malloc(sizeof(struct queue));
@@ -11,6 +14,51 @@ queue_push( struct queue *queue, void* data )
 
   newNode->next = queue->tail;
   queue->tail = newNode;
+}
+
+queue_pop( struct queue *queue )
+{
+  queue_node* this;
+  void* ret;
+
+  if( queue == NULL )
+  {
+    printf( "queue is NULL\n" );
+    return -1;
+  }
+  if( queue->head == NULL )
+  {
+    printf( "queue head is NULL\n" );
+    return -1;
+  }
+
+  // Save the element that we want to return
+  ret = queue->head->data;
+
+  // Free memory of current head
+  free(queue->head);
+
+  // This was the only element in the queue
+  if( queue->head == queue->tail )
+    queue->head = queue->tail = NULL;
+  else
+  {
+    this = queue->tail;
+
+    // Reset head
+    while( this != queue->head )
+    {
+      if( this->next == queue->head )
+      {
+        queue->head = this->next;
+        break;
+      }
+
+      this = this->next;
+    }
+  }
+
+  return ret;
 }
 
 list * list_find(list * head, char * name){
