@@ -6,11 +6,11 @@ void listen_peer_connections( int port){
 	numPeers = 0;
 	peer_fd = malloc(MAX_PEERS * sizeof(int));
 	
-	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_storage));
+	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_in));
 	int i = 0;
 	for(; i < MAX_PEERS; i++){
 		peer_fd[i] = -1;
-		memset(&peer_info[i], 0, sizeof(struct sockaddr_storage));
+		memset(&peer_info[i], 0, sizeof(struct sockaddr_in));
 	}
 }
 
@@ -39,7 +39,7 @@ int listen_on_port( int port, int protocol){
 
 	// Bind socket
 	if( bind( conn_socket, &addr, addr_size ) == -1) {
-		perror("bind");
+		perror("tcp bind");
 		exit(1);
 	}
 
@@ -52,8 +52,26 @@ int listen_on_port( int port, int protocol){
   return conn_socket;
 }
 
+void init_udp_av(){
+	int slen=sizeof(si_me);
+
+	if ((video_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		perror("socket");
+
+	memset((char *) &si_me, 0, sizeof(si_me));
+	si_me.sin_family = AF_INET;
+	si_me.sin_port = htons(VIDEO_PORT);
+	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
+		perror("udp bind");
+	printf("[VIDEO] UDP Socket is bound\n");
+	jpgBuffer = malloc(UDP_MAX);
+	memset(jpgBuffer, 0, UDP_MAX);
+}
+
 void accept_peer_connection(int socket, int protocol){
 	accept_connection(socket, numPeers, protocol);
+	printf("%s\n",inet_ntoa(peer_info[numPeers].sin_addr));
 	numPeers++;
 	/*
 	struct timeb tp; 
@@ -92,14 +110,15 @@ void accept_peer_connection(int socket, int protocol){
 
 void accept_connection(int socket, int peerIndex, int protocol){
 	int fd;
-	int addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	int addr_size = sizeof(struct sockaddr_in);
+	struct sockaddr_in their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_in));
 	fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
 	if(fd == -1 ){
 		perror("accept connection");
 		exit(1);
 	}
+	their_addr.sin_port = htons(AV_PORT);
 	peer_fd[peerIndex] = fd;
 	peer_info[peerIndex] = their_addr;
 }

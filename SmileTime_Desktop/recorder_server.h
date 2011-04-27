@@ -13,12 +13,13 @@ int recorder_control_socket;
 
 int numPeers;
 int * peer_fd;
-struct sockaddr_storage * peer_info;
+struct sockaddr_in * peer_info;
 
 void listen_peer_connections( int port );
 int listen_on_port(int port, int protocol);
 void accept_peer_connection(int socket, int protocol);
 void accept_connection(int socket, int peerIndex, int protocol);
+void init_udp_av();
 void establish_video_connection();
 void establish_audio_connection();
 void establish_control_connection();

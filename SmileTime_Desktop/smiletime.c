@@ -108,6 +108,9 @@ int main(int argc, char*argv[])
 		return 0;
 	} 
 
+	printf("%d\n", sizeof(av_packet));
+	printf("%d\n", sizeof(pantilt_packet));
+
 	signal(SIGINT, &onExit);
 	streaming = 0;
   	stopRecording = 0;
@@ -134,6 +137,7 @@ int main(int argc, char*argv[])
 	while(stopRecording == 0){
 		printf("[smiletime] waiting for a peer connection.\n");
 		accept_peer_connection(recorder_control_socket, SOCK_STREAM);
+		printf("[smiletime] received a new peer connection.\n");
 		streaming = 1;
 	}
 

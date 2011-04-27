@@ -7,9 +7,12 @@ SDL_Surface *message = NULL;
 SDL_Surface *background = NULL;
 SDL_Surface *screen = NULL;
 SDL_Surface *cam_surface = NULL;
+SDL_Surface *icon;
 
 SDL_Overlay * overlay_camera = NULL;
 SDL_Overlay * overlay_phone = NULL;
+
+unsigned char * smiletime_background;
 
 //The attributes of the screen
 const int SCREEN_WIDTH = VIDEO_WIDTH;
@@ -25,9 +28,21 @@ int sdl_init(){
 	}
 
 	//set up the icon
-	SDL_Surface *icon;
 	icon = IMG_Load("icon.png");
 	SDL_WM_SetIcon(icon, NULL);
+
+	//set up the smiletime icon overlay
+	int width1 = SCREEN_WIDTH;
+	int height1 = SCREEN_HEIGHT;
+	FILE* jpgfile = fopen("background.jpg", "r");
+	fseek(jpgfile, 0, SEEK_END);
+	int fileSize = ftell(jpgfile);
+	void* buffe = malloc(fileSize);
+	rewind(jpgfile);
+	fread(buffe, fileSize, 1, jpgfile);
+	fclose(jpgfile);
+	jpeg_decode(&smiletime_background, buffe, &width1, &height1);
+	free(buffe);
 
 	//Set up the screen
 	screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT*2, SCREEN_BPP, SDL_SWSURFACE | SDL_ANYFORMAT );
@@ -55,6 +70,7 @@ int sdl_init(){
 		exit(EXIT_FAILURE);
 	}
   pthread_mutex_init(&jpg_mutex, NULL);
+	decompressed_frame_phone = NULL;
   return 0;
 }
 
@@ -83,11 +99,15 @@ void video_frame_display(int bufferIndex)
 	overlay_camera->pixels[0] = decompressed_frame_camera;
 	
 
-	if((decompressed_frame_phone) != NULL){
-    pthread_mutex_lock(&jpg_mutex);		
+	if(decompressed_frame_phone != NULL){
+		pthread_mutex_lock(&jpg_mutex);
 		overlay_phone->pixels[0] = decompressed_frame_phone;
-    pthread_mutex_unlock(&jpg_mutex);		
+		pthread_mutex_unlock(&jpg_mutex);
 	}
+	//else{
+
+		//overlay_phone->pixels[0] = smiletime_background;
+	//}
 	SDL_UnlockYUVOverlay(overlay_phone);
 	SDL_UnlockYUVOverlay(overlay_camera);
 
@@ -122,23 +142,6 @@ int accept_connection_s(int socket, int protocol){
     return fd;
 }
 
-void init_udp_av(){
-	int slen=sizeof(si_me);
-
-	if ((video_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-		perror("socket");
-
-	memset((char *) &si_me, 0, sizeof(si_me));
-	si_me.sin_family = AF_INET;
-	si_me.sin_port = htons(VIDEO_PORT);
-	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
-		perror("bind");
-	printf("[VIDEO] UDP Socket is bound\n");
-	jpgBuffer = malloc(UDP_MAX);
-	memset(jpgBuffer, 0, UDP_MAX);
-}
-
 void * read_jpg(int fd){
 	struct sockaddr_in si_other;
 	int jpgSize = -1;
@@ -152,7 +155,6 @@ void * read_jpg(int fd){
 	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
-	add_user(si_other);
 //	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
 	return (jpgBuffer+sizeof(int));
 }
@@ -161,19 +163,13 @@ int width1 = VIDEO_WIDTH;
 int height1 = VIDEO_HEIGHT;
 void video_frame_decompress()
 {
-/*
-	FILE* jpgfile = fopen("kiran.jpg", "r");
-	fseek(jpgfile, 0, SEEK_END);
-	int fileSize = ftell(jpgfile);
-	void* buffe = malloc(fileSize);
-	rewind(jpgfile);
-	fread(buffe, fileSize, 1, jpgfile);
-*/
 	void * buffe = read_jpg(video_socket);
-  pthread_mutex_lock(&jpg_mutex);		
+  pthread_mutex_lock(&jpg_mutex);
+	//if(decompressed_frame_phone != NULL){
+		//free(decompressed_frame_phone);
+	//}
 	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
   pthread_mutex_unlock(&jpg_mutex);		
-//	fclose(jpgfile);
 }
 
 void sdl_quit(){

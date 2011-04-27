@@ -11,12 +11,28 @@ char* strstp(char * str, char * stp, int * size){
 }
 
 //sends to multiple peers
-int xwrite(HTTP_packet* np){
+int xwrite(HTTP_packet* np, int fd){
 	int ret = 0;
 	int i = 0;
 	for(; i < numPeers; i ++)
 	{
-  		ret = sendto(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_storage));
+  		ret = sendto(fd, np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_in));
+		if(ret == -1){
+			perror("write");
+			exit(1);
+		}
+	}
+	return ret;
+}
+
+//reads from multiple peers (this probably won't work.)
+int xread(HTTP_packet* np){
+	int ret = 0;
+	int i = 0;
+	int sockaddr_storage_size = sizeof(struct sockaddr_storage);
+	for(; i < numPeers; i ++)
+	{
+		ret = recvfrom(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], &sockaddr_storage_size);
 		if(ret == -1){
 			perror("write");
 			exit(1);
@@ -43,22 +59,6 @@ void add_user(struct sockaddr_in user){
 		}
 	}
 */
-}
-
-//reads from multiple peers (this probably won't work.)
-int xread(HTTP_packet* np){
-	int ret = 0;
-	int i = 0;
-	int sockaddr_storage_size = sizeof(struct sockaddr_storage);
-	for(; i < numPeers; i ++)
-	{
-		ret = recvfrom(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], &sockaddr_storage_size);
-		if(ret == -1){
-			perror("write");
-			exit(1);
-		}
-	}
-	return ret;
 }
 
 int strToInt(char* str){

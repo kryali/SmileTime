@@ -19,7 +19,7 @@
 #include "network_packet.h"
 
 char* strstp(char * str, char * stp, int * size);
-int xwrite(HTTP_packet* np);
+int xwrite(HTTP_packet* np, int fd);
 int xread(HTTP_packet* np);
 int strToInt(char* str);
 void add_user(struct sockaddr_in user);

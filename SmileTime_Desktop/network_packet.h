@@ -41,15 +41,17 @@ typedef struct __control_packet{
 } control_packet;
 
 typedef struct __pantilt_packet{
-	char packetType;
-	char type;//pan or tilt
+	int packetType;
+	int type;//pan or tilt
 	int distance;
 } pantilt_packet;
 
 typedef struct __av_packet{
-	char packetType;
-	Buffer buff;
+	int packetType;
+	int length;
+	int timestamp;
 } av_packet;
+
 
 HTTP_packet* create_HTTP_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
@@ -57,7 +59,7 @@ void destroy_HTTP_packet(HTTP_packet* packet);
 //data structs -> network packets
 HTTP_packet* control_to_network_packet(control_packet* packet);
 HTTP_packet* pantilt_to_network_packet(pantilt_packet* packet);
-HTTP_packet* av_to_network_packet(av_packet* packet);
+HTTP_packet* av_to_network_packet(av_packet* packet, void* data);
 
 //network packets -> data structs
 char get_packet_type(HTTP_packet* network_packet);

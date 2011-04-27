@@ -9,7 +9,6 @@ short *audio_buf;
 int audio_buf_size;
 struct timeb time_of_copy;
 
-Buffer audio_pkt;
 av_packet av;
 
 int channels = 1;
@@ -52,17 +51,15 @@ void audio_segment_copy()
 		perror("audio_segment_copy read: ");
 	ftime(&time_of_copy);
 
-	audio_pkt.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
-	audio_pkt.length = audio_buf_size;
-	audio_pkt.start = audio_buf;
 	av.packetType = AUDIO_PACKET;
-	av.buff = audio_pkt;
+	av.length = audio_buf_size;
+	av.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
 }
 
 void audio_segment_send()
 {
-	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(http);
+	HTTP_packet* http = av_to_network_packet(&av, audio_buf);
+	xwrite(http, video_socket);
 	destroy_HTTP_packet(http);
 }
 
