@@ -19,6 +19,8 @@
 #include "network_packet.h"
 
 char* strstp(char * str, char * stp, int * size);
+int ywrite(HTTP_packet* np);
+int yread(HTTP_packet* np, int fd);
 int xwrite(HTTP_packet* np, int fd);
 int xread(HTTP_packet* np);
 int strToInt(char* str);

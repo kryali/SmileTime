@@ -108,8 +108,6 @@ int main(int argc, char*argv[])
 		return 0;
 	} 
 
-	printf("%d\n", sizeof(text_packet));
-
 	signal(SIGINT, &onExit);
 	streaming = 0;
   	stopRecording = 0;
@@ -117,12 +115,13 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-  audio_play_init();
+	audio_play_init();
 	audio_record_init();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
 	//pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
+	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
 	startAVReceiving();
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 
@@ -144,9 +143,9 @@ int main(int argc, char*argv[])
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
 	pthread_join(keyboard_thread_id, NULL);
+	pthread_join(control_network_thread_id, NULL);
 
-//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
-//pthread_join(control_network_thread_id, NULL);
+
 
 	// * Exit *
 	sdl_quit();

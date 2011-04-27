@@ -199,12 +199,10 @@ void xioctl(int ctrl, int value){
 
 
 void pan_relative(int pan){
-	//printf("pan:%d\n", pan);
 	xioctl(V4L2_CID_PAN_RELATIVE, pan);
 }
 
 void tilt_relative(int tilt){
-	//printf("tilt:%d\n", tilt);
 	xioctl(V4L2_CID_TILT_RELATIVE, tilt);
 }
 
@@ -223,9 +221,6 @@ void panTilt_reset(){
 
 void keyboard_capture()
 {
-//	char* str;
-//	fscanf(stdin,"%s",str);
-//	printf();
 	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.
 	{
 		switch(event.type) {
