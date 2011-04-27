@@ -17,8 +17,8 @@ void onExit()
 void * startVideoEncoding(){
 	while( stopRecording == 0){
 		video_frame_copy();
-		//if(streaming == 1)
-			//video_frame_send();
+		if(streaming == 1)
+			video_frame_send();
 		video_frame_mjpg_to_yuv();
 		video_frame_display();
 	}
@@ -29,8 +29,8 @@ void * startVideoEncoding(){
 void * startAudioEncoding(){
 	while( stopRecording == 0){
 		audio_segment_copy();
-		//if(streaming == 1)
-			//audio_segment_send();
+		if(streaming == 1)
+			audio_segment_send();
 	}
 	pthread_exit(NULL);
 }
@@ -108,8 +108,7 @@ int main(int argc, char*argv[])
 		return 0;
 	} 
 
-	printf("%d\n", sizeof(av_packet));
-	printf("%d\n", sizeof(pantilt_packet));
+	printf("%d\n", sizeof(text_packet));
 
 	signal(SIGINT, &onExit);
 	streaming = 0;
@@ -118,7 +117,7 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-  audio_play_init();
+	audio_play_init();
 	//audio_record_init();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 

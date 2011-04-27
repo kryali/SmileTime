@@ -25,6 +25,8 @@
 #define PANTILT_PACKET 1
 #define AUDIO_PACKET 2
 #define VIDEO_PACKET 3
+#define TEXT_PACKET 4
+#define TEXT_MAX_SIZE 140
 
 #define PAN 0
 #define TILT 1
@@ -52,6 +54,10 @@ typedef struct __av_packet{
 	int timestamp;
 } av_packet;
 
+typedef struct __text_packet{
+	int packetType;
+	char message[TEXT_MAX_SIZE];
+} text_packet;
 
 HTTP_packet* create_HTTP_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
