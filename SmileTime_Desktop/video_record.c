@@ -65,15 +65,17 @@ void video_frame_mjpg_to_yuv()
 	//if(decompressed_frame_camera != NULL){
 		//free(decompressed_frame_camera);
 	//}
+		pthread_mutex_lock(&jpg_mutex);
+
 	if(jpeg_decode(&decompressed_frame_camera, buffers[bufferIndex].start, &width, &height) < 0){
 		printf("jpeg decode failure\n");
 		exit(1);
 	}
+		pthread_mutex_unlock(&jpg_mutex);
 }
 
 void video_frame_send()
 {
-	printf("video frame send\n");
 	HTTP_packet* http = av_to_network_packet(&av, jpegStart);
 	xwrite(http, video_socket);
 	destroy_HTTP_packet(http);

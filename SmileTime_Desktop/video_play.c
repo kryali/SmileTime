@@ -41,7 +41,7 @@ int sdl_init(){
 	rewind(jpgfile);
 	fread(buffe, fileSize, 1, jpgfile);
 	fclose(jpgfile);
-	jpeg_decode(&smiletime_background, buffe, &width1, &height1);
+	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
 	free(buffe);
 
 	//Set up the screen
@@ -70,7 +70,6 @@ int sdl_init(){
 		exit(EXIT_FAILURE);
 	}
   pthread_mutex_init(&jpg_mutex, NULL);
-	decompressed_frame_phone = NULL;
   return 0;
 }
 
@@ -100,9 +99,9 @@ void video_frame_display(int bufferIndex)
 	
 
 	if(decompressed_frame_phone != NULL){
-		pthread_mutex_lock(&jpg_mutex);
+		//pthread_mutex_lock(&jpg_mutex);
 		overlay_phone->pixels[0] = decompressed_frame_phone;
-		pthread_mutex_unlock(&jpg_mutex);
+		//pthread_mutex_unlock(&jpg_mutex);
 	}
 	//else{
 
@@ -164,12 +163,13 @@ int height1 = VIDEO_HEIGHT;
 void video_frame_decompress()
 {
 	void * buffe = read_jpg(video_socket);
-  pthread_mutex_lock(&jpg_mutex);
+ 
 	//if(decompressed_frame_phone != NULL){
 		//free(decompressed_frame_phone);
 	//}
+	pthread_mutex_lock(&jpg_mutex);
 	jpeg_decode(&decompressed_frame_phone, buffe, &width1, &height1);
-  pthread_mutex_unlock(&jpg_mutex);		
+	pthread_mutex_unlock(&jpg_mutex);		
 }
 
 void sdl_quit(){
@@ -223,6 +223,9 @@ void panTilt_reset(){
 
 void keyboard_capture()
 {
+//	char* str;
+//	fscanf(stdin,"%s",str);
+//	printf();
 	while (SDL_PollEvent(&event))   //Poll our SDL key event for any keystrokes.
 	{
 		switch(event.type) {

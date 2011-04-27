@@ -108,8 +108,7 @@ int main(int argc, char*argv[])
 		return 0;
 	} 
 
-	printf("%d\n", sizeof(av_packet));
-	printf("%d\n", sizeof(pantilt_packet));
+	printf("%d\n", sizeof(text_packet));
 
 	signal(SIGINT, &onExit);
 	streaming = 0;
