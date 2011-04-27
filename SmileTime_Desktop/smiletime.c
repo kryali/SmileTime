@@ -17,8 +17,8 @@ void onExit()
 void * startVideoEncoding(){
 	while( stopRecording == 0){
 		video_frame_copy();
-		if(streaming == 1)
-			video_frame_send();
+		//if(streaming == 1)
+			//video_frame_send();
 		video_frame_mjpg_to_yuv();
 		video_frame_display();
 	}
@@ -29,8 +29,8 @@ void * startVideoEncoding(){
 void * startAudioEncoding(){
 	while( stopRecording == 0){
 		audio_segment_copy();
-		if(streaming == 1)
-			audio_segment_send();
+		//if(streaming == 1)
+			//audio_segment_send();
 	}
 	pthread_exit(NULL);
 }
