@@ -76,7 +76,6 @@ void video_frame_mjpg_to_yuv()
 
 void video_frame_send()
 {
-	printf("video frame send\n");
 	HTTP_packet* http = av_to_network_packet(&av, jpegStart);
 	xwrite(http, video_socket);
 	destroy_HTTP_packet(http);
