@@ -119,7 +119,7 @@ int main(int argc, char*argv[])
 	video_record_init();
 	video_play_init();
   audio_play_init();
-	//audio_record_init();
+	audio_record_init();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);

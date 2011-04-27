@@ -11,14 +11,74 @@ struct timeb time_of_copy;
 
 av_packet av;
 
-int channels = 1;
-int sample_bits = 16; //bits per sample
-int sample_rate = 44100; //samples per second
-int sample_size; //size of a sample in bytes
-int audio_input_frame_size = 1000; //number of samples per frame
+unsigned int channels = 1;
+unsigned int sample_bits = 16; // bits per sample
+unsigned int sample_rate = 44100; // samples per second
+unsigned int sample_size; // size of a sample in bytes
+unsigned int audio_input_frame_size = 128; // number of samples per frame
+
+// ALSA variables
+snd_pcm_t *capture_handle;
+snd_pcm_hw_params_t *capture_hw_params;
 
 void audio_record_init()
-{
+{ 
+  int err;
+
+  // Initialize the ALSA device for recording
+  if ((err = snd_pcm_open (&capture_handle, "default", SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+    fprintf (stderr, "cannot open audio device \"default\" (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+     
+  if ((err = snd_pcm_hw_params_malloc (&capture_hw_params)) < 0) {
+    fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+       
+  if ((err = snd_pcm_hw_params_any (capture_handle, capture_hw_params)) < 0) {
+    fprintf (stderr, "cannot initialize hardware parameter structure (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  if ((err = snd_pcm_hw_params_set_access (capture_handle, capture_hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+    fprintf (stderr, "cannot set access type (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  if ((err = snd_pcm_hw_params_set_format (capture_handle, capture_hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+    fprintf (stderr, "cannot set sample format (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  if ((err = snd_pcm_hw_params_set_rate_near (capture_handle, capture_hw_params, &sample_rate, 0)) < 0) {
+    fprintf (stderr, "cannot set sample rate (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  if ((err = snd_pcm_hw_params_set_channels (capture_handle, capture_hw_params, channels)) < 0) {
+    fprintf (stderr, "cannot set channel count (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  if ((err = snd_pcm_hw_params (capture_handle, capture_hw_params)) < 0) {
+    fprintf (stderr, "cannot set parameters (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+  snd_pcm_hw_params_free (capture_hw_params);
+
+  if ((err = snd_pcm_prepare (capture_handle)) < 0) {
+    fprintf (stderr, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
+    exit (1);
+  }
+
+	sample_size = channels * sample_bits/8;
+
+  audio_buf_size = audio_input_frame_size * sample_size;
+	audio_buf = malloc(audio_buf_size);
+
+  /*
 	// Open the microphone device
 	microphone_fd = open( microphone_name, O_RDWR );
 	if(microphone_fd == -1){
@@ -38,17 +98,19 @@ void audio_record_init()
 		perror("channels failed");
 		exit(1);
 	}
-
-	sample_size = channels * sample_bits/8;
-
-  	audio_buf_size = audio_input_frame_size * sample_size;
-	audio_buf =  malloc(audio_buf_size);
+  */
 }
 
 void audio_segment_copy()
 {	
-	if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
-		perror("audio_segment_copy read: ");
+	//if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
+	//	perror("audio_segment_copy read: ");
+  int frames = 128;
+  int err;
+  if( (err = snd_pcm_readi (capture_handle, audio_buf, frames)) != frames )
+  {
+    printf("Only read %d frames instead of %d", err, frames); 
+  }
 	ftime(&time_of_copy);
 
 	av.packetType = AUDIO_PACKET;
@@ -58,6 +120,7 @@ void audio_segment_copy()
 
 void audio_segment_send()
 {
+  printf( "AV length = %d\n", av.length );
 	HTTP_packet* http = av_to_network_packet(&av, audio_buf);
 	xwrite(http, video_socket);
 	destroy_HTTP_packet(http);
