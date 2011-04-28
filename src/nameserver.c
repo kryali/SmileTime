@@ -2,7 +2,7 @@
 
 int main(){
 	iplist = NULL;
-	populate();
+//	populate();
 	/*
 	list_print(iplist);
 	*/
@@ -185,6 +185,7 @@ void handle_connection(int fd){
 			break;
       	case LIST:
 			printf("[NAMESERVER] LIST received!\n");
+			list_print(iplist);
 			list * temp = iplist;			
 			int size = 0;
 			int count = 0;

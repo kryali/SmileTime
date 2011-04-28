@@ -2,19 +2,19 @@
 
 
 void listen_peer_connections( int port){
-	recorder_control_socket = listen_on_port(port);
+	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
 	numPeers = 0;
+
 	peer_fd = malloc(MAX_PEERS * sizeof(int));
-	
-	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_storage));
+	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_in));
 	int i = 0;
 	for(; i < MAX_PEERS; i++){
 		peer_fd[i] = -1;
-		memset(&peer_info[i], 0, sizeof(struct sockaddr_storage));
+		memset(&peer_info[i], 0, sizeof(struct sockaddr_in));
 	}
 }
 
-int listen_on_port( int port){
+int listen_on_port( int port, int protocol){
 	// Open up a socket
 	int conn_socket = socket( AF_INET, SOCK_STREAM, 0 );
 	if( conn_socket == -1 ){
@@ -39,7 +39,7 @@ int listen_on_port( int port){
 
 	// Bind socket
 	if( bind( conn_socket, &addr, addr_size ) == -1) {
-		perror("bind");
+		perror("tcp bind");
 		exit(1);
 	}
 
@@ -52,131 +52,141 @@ int listen_on_port( int port){
   return conn_socket;
 }
 
-void accept_peer_connection(){
-	accept_connection(recorder_control_socket, numPeers);
-	numPeers++;
-	/*
-	struct timeb tp; 
-	int t1, t2;
-	printf("Connection recieved!\n");
-	char * buf = malloc(25);
-	memset(buf, 0, 25);
-	strcpy(buf, "Hello World!\0");
+void init_udp_av(){
+	int slen=sizeof(si_me);
 
-	ftime(&tp);
-	t1 = (tp.time * 1000) + tp.millitm;
-	//printf("Start: %d\n", tp.millitm);
-	
-	// Send the packet to the client
-	if( write(controlfd, buf, 25) == -1){
-		perror("write");
-		exit(1);
-	}
+	if ((video_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		perror("socket");
 
-	// Get the time elapsed on the client
-	int * t3 = malloc(sizeof(int));
-	if( read(controlfd, t3, sizeof(int)) == -1 ){
-		perror("read");
-		exit(1);
-	}
-	//printf("Elapsed time from client: %d\n", *t3);
-
-	ftime(&tp);
-	t2 = (tp.time * 1000) + tp.millitm;
-	//printf("End: %d\n", tp.millitm);
-
-	printf("Message Sent!\n");
-	printf("RTT:%ds\n", t2-t1-*t3);
-	*/
+	memset((char *) &si_me, 0, sizeof(si_me));
+	si_me.sin_family = AF_INET;
+	si_me.sin_port = htons(VIDEO_PORT);
+	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
+		perror("udp bind");
+	printf("[VIDEO] UDP Socket is bound\n");
+	jpgBuffer = malloc(UDP_MAX);
+	memset(jpgBuffer, 0, UDP_MAX);
 }
 
-void accept_connection(int socket, int peerIndex){
+void accept_peer_connection(int socket, int protocol){
+	accept_connection(socket, numPeers, protocol);
+	printf("%s\n",inet_ntoa(peer_info[numPeers].sin_addr));
+	numPeers++;
+}
+
+void accept_connection(int socket, int peerIndex, int protocol){
 	int fd;
-	int addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	int addr_size = sizeof(struct sockaddr_in);
+	struct sockaddr_in their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_in));
 	fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
 	if(fd == -1 ){
 		perror("accept connection");
 		exit(1);
 	}
+	their_addr.sin_port = htons(AV_PORT);
 	peer_fd[peerIndex] = fd;
 	peer_info[peerIndex] = their_addr;
 }
 
-void start_stats_timer(){
+void* calculate_stats(){
 	printf("[smiletime] Starting bandwidth stats\n");
-	timer_t timer_id;
-	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
-	struct itimerspec val;
-	memset(&val, 0, sizeof(struct itimerspec));
-	val.it_value.tv_sec = 1;
-	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, (int)NULL, &val, NULL);
-}
-
-
-
-/*
-void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
-  AVStream* audio_stream;
-  AVStream* video_stream;
-  if( stream0->codec->codec_type == AVMEDIA_TYPE_AUDIO )
-  {
-    audio_stream = stream0;
-    video_stream = stream1;
-  }
-  else
-  {
-    audio_stream = stream1;
-    video_stream = stream0;
-  }
-
-  control_packet cp;
-  cp.audio_codec = *audio_stream->codec->codec;
-  cp.video_codec = *video_stream->codec->codec;
-  cp.audio_codec_ctx = *audio_stream->codec;
-  cp.video_codec_ctx = *video_stream->codec;
-  HTTP_packet* np = control_to_network_packet(&cp);
-  printf("TYPE: %c\n", get_packet_type(np));
-  xwrite(controlfd, np );
-}*/
-/*
-void listen_control_packets(){
-	//listen for control and pantilt packets.
-	void* buffer = malloc(100);
-	while(stopRecording == 0){
-		int size = read(controlfd, buffer, 100);
-		if( size == -1 || size == 0 ){
-			perror("read");
-			exit(1);
-		}
-		//printf("read packet of size: %d\n",size);
-		HTTP_packet packet;
-		packet.message = buffer;
-		packet.length = size;
-		char packet_type = get_packet_type(&packet);
-		switch(packet_type)
-		{
-			case CONTROL_PACKET:
-				printf("received control packet\n");
-				break;
-			case PANTILT_PACKET:
-				;
-				pantilt_packet* pt = to_pantilt_packet(&packet);
-				if(pt->type == PAN)
-					pan_relative(pt->distance);
-				else if(pt->type == TILT)
-					tilt_relative(pt->distance);
-				break;
-			default:
-				printf("received INVALID packet\n");
-				break;
+	int sent_bandwidth;
+	int received_bandwidth;
+	bytes_sent = 0;
+	bytes_received = 0;
+	int seconds_elapsed = 0;
+	while( stopRecording == 0)
+	{
+		if(streaming == 1){
+			seconds_elapsed++;
+			//pthread_mutex_lock(&bytes_sent_mutex);
+			//pthread_mutex_unlock(&bytes_sent_mutex);
+			sent_bandwidth = bytes_sent*8;
+			received_bandwidth = bytes_received*8;
+			printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, sent_bandwidth);
+			printf("[%ds] Incoming Bandwidth: %dbps\n", seconds_elapsed, received_bandwidth);
+			bytes_sent = 0;
+			bytes_received = 0;
+			sleep(1);
 		}
 	}
-	free(buffer);
 	pthread_exit(NULL);
-}*/
+}
+
+void send_text_message(){
+	text_packet txt;
+	txt.packetType = TEXT_PACKET;
+	fgets(txt.message, TEXT_MAX_SIZE, stdin);
+	printf("sending text message: %s", txt.message);
+	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
+	memcpy(txtpacket->message, &txt, sizeof(text_packet));
+	ywrite(txtpacket);
+	destroy_HTTP_packet(txtpacket);
+}
+
+void listen_control_packets(){
+	//listen for control and pantilt packets.
+	int packetType;
+	HTTP_packet* packet;
+	int i;
+	struct timeval timeout;
+   timeout.tv_sec = 2; // 2 second timeout.  New users will be able to send new messages within 2 seconds.
+   timeout.tv_usec = 0;
+
+	while(stopRecording == 0){
+		FD_ZERO(&fds);
+		nfds = 0;
+		for(i = 0; i < numPeers; i++){
+			if(peer_fd[i] != -1){
+				if(peer_fd[i] > nfds) nfds = peer_fd[i];
+				FD_SET(peer_fd[i], &fds);
+			}
+		}
+		if(select(nfds+1, &fds, NULL, NULL, &timeout) > 0)
+		{
+			for(i = 0; i < numPeers; i++){
+				if(peer_fd[i] != -1 && FD_ISSET(peer_fd[i], &fds)){
+					int size = recv(peer_fd[i], &packetType, sizeof(packetType), MSG_PEEK);
+					if( size == -1 || size == 0 ){
+						peer_fd[i] = -1;
+						break;
+					}
+					switch(packetType)
+					{
+						case CONTROL_PACKET:
+							packet = create_HTTP_packet(sizeof(control_packet));
+							yread(packet, peer_fd[i]);
+						break;
+						case PANTILT_PACKET:
+							packet = create_HTTP_packet(sizeof(pantilt_packet));
+							yread(packet, peer_fd[i]);
+							pantilt_packet* pt = to_pantilt_packet(packet);
+							printf("pan: %d, tilt: %d\n", pt->pan, pt->tilt);
+							pan_relative(pt->pan);
+							tilt_relative(pt->tilt);
+							free(pt);
+						break;
+						case TEXT_PACKET:
+							packet = create_HTTP_packet(sizeof(text_packet));
+							yread(packet, peer_fd[i]);
+							text_packet* tp = to_text_packet(packet);
+							printf("peer%d: %s\n", i, tp->message);
+							free(tp);
+						break;
+						default:
+							printf("received UNRECOGNIZED packet\n");
+						break;
+					}
+					destroy_HTTP_packet(packet);
+					packet = NULL;
+				}
+			}
+		}
+	}
+	pthread_exit(NULL);
+}
 
 //______________NAME SERVER_______________
 

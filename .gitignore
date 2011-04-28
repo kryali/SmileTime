@@ -21,6 +21,7 @@
 # Executables
 src/recorder
 src/player
+SmileTime_Desktop/smiletime
 SmileTime/bin/*
 bin/*
 src/nameserver

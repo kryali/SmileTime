@@ -22,6 +22,7 @@
 #include "helper.h"
 
 int stopRecording;
+int streaming;
 
 #define CONTROL_PORT 1336
 #define CONTROL_PORT_S "1336"
@@ -31,6 +32,8 @@ int stopRecording;
 #define AUDIO_PORT_S "1338"
 #define VIDEO_PORT 1339
 #define VIDEO_PORT_S "1339"
+#define AV_PORT 1339
+#define AV_PORT_S "1339"
 #define BACKLOG 20
 
 #define NAMESERVER_IP "173.230.140.232"

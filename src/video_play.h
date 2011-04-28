@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include "SDL/SDL.h"
 #include "video_record.h"
+#include "include.h"
+
 
 #ifndef VIDEO_PLAY_H
 #define VIDEO_PLAY_H
 	SDL_Event event;
+
+  pthread_mutex_t jpg_mutex;
 
 	void print_overlay_info();
 	void video_play_init();

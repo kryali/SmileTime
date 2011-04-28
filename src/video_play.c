@@ -26,6 +26,7 @@ const int CAM_HEIGHT = 240;
 int sdl_init(){
 	//SDL_Event event;
 	//Initialize all SDL subsystems
+  jpg_mutex = PTHREAD_MUTEX_INITIALIZER; // Initialize mutex
 	if( SDL_Init( SDL_INIT_EVERYTHING ) == -1 )
 	{
 		return 1;    

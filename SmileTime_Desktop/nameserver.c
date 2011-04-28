@@ -159,16 +159,17 @@ void handle_connection(int fd){
 				exit(1);
 			}
 			printf("Incoming message size: %d bytes\n", size);
-			msg = malloc(size);
-			memset(msg, 0, size);
+			msg = malloc(size+1);
+			memset(msg, 0, size+1);
 
 			if( read( fd, msg, size) == -1){
 				perror("read");
 				exit(1);
 			}
+			msg[size] = '\0';
 			printf("[NAMESERVER] received msg: %s\n", msg);
 			add_server(msg);
-			free(msg);
+//			free(msg);
 			break;
 		case EXIT:
 			printf("[NAMESERVER] EXIT received!\n");

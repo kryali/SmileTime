@@ -10,13 +10,40 @@ char* strstp(char * str, char * stp, int * size){
 	return retstr;
 }
 
-//sends to multiple peers
-int xwrite(HTTP_packet* np){
+//sends to multiple TCP peers
+int ywrite(HTTP_packet* np){
+	int i = 0;
+	int ret = 0;
+	for(;i < numPeers; i++){
+		if(peer_fd[i] != -1){
+			ret = send(peer_fd[i], np->message, np->length, 0);
+			if(ret == -1){
+				perror("send");
+				exit(1);
+			}
+		}
+	}
+	return ret;
+}
+
+//reads from a single tcp peer
+int yread(HTTP_packet* np, int fd){
+	int ret = 0;
+	ret = recv(fd, np->message, np->length, 0);
+	if(ret == -1){
+		perror("write");
+		exit(1);
+	}
+	return ret;
+}
+
+//sends to multiple UDP peers
+int xwrite(HTTP_packet* np, int fd){
 	int ret = 0;
 	int i = 0;
 	for(; i < numPeers; i ++)
 	{
-  		ret = sendto(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_storage));
+  		ret = sendto(fd, np->message, np->length, 0, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_in));
 		if(ret == -1){
 			perror("write");
 			exit(1);
@@ -32,13 +59,33 @@ int xread(HTTP_packet* np){
 	int sockaddr_storage_size = sizeof(struct sockaddr_storage);
 	for(; i < numPeers; i ++)
 	{
-		ret = recvfrom(peer_fd[i], np->message, np->length, NULL, (struct sockaddr *)&peer_info[i], &sockaddr_storage_size);
+		ret = recvfrom(peer_fd[i], np->message, np->length, 0, (struct sockaddr *)&peer_info[i], &sockaddr_storage_size);
 		if(ret == -1){
 			perror("write");
 			exit(1);
 		}
 	}
 	return ret;
+}
+
+// This function should add a users sockaddr_in if we don't have it already
+// and also add it
+// Jon, should peer_info be sockaddr_in?
+void add_user(struct sockaddr_in user){
+/*
+	int i = 0;
+	for(; i < numPeers; i ++)
+	{
+		if(peer_fd[i] != -1){
+			if(strcmp(inet_ntoa(peer_info[i].sin_addr),inet_ntoa(user.sin_addr))==0){
+				// Here, we've found the user already collected
+				return
+			}
+		} else {
+			// At this point we should open up a udp socket for the user and save the sockaddr_in info
+		}
+	}
+*/
 }
 
 int strToInt(char* str){
