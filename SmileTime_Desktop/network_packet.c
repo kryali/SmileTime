@@ -10,8 +10,10 @@ HTTP_packet* create_HTTP_packet(int length)
 
 void destroy_HTTP_packet(HTTP_packet* packet)
 {
-	free(packet->message);
-	free(packet);
+	if(packet != NULL){
+		free(packet->message);
+		free(packet);
+	}
 }
 
 // converts a control_packet into a HTTP_packet
@@ -44,19 +46,17 @@ HTTP_packet* av_to_network_packet(av_packet* packet, void* data)
 	return network_packet;
 }
 
-
 //network packets -> data structs
-char get_packet_type(HTTP_packet* network_packet)
+int get_packet_type(HTTP_packet* network_packet)
 {
-	char packetType = ((char*)network_packet->message)[0];
-	return packetType;
+	return ((int*)network_packet->message)[0];
 }
 
 control_packet* to_control_packet(HTTP_packet* network_packet)
 {
 	int length = sizeof(control_packet);
 	control_packet* cp = malloc(length);
-	memcpy(cp, network_packet->message + 1, length);
+	memcpy(cp, network_packet->message, length);
 	return cp;
 }
 
@@ -64,8 +64,16 @@ pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet)
 {
 	int length = sizeof(pantilt_packet);
 	pantilt_packet* pt = malloc(length);
-	memcpy(pt, network_packet->message + 1, length);
+	memcpy(pt, network_packet->message, length);
 	return pt;
+}
+
+text_packet* to_text_packet(HTTP_packet* network_packet)
+{
+	int length = sizeof(text_packet);
+	text_packet* tp = malloc(length);
+	memcpy(tp, network_packet->message, length);
+	return tp;
 }
 
 av_packet* to_av_packet(HTTP_packet* network_packet)
@@ -77,21 +85,11 @@ av_packet* to_av_packet(HTTP_packet* network_packet)
 	return av;
 }
 
-pantilt_packet* generate_pantilt_packet(int type, int distance)
+pantilt_packet* generate_pantilt_packet(int type, int pan, int tilt)
 {
 	pantilt_packet* pt = malloc(sizeof(pantilt_packet));
 	pt->packetType = PANTILT_PACKET;
-	pt->type = type;
-	pt->distance = distance;
+	pt->pan = pan;
+	pt->tilt = tilt;
 	return pt;
-}
-
-pantilt_packet* generate_pan_packet(int distance)
-{
-	return generate_pantilt_packet(PAN, distance);
-}
-
-pantilt_packet* generate_tilt_packet(int distance)
-{
-	return generate_pantilt_packet(TILT, distance);
 }

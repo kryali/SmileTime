@@ -12,6 +12,8 @@
 int recorder_control_socket;
 
 int numPeers;
+int nfds;
+fd_set fds;
 int * peer_fd;
 struct sockaddr_in * peer_info;
 
@@ -19,12 +21,13 @@ void listen_peer_connections( int port );
 int listen_on_port(int port, int protocol);
 void accept_peer_connection(int socket, int protocol);
 void accept_connection(int socket, int peerIndex, int protocol);
+void send_text_message();
 void init_udp_av();
 void establish_video_connection();
 void establish_audio_connection();
 void establish_control_connection();
 
-//void listen_control_packets();
+void listen_control_packets();
 void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();

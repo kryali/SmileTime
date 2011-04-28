@@ -26,6 +26,7 @@
 #define AUDIO_PACKET 2
 #define VIDEO_PACKET 3
 #define TEXT_PACKET 4
+
 #define TEXT_MAX_SIZE 140
 
 #define PAN 0
@@ -38,14 +39,14 @@ typedef struct __HTTP_packet
 } HTTP_packet;
 
 typedef struct __control_packet{
-
+	int packetType;
 	//int elapsed_time;
 } control_packet;
 
 typedef struct __pantilt_packet{
 	int packetType;
-	int type;//pan or tilt
-	int distance;
+	int pan;
+	int tilt;
 } pantilt_packet;
 
 typedef struct __av_packet{
@@ -68,16 +69,13 @@ HTTP_packet* pantilt_to_network_packet(pantilt_packet* packet);
 HTTP_packet* av_to_network_packet(av_packet* packet, void* data);
 
 //network packets -> data structs
-char get_packet_type(HTTP_packet* network_packet);
+int get_packet_type(HTTP_packet* network_packet);
 control_packet* to_control_packet(HTTP_packet* network_packet);
 pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet);
+text_packet* to_text_packet(HTTP_packet* network_packet);
 av_packet* to_av_packet(HTTP_packet* network_packet);
 
 //data struct creators
-//control_packet* generate_control_packet(int elapsed_time);
-pantilt_packet* generate_pantilt_packet(int type, int distance);
-pantilt_packet* generate_pan_packet(int distance);
-pantilt_packet* generate_tilt_packet(int distance);
-//av_packet* generate_av_packet(AVPacket* avpacket);
+pantilt_packet* generate_pantilt_packet(int type, int pan, int tilt);
 
 #endif
