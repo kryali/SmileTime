@@ -95,20 +95,23 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-	//audio_play_init();
+	audio_play_init();
 	audio_record_init();
 	init_udp_av();
 	init_udp_audio();
+	pthread_mutex_init(&bytes_sent_mutex, NULL);
+	pthread_mutex_init(&bytes_received_mutex, NULL);
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
 	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
-	//pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
+	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
 	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 	pthread_create(&text_send_thread_id, NULL,  captureTextMessages, NULL);
+	pthread_create(&stats_thread_id, NULL,  calculate_stats, NULL);
 
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
@@ -130,6 +133,7 @@ int main(int argc, char*argv[])
 	pthread_join(keyboard_thread_id, NULL);
 	pthread_join(text_send_thread_id, NULL);
 	pthread_join(control_network_thread_id, NULL);
+	pthread_join(stats_thread_id, NULL);
 
 
 
@@ -138,6 +142,6 @@ int main(int argc, char*argv[])
 	video_close();
 	audio_close();
 	audio_play_close();
-	printf("[RECORDER] Quit Successfully\n");
+	printf("[smiletime] Quit Successfully\n");
 	return 0;
 }

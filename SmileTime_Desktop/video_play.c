@@ -96,17 +96,10 @@ void video_frame_display(int bufferIndex)
 	}
 
 	overlay_camera->pixels[0] = decompressed_frame_camera;
-	
-
 	if(decompressed_frame_phone != NULL){
-		//pthread_mutex_lock(&jpg_mutex);
 		overlay_phone->pixels[0] = decompressed_frame_phone;
-		//pthread_mutex_unlock(&jpg_mutex);
 	}
-	//else{
 
-		//overlay_phone->pixels[0] = smiletime_background;
-	//}
 	SDL_UnlockYUVOverlay(overlay_phone);
 	SDL_UnlockYUVOverlay(overlay_camera);
 
@@ -149,6 +142,9 @@ void * read_jpg(int fd){
 	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), MSG_PEEK, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
+	pthread_mutex_lock(&bytes_received_mutex);
+	bytes_received += jpgSize;
+	pthread_mutex_unlock(&bytes_received_mutex);
 //	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
 	memset(jpgBuffer, 0, UDP_MAX);
 	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){

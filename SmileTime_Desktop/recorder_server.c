@@ -73,39 +73,6 @@ void accept_peer_connection(int socket, int protocol){
 	accept_connection(socket, numPeers, protocol);
 	printf("%s\n",inet_ntoa(peer_info[numPeers].sin_addr));
 	numPeers++;
-	/*
-	struct timeb tp; 
-	int t1, t2;
-	printf("Connection recieved!\n");
-	char * buf = malloc(25);
-	memset(buf, 0, 25);
-	strcpy(buf, "Hello World!\0");
-
-	ftime(&tp);
-	t1 = (tp.time * 1000) + tp.millitm;
-	//printf("Start: %d\n", tp.millitm);
-	
-	// Send the packet to the client
-	if( write(controlfd, buf, 25) == -1){
-		perror("write");
-		exit(1);
-	}
-
-	// Get the time elapsed on the client
-	int * t3 = malloc(sizeof(int));
-	if( read(controlfd, t3, sizeof(int)) == -1 ){
-		perror("read");
-		exit(1);
-	}
-	//printf("Elapsed time from client: %d\n", *t3);
-
-	ftime(&tp);
-	t2 = (tp.time * 1000) + tp.millitm;
-	//printf("End: %d\n", tp.millitm);
-
-	printf("Message Sent!\n");
-	printf("RTT:%ds\n", t2-t1-*t3);
-	*/
 }
 
 void accept_connection(int socket, int peerIndex, int protocol){
@@ -123,22 +90,36 @@ void accept_connection(int socket, int peerIndex, int protocol){
 	peer_info[peerIndex] = their_addr;
 }
 
-void start_stats_timer(){
+void* calculate_stats(){
 	printf("[smiletime] Starting bandwidth stats\n");
-	timer_t timer_id;
-	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
-	struct itimerspec val;
-	memset(&val, 0, sizeof(struct itimerspec));
-	val.it_value.tv_sec = 1;
-	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, (int)NULL, &val, NULL);
+	int sent_bandwidth;
+	int received_bandwidth;
+	bytes_sent = 0;
+	bytes_received = 0;
+	int seconds_elapsed = 0;
+	while( stopRecording == 0)
+	{
+		if(streaming == 1){
+			seconds_elapsed++;
+			//pthread_mutex_lock(&bytes_sent_mutex);
+			//pthread_mutex_unlock(&bytes_sent_mutex);
+			sent_bandwidth = bytes_sent*8;
+			received_bandwidth = bytes_received*8;
+			printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, sent_bandwidth);
+			printf("[%ds] Incoming Bandwidth: %dbps\n", seconds_elapsed, received_bandwidth);
+			bytes_sent = 0;
+			bytes_received = 0;
+			sleep(1);
+		}
+	}
+	pthread_exit(NULL);
 }
 
 void send_text_message(){
 	text_packet txt;
 	txt.packetType = TEXT_PACKET;
 	fgets(txt.message, TEXT_MAX_SIZE, stdin);
-	printf("sending text message: %s\n", txt.message);
+	printf("sending text message: %s", txt.message);
 	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
 	memcpy(txtpacket->message, &txt, sizeof(text_packet));
 	ywrite(txtpacket);

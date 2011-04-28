@@ -26,8 +26,8 @@ pthread_t text_send_thread_id;
 pthread_t keyboard_thread_id;
 pthread_t audio_decode_thread_id;
 pthread_t video_decode_thread_id;
+pthread_t stats_thread_id;
 
-int streaming;
 char* peer_port;
 char* protocol;
 

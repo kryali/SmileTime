@@ -8,6 +8,7 @@ char *microphone_name = "/dev/dsp";
 short *audio_buf;
 int audio_buf_size;
 struct timeb time_of_copy;
+struct timeb time_of_send;
 
 av_packet av;
 
@@ -91,13 +92,17 @@ void audio_segment_copy()
 
 	av.packetType = AUDIO_PACKET;
 	av.length = audio_buf_size;
-	av.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
 }
 
 void audio_segment_send()
 {
+	ftime(&time_of_send);
+	av.latency = (time_of_send.time * 1000) + time_of_send.millitm - (time_of_copy.time * 1000) - time_of_copy.millitm;
 	HTTP_packet* http = av_to_network_packet(&av, audio_buf);
 	xwrite(http, video_socket);
+	pthread_mutex_lock(&bytes_sent_mutex);
+	bytes_sent += http->length;
+	pthread_mutex_unlock(&bytes_sent_mutex);
 	destroy_HTTP_packet(http);
 }
 

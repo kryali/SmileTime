@@ -52,7 +52,7 @@ typedef struct __pantilt_packet{
 typedef struct __av_packet{
 	int packetType;
 	int length;
-	int timestamp;
+	int latency;
 } av_packet;
 
 typedef struct __text_packet{

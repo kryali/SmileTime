@@ -17,6 +17,11 @@ fd_set fds;
 int * peer_fd;
 struct sockaddr_in * peer_info;
 
+int bytes_sent;
+int bytes_received;
+pthread_mutex_t bytes_sent_mutex;
+pthread_mutex_t bytes_received_mutex;
+
 void listen_peer_connections( int port );
 int listen_on_port(int port, int protocol);
 void accept_peer_connection(int socket, int protocol);
@@ -31,6 +36,6 @@ void listen_control_packets();
 void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();
-void start_stats_timer();
+void* calculate_stats();
 
 #endif
