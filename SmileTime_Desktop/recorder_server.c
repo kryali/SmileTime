@@ -140,7 +140,7 @@ void send_text_message(){
 	fgets(txt.message, TEXT_MAX_SIZE, stdin);
 	printf("sending text message: %s\n", txt.message);
 	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
-	memcpy(txtpacket, &txt, sizeof(text_packet));
+	memcpy(txtpacket->message, &txt, sizeof(text_packet));
 	ywrite(txtpacket);
 	destroy_HTTP_packet(txtpacket);
 }
@@ -165,7 +165,6 @@ void listen_control_packets(){
 		}
 		if(select(nfds+1, &fds, NULL, NULL, &timeout) > 0)
 		{
-			printf("select worked!\n");
 			for(i = 0; i < numPeers; i++){
 				if(peer_fd[i] != -1 && FD_ISSET(peer_fd[i], &fds)){
 					int size = recv(peer_fd[i], &packetType, sizeof(packetType), MSG_PEEK);
@@ -173,7 +172,6 @@ void listen_control_packets(){
 						peer_fd[i] = -1;
 						break;
 					}
-					printf("received a: %d\n", packetType);
 					switch(packetType)
 					{
 						case CONTROL_PACKET:

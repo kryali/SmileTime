@@ -95,18 +95,16 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-	audio_play_init();
+	//audio_play_init();
 	audio_record_init();
 	init_udp_av();
 	init_udp_audio();
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
-
 	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
-	//startAVReceiving();
 	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
-	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
+	//pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
 	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);

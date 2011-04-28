@@ -15,10 +15,12 @@ int ywrite(HTTP_packet* np){
 	int i = 0;
 	int ret = 0;
 	for(;i < numPeers; i++){
-		ret = send(peer_fd[i], np->message, np->length, 0);
-		if(ret == -1){
-			perror("send");
-			exit(1);
+		if(peer_fd[i] != -1){
+			ret = send(peer_fd[i], np->message, np->length, 0);
+			if(ret == -1){
+				perror("send");
+				exit(1);
+			}
 		}
 	}
 	return ret;
