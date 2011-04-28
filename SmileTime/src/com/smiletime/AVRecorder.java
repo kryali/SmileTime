@@ -36,7 +36,9 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.Window;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -201,6 +203,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		hideTitleAndNotification();
 		setContentView(R.layout.avrecorder);
 		mSurfaceView = (SurfaceView) findViewById(R.id.avsv);
 		
@@ -270,7 +273,14 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 				return true;
 			}
 		});
+		
+		
 
+	}
+	
+	public void hideTitleAndNotification(){
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 	}
 	
 	final Handler handler = new Handler() {

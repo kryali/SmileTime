@@ -2,20 +2,23 @@
 
 	<LinearLayout
 	    xmlns:android="http://schemas.android.com/apk/res/android"
-	  android:id="@+id/llayout"
 	  android:layout_width="fill_parent"
 	  android:layout_height="fill_parent">
-		
-		<ImageView
-			android:id="@+id/image01"
-			android:layout_width="320px"
-			android:layout_height="240px"
-			android:src="@drawable/logo2big"
-			></ImageView>
-		<SurfaceView
-			android:layout_width="320px"
-			android:layout_height="240px"
-			android:id="@+id/avsv" />  
-		   
-	</LinearLayout>
+		<LinearLayout
+		  android:id="@+id/llayout"
+		  android:layout_width="fill_parent"
+		  android:layout_height="240px">
+			
+			<ImageView
+				android:id="@+id/image01"
+				android:layout_width="320px"
+				android:layout_height="240px"
+				android:src="@drawable/logo2big"
+				></ImageView>
+			<SurfaceView
+				android:layout_width="320px"
+				android:layout_height="240px"
+				android:id="@+id/avsv" />  
 	
+		</LinearLayout>
+	</LinearLayout>
