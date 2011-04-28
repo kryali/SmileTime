@@ -13,10 +13,9 @@ av_packet av;
 
 unsigned int channels = 1;
 unsigned int sample_bits = 16; // bits per sample
-unsigned int sample_rate = 44100; // samples per second
+unsigned int sample_rate = 11025; // samples per second
 unsigned int sample_size; // size of a sample in bytes
-unsigned int audio_input_frame_size = 128; // number of samples per frame
-
+unsigned int audio_input_frame_size = 2080; // number of samples per frame 
 // ALSA variables
 snd_pcm_t *capture_handle;
 snd_pcm_hw_params_t *capture_hw_params;
@@ -75,37 +74,14 @@ void audio_record_init()
 
 	sample_size = channels * sample_bits/8;
 
-  audio_buf_size = audio_input_frame_size * sample_size;
-	audio_buf = malloc(audio_buf_size);
-
-  /*
-	// Open the microphone device
-	microphone_fd = open( microphone_name, O_RDWR );
-	if(microphone_fd == -1){
-		perror("Opening microphone");
-		exit(1);
-	}
-	// Set sampling parameters
-	if( ioctl( microphone_fd, SOUND_PCM_WRITE_BITS, &sample_bits ) == -1){
-		perror("Write bits failed");
-		exit(1);
-	}	
-	if( ioctl( microphone_fd, SOUND_PCM_WRITE_RATE, &sample_rate ) == -1){
-		perror("rate failed");
-		exit(1);
-	}
-	if( ioctl( microphone_fd, SOUND_PCM_WRITE_CHANNELS, &channels ) == -1){
-		perror("channels failed");
-		exit(1);
-	}
-  */
+  audio_buf_size = audio_input_frame_size * sample_size; audio_buf = malloc(audio_buf_size);
 }
 
 void audio_segment_copy()
 {	
 	//if( (read( microphone_fd, audio_buf, audio_buf_size )) != audio_buf_size )
 	//	perror("audio_segment_copy read: ");
-  int frames = 128;
+  int frames = 2080;
   int err;
   if( (err = snd_pcm_readi (capture_handle, audio_buf, frames)) != frames )
   {
@@ -120,7 +96,6 @@ void audio_segment_copy()
 
 void audio_segment_send()
 {
-  printf( "AV length = %d\n", av.length );
 	HTTP_packet* http = av_to_network_packet(&av, audio_buf);
 	xwrite(http, video_socket);
 	destroy_HTTP_packet(http);
