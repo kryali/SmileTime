@@ -404,7 +404,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	        	v.setImageBitmap(bm);
 	        	v.invalidate();
 	        	jpgMut.release();
-	        	Log.d(tag, "Displaying a video jpg");
 	        	try {
 					frameMut.acquire();
 				} catch (InterruptedException e) {
@@ -460,7 +459,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 						DatagramPacket pkt = new DatagramPacket(audioBuffer, audioBuffer.length, new InetSocketAddress(serverIP, 1338));
 						s.send(pkt);
 						udpAudioCounter++;
-						Log.d("counter", "#packets: "+ udpAudioCounter + "readFromDev: " + bufferReadResult + " bfferLen:" + audioBuffer.length);
+//						//Log.d("counter", "#packets: "+ udpAudioCounter + "readFromDev: " + bufferReadResult + " bfferLen:" + audioBuffer.length);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

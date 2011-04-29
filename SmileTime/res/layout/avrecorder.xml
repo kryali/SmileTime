@@ -3,7 +3,8 @@
 	<RelativeLayout
 	    xmlns:android="http://schemas.android.com/apk/res/android"
 	  android:layout_width="fill_parent"
-	  android:layout_height="fill_parent">
+	  android:layout_height="fill_parent"
+	  android:keepScreenOn="true">
 			
 			<ImageView android:src="@drawable/logo2big"
 					   android:layout_width="320px" 
@@ -21,13 +22,6 @@
 				android:text="FPS: 14"
 				android:layout_below="@id/image01"
 				android:id="@+id/fps"
-			></TextView>
-			<TextView
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="0"
-				android:layout_below="@id/avsv"
-				android:id="@+id/counter"
 			></TextView>
 	
 		<SlidingDrawer 
