@@ -74,7 +74,12 @@ public class ControlThread extends Thread{
                 }
               }
               long now = System.currentTimeMillis();
+							Log.d(tag, "NOW = " + now);
+							Log.d(tag, "SENT_TIME " + sent_time);
               long latency = now - sent_time;
+							Log.d(tag, "Sending MOBILE latency packet " + latency);
+
+              // Create the payload and send
               payload[8] = (byte)(latency);
               payload[9] = (byte)(latency >>> 8);
               payload[10] = (byte)(latency >>> 16);
@@ -84,7 +89,6 @@ public class ControlThread extends Thread{
               payload[14] = (byte)(latency >>> 48);
               payload[15] = (byte)(latency >>> 56);
 							out.write(payload);
-							Log.d(tag, "Sending MOBILE latency packet " + latency);
 						}
             else
 							Log.d(tag, "Sender not 0 or 1 ... instead its " + sender);
