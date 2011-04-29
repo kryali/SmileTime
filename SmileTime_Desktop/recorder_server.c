@@ -96,7 +96,7 @@ void* calculate_stats(){
 	int received_bandwidth;
 	bytes_sent = 0;
 	bytes_received = 0;
-	int seconds_elapsed = 0;
+	seconds_elapsed = 0;
 	while( stopRecording == 0)
 	{
 		if(streaming == 1){
@@ -113,6 +113,57 @@ void* calculate_stats(){
 		}
 	}
 	pthread_exit(NULL);
+}
+
+
+void* sendLatencyPackets(){
+	printf("[smiletime] Starting latency monitoring\n");
+
+	while( stopRecording == 0)
+	{
+		if(streaming == 1){
+
+      // Create the latency packet
+      latency_packet l;
+      l.packetType = LATENCY_PACKET;
+      l.peer_sender = 1; // This latency packet is for Desktop-to-Mobile latency
+      ftime(&l.time_sent);
+      HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
+      memcpy(latencypacket->message, &l, sizeof(latency_packet));
+
+      // Send the latency packet to all peers
+      ywrite(latencypacket);
+      destroy_HTTP_packet(latencypacket);
+
+			sleep(30);
+		}
+	}
+	pthread_exit(NULL);
+}
+
+void calculate_latency( latency_packet *l ){
+  int dtom_latency;
+  int mtod_latency;
+  struct timeb now;
+
+  // Get current time
+  ftime(&now);
+
+  // Desktop-to-Mobile latency
+  if( l->peer_sender == 1 )
+  {
+    // Latency is roundtrip / 2
+    dtom_latency = ( (now.time+now.millitm) - (l->time_sent.time+l->time_sent.millitm) ) / 2 * 1000;
+
+    // Print the Desktop-to-Mobile latency
+    printf("[%ds] Desktop-to-Mobile Latency: %dms\n", seconds_elapsed, dtom_latency);
+  }
+  else
+  {
+    // Print the Mobile-to-Desktop latency
+    mtod_latency = ( (now.time+now.millitm) - (l->time_sent.time+l->time_sent.millitm) )*1000;
+    printf("[%ds] Mobile-to-Desktop Latency: %dms\n", seconds_elapsed, mtod_latency);
+  }
 }
 
 void send_text_message(){
@@ -174,6 +225,13 @@ void listen_control_packets(){
 							text_packet* tp = to_text_packet(packet);
 							printf("peer%d: %s\n", i, tp->message);
 							free(tp);
+						break;
+						case LATENCY_PACKET:
+							packet = create_HTTP_packet(sizeof(latency_packet));
+							yread(packet, peer_fd[i]);
+							latency_packet* lp = to_latency_packet(packet);
+              calculate_latency(lp);
+							free(lp);
 						break;
 						default:
 							printf("received UNRECOGNIZED packet\n");

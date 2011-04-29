@@ -76,6 +76,14 @@ text_packet* to_text_packet(HTTP_packet* network_packet)
 	return tp;
 }
 
+latency_packet* to_latency_packet(HTTP_packet* network_packet)
+{
+	int length = sizeof(latency_packet);
+	latency_packet* lp = malloc(length);
+	memcpy(lp, network_packet->message, length);
+	return lp;
+}
+
 av_packet* to_av_packet(HTTP_packet* network_packet)
 {
 	av_packet* av = malloc(sizeof(av_packet));
