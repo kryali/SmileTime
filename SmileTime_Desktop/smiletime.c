@@ -103,6 +103,7 @@ int main(int argc, char*argv[])
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
 	pthread_create(&stats_thread_id, NULL,  calculate_stats, NULL);
+	pthread_create(&latency_thread_id, NULL,  sendLatencyPackets, NULL);
 
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);

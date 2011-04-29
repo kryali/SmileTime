@@ -16,6 +16,7 @@ int nfds;
 fd_set fds;
 int * peer_fd;
 struct sockaddr_in * peer_info;
+int seconds_elapsed;
 
 int bytes_sent;
 int bytes_received;
@@ -37,5 +38,7 @@ void register_nameserver(char * name, char * protocol, char * control_port);
 char * nameServerMsg(char * name, char * ip, char * port, char * protocol, int * size);
 char * getIP();
 void* calculate_stats();
+void* sendLatencyPackets();
+void calculate_latency( latency_packet *l );
 
 #endif

@@ -26,6 +26,7 @@
 #define AUDIO_PACKET 2
 #define VIDEO_PACKET 3
 #define TEXT_PACKET 4
+#define LATENCY_PACKET 5
 
 #define TEXT_MAX_SIZE 140
 
@@ -60,6 +61,12 @@ typedef struct __text_packet{
 	char message[TEXT_MAX_SIZE];
 } text_packet;
 
+typedef struct __latency_packet{
+	int packetType;
+	int peer_sender; // 0 = Desktop-to-Mobile, 1 = Mobile-to-Desktop, 1 = Second Mobile-to-Desktop peer, etc.
+  long time_sent;
+} latency_packet;
+
 HTTP_packet* create_HTTP_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
 
@@ -73,6 +80,7 @@ int get_packet_type(HTTP_packet* network_packet);
 control_packet* to_control_packet(HTTP_packet* network_packet);
 pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet);
 text_packet* to_text_packet(HTTP_packet* network_packet);
+latency_packet* to_latency_packet(HTTP_packet* network_packet);
 av_packet* to_av_packet(HTTP_packet* network_packet);
 
 //data struct creators
