@@ -47,13 +47,15 @@ public class ControlThread extends Thread{
 
 					in.read(time_packet);
 
-					long sent_time = ((time_packet[7] << 56) | (time_packet[6] << 48) | (time_packet[5] << 40 )| time_packet[4] << 32
-							| (time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
+					//int sent_time = ((time_packet[7] << 56) | (time_packet[6] << 48) | (time_packet[5] << 40 )| time_packet[4] << 32
+					//		| (time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
+					int sent_time = ((time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
 
 					if( sender == 0){
 							// Desktop to Mobile
 							//sendLatencyPacketToDesktop(packetType, sender, time);
-							for(int i = 0 ; i < 16; i++){
+							//for(int i = 0 ; i < 16; i++){
+							for(int i = 0 ; i < 12; i++){
 								if(i < 4){
 									payload[i] = packetTypeArr[i];
 								} else if( i < 8) {
@@ -74,9 +76,11 @@ public class ControlThread extends Thread{
                 }
               }
               long now = System.currentTimeMillis();
+              int now2 = (int)now;
 							Log.d(tag, "NOW = " + now);
+							Log.d(tag, "NOW = " + now2);
 							Log.d(tag, "SENT_TIME " + sent_time);
-              long latency = now - sent_time;
+              int latency = now2 - sent_time;
 							Log.d(tag, "Sending MOBILE latency packet " + latency);
 
               // Create the payload and send
@@ -84,10 +88,11 @@ public class ControlThread extends Thread{
               payload[9] = (byte)(latency >>> 8);
               payload[10] = (byte)(latency >>> 16);
               payload[11] = (byte)(latency >>> 24);
-              payload[12] = (byte)(latency >>> 32);
+              /*payload[12] = (byte)(latency >>> 32);
               payload[13] = (byte)(latency >>> 40);
               payload[14] = (byte)(latency >>> 48);
               payload[15] = (byte)(latency >>> 56);
+              */
 
 							out.write(payload);
 						}
