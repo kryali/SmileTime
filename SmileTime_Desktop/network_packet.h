@@ -63,8 +63,8 @@ typedef struct __text_packet{
 
 typedef struct __latency_packet{
 	int packetType;
-	int peer_sender; // 1 = Desktop-to-Mobile, 2 = Mobile-to-Desktop, 3 = Second Mobile-to-Desktop peer, etc.
-  struct timeb time_sent;
+	int peer_sender; // 0 = Desktop-to-Mobile, 1 = Mobile-to-Desktop, 1 = Second Mobile-to-Desktop peer, etc.
+  long time_sent;
 } latency_packet;
 
 HTTP_packet* create_HTTP_packet(int length);
