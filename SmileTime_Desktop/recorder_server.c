@@ -161,7 +161,7 @@ void calculate_latency( latency_packet *l ){
   if( l->peer_sender == 0 )
   {
     // Latency is roundtrip / 2
-    dtom_latency = ( (now.time*1000 + now.millitm) - l->time_sent ) / 2;
+    dtom_latency = ( ((int)(now.time*1000 + now.millitm)) - l->time_sent ) / 2;
 
     // Print the Desktop-to-Mobile latency
     printf("[%ds] Desktop-to-Mobile Latency: %lums\n", seconds_elapsed, dtom_latency);
