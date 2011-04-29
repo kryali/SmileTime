@@ -134,6 +134,7 @@ void server_list_prune(list *head) {
 
 char * server_find(char * name){
 	int size = 0;
+  server_list_prune(iplist);
 	list * f = list_find(iplist, name);
 	if( strcmp(f->name, "NULL") == 0){
 		return "(null)";
