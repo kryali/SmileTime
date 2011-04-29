@@ -99,7 +99,7 @@ void audio_segment_send()
 	ftime(&time_of_send);
 	av.latency = (time_of_send.time * 1000) + time_of_send.millitm - (time_of_copy.time * 1000) - time_of_copy.millitm;
 	HTTP_packet* http = av_to_network_packet(&av, audio_buf);
-	xwrite(http, video_socket);
+	xwrite(http, video_socket, AUDIO_PORT);
 	pthread_mutex_lock(&bytes_sent_mutex);
 	bytes_sent += http->length;
 	pthread_mutex_unlock(&bytes_sent_mutex);
