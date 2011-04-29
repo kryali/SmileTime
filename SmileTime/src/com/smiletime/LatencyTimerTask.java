@@ -56,7 +56,6 @@ public class LatencyTimerTask extends TimerTask {
     // Send the packet
 		try { outStream.write(payload); }
     catch (IOException e) { 
-    	
     }
   }
 
