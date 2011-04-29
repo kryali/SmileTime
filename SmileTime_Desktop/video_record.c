@@ -9,10 +9,10 @@ char* camera_name = "/dev/video0";
 int width = VIDEO_WIDTH;
 int height = VIDEO_HEIGHT;
 
-Buffer video_pkt;
 av_packet av;
-
+char* jpegStart;
 struct timeb time_of_copy;
+struct timeb time_of_send;
 
 int bufferIndex;
 
@@ -27,6 +27,7 @@ void video_record_init(){
 
 	set_camera_output_format();
 	buffers = NULL;
+	decompressed_frame_camera = NULL;
 	mmap_init();
 }
 
@@ -52,30 +53,34 @@ void video_frame_copy()
 	ftime(&time_of_copy);
 	bufferIndex = bufQ.index;
 
-	char* jpegStart;
 	int jpegSize = mjpeg2Jpeg(&jpegStart, buffers[bufferIndex].start, buf.bytesused);
-	video_pkt.timestamp = (time_of_copy.time * 1000) + time_of_copy.millitm;
-	video_pkt.length = jpegSize;
-	video_pkt.start = jpegStart;
 	av.packetType = VIDEO_PACKET;
-	av.buff = video_pkt;
+	av.length = jpegSize;
 }
 
 // This function should decompress the captured MJPG image to a yuv image.
 void video_frame_mjpg_to_yuv()
 {
+	free(jpegStart);
+
+	pthread_mutex_lock(&jpg_mutex);
 	if(jpeg_decode(&decompressed_frame_camera, buffers[bufferIndex].start, &width, &height) < 0){
 		printf("jpeg decode failure\n");
 		exit(1);
 	}
+	pthread_mutex_unlock(&jpg_mutex);
 }
 
 void video_frame_send()
 {
-	HTTP_packet* http = av_to_network_packet(&av);
-	xwrite(http);
+	ftime(&time_of_send);
+	av.latency = (time_of_send.time * 1000) + time_of_send.millitm - (time_of_copy.time * 1000) - time_of_copy.millitm;
+	HTTP_packet* http = av_to_network_packet(&av, jpegStart);
+	xwrite(http, video_socket, VIDEO_PORT);
+	pthread_mutex_lock(&bytes_sent_mutex);
+	bytes_sent += http->length;
+	pthread_mutex_unlock(&bytes_sent_mutex);
 	destroy_HTTP_packet(http);
-	free(video_pkt.start);
 }
 
 //Closes the camera and frees all memory

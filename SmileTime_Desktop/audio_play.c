@@ -103,7 +103,9 @@ void * read_audio_packet(){
 	if( (readbytes = recvfrom(audio_socket, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
 		perror("recvfrom");
 	}
-
+	pthread_mutex_lock(&bytes_received_mutex);
+	bytes_received += readbytes;
+	pthread_mutex_unlock(&bytes_received_mutex);
   rc = snd_pcm_writei(handle, audioBuffer, frames);
 
   /* EPIPE means underrun */

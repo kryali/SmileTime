@@ -25,6 +25,10 @@
 #define PANTILT_PACKET 1
 #define AUDIO_PACKET 2
 #define VIDEO_PACKET 3
+#define TEXT_PACKET 4
+#define LATENCY_PACKET 5
+
+#define TEXT_MAX_SIZE 140
 
 #define PAN 0
 #define TILT 1
@@ -36,20 +40,33 @@ typedef struct __HTTP_packet
 } HTTP_packet;
 
 typedef struct __control_packet{
-
+	int packetType;
 	//int elapsed_time;
 } control_packet;
 
 typedef struct __pantilt_packet{
-	char packetType;
-	char type;//pan or tilt
-	int distance;
+	int packetType;
+	int pan;
+	int tilt;
 } pantilt_packet;
 
 typedef struct __av_packet{
-	char packetType;
-	Buffer buff;
+	int packetType;
+	int length;
+	int latency;
 } av_packet;
+
+typedef struct __text_packet{
+	int packetType;
+	char message[TEXT_MAX_SIZE];
+} text_packet;
+
+typedef struct __latency_packet{
+	int packetType;
+	int peer_sender; // 0 = Desktop-to-Mobile, 1 = Mobile-to-Desktop, 2 = Second Mobile-to-Desktop peer, etc.
+  //long time_sent;
+  int time_sent;
+} latency_packet;
 
 HTTP_packet* create_HTTP_packet(int length);
 void destroy_HTTP_packet(HTTP_packet* packet);
@@ -57,19 +74,17 @@ void destroy_HTTP_packet(HTTP_packet* packet);
 //data structs -> network packets
 HTTP_packet* control_to_network_packet(control_packet* packet);
 HTTP_packet* pantilt_to_network_packet(pantilt_packet* packet);
-HTTP_packet* av_to_network_packet(av_packet* packet);
+HTTP_packet* av_to_network_packet(av_packet* packet, void* data);
 
 //network packets -> data structs
-char get_packet_type(HTTP_packet* network_packet);
+int get_packet_type(HTTP_packet* network_packet);
 control_packet* to_control_packet(HTTP_packet* network_packet);
 pantilt_packet* to_pantilt_packet(HTTP_packet* network_packet);
+text_packet* to_text_packet(HTTP_packet* network_packet);
+latency_packet* to_latency_packet(HTTP_packet* network_packet);
 av_packet* to_av_packet(HTTP_packet* network_packet);
 
 //data struct creators
-//control_packet* generate_control_packet(int elapsed_time);
-pantilt_packet* generate_pantilt_packet(int type, int distance);
-pantilt_packet* generate_pan_packet(int distance);
-pantilt_packet* generate_tilt_packet(int distance);
-//av_packet* generate_av_packet(AVPacket* avpacket);
+pantilt_packet* generate_pantilt_packet(int type, int pan, int tilt);
 
 #endif

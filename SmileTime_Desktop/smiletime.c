@@ -49,37 +49,8 @@ void * startVideoDecoding(){
 	}
 	pthread_exit(NULL);
 }
-// Thread function to receive and play audio and video.
-void * startAVReceiving(){
-/*
-	printf("[VIDEO] Opening up port..\n");
-	int listen = listen_on_port(VIDEO_PORT);
-	printf("[VIDEO] Listening for a connection..\n");
-	video_socket = accept_connection_s(listen, SOCK_STREAM);
-	printf("[VIDEO] connection accepted..\n");
-*/
-	init_udp_av();
-	init_udp_audio();
 
-	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
-	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
-	/*
-	while(stopRecording == 0){
-		video_frame_decompress();
-		read_audio_packet();
-		if(streaming == 1){
-			//Check with kiran to see about 1 UDP stream.
-			//1  Receive a packet
-			//2  check packet type
-			//3a play audio packets
-			//3b decode and display video packets.  Possibly use a queue for video packets, probably unnecessary.
-		}
-	}
-	*/
-	pthread_exit(NULL);
-}
-
-// Thread function to capture and handle keyboard input
+// Thread function to capture and handle keyboard input (for pan tilt)
 void * captureKeyboard(){
 	while( stopRecording == 0){
 		keyboard_capture();
@@ -116,14 +87,24 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-  audio_play_init();
-	//audio_record_init();
+	audio_play_init();
+	audio_record_init();
+	init_udp_av();
+	init_udp_audio();
+	pthread_mutex_init(&bytes_sent_mutex, NULL);
+	pthread_mutex_init(&bytes_received_mutex, NULL);
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
-	//pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
-	pthread_create(&AV_recv_thread_id, NULL,  startAVReceiving, NULL);
+	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
+	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
+	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
+	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
+
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_create(&chat_thread_id, NULL,  chatwindow_init, NULL);
+	pthread_create(&stats_thread_id, NULL,  calculate_stats, NULL);
+	pthread_create(&latency_thread_id, NULL,  sendLatencyPackets, NULL);
 
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
@@ -135,23 +116,23 @@ int main(int argc, char*argv[])
 	while(stopRecording == 0){
 		printf("[smiletime] waiting for a peer connection.\n");
 		accept_peer_connection(recorder_control_socket, SOCK_STREAM);
+		printf("[smiletime] received a new peer connection.\n");
 		streaming = 1;
 	}
 
 	// * Wait for threads to exit * 
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
-	pthread_join(AV_recv_thread_id, NULL);	
 	pthread_join(keyboard_thread_id, NULL);
-
-//pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
-//pthread_join(control_network_thread_id, NULL);
+	pthread_join(chat_thread_id, NULL);
+	pthread_join(control_network_thread_id, NULL);
+	pthread_join(stats_thread_id, NULL);
 
 	// * Exit *
 	sdl_quit();
 	video_close();
 	audio_close();
 	audio_play_close();
-	printf("[RECORDER] Quit Successfully\n");
+	printf("[smiletime] Quit Successfully\n");
 	return 0;
 }

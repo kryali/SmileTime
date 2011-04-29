@@ -1,16 +1,17 @@
 #include "recorder_server.h"
 
+int mobile_latency_packet_consumed;
 
 void listen_peer_connections( int port){
 	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
 	numPeers = 0;
+
 	peer_fd = malloc(MAX_PEERS * sizeof(int));
-	
-	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_storage));
+	peer_info = malloc(MAX_PEERS * sizeof(struct sockaddr_in));
 	int i = 0;
 	for(; i < MAX_PEERS; i++){
 		peer_fd[i] = -1;
-		memset(&peer_info[i], 0, sizeof(struct sockaddr_storage));
+		memset(&peer_info[i], 0, sizeof(struct sockaddr_in));
 	}
 }
 
@@ -39,7 +40,7 @@ int listen_on_port( int port, int protocol){
 
 	// Bind socket
 	if( bind( conn_socket, &addr, addr_size ) == -1) {
-		perror("bind");
+		perror("tcp bind");
 		exit(1);
 	}
 
@@ -52,49 +53,34 @@ int listen_on_port( int port, int protocol){
   return conn_socket;
 }
 
+void init_udp_av(){
+	int slen=sizeof(si_me);
+
+	if ((video_socket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		perror("socket");
+
+	memset((char *) &si_me, 0, sizeof(si_me));
+	si_me.sin_family = AF_INET;
+	si_me.sin_port = htons(VIDEO_PORT);
+	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(video_socket, &si_me, sizeof(si_me))==-1)
+		perror("udp bind");
+	printf("[VIDEO] UDP Socket is bound\n");
+	jpgBuffer = malloc(UDP_MAX);
+	memset(jpgBuffer, 0, UDP_MAX);
+}
+
 void accept_peer_connection(int socket, int protocol){
 	accept_connection(socket, numPeers, protocol);
+	printf("%s\n",inet_ntoa(peer_info[numPeers].sin_addr));
 	numPeers++;
-	/*
-	struct timeb tp; 
-	int t1, t2;
-	printf("Connection recieved!\n");
-	char * buf = malloc(25);
-	memset(buf, 0, 25);
-	strcpy(buf, "Hello World!\0");
-
-	ftime(&tp);
-	t1 = (tp.time * 1000) + tp.millitm;
-	//printf("Start: %d\n", tp.millitm);
-	
-	// Send the packet to the client
-	if( write(controlfd, buf, 25) == -1){
-		perror("write");
-		exit(1);
-	}
-
-	// Get the time elapsed on the client
-	int * t3 = malloc(sizeof(int));
-	if( read(controlfd, t3, sizeof(int)) == -1 ){
-		perror("read");
-		exit(1);
-	}
-	//printf("Elapsed time from client: %d\n", *t3);
-
-	ftime(&tp);
-	t2 = (tp.time * 1000) + tp.millitm;
-	//printf("End: %d\n", tp.millitm);
-
-	printf("Message Sent!\n");
-	printf("RTT:%ds\n", t2-t1-*t3);
-	*/
 }
 
 void accept_connection(int socket, int peerIndex, int protocol){
 	int fd;
-	int addr_size = sizeof(struct sockaddr_storage);
-	struct sockaddr_storage their_addr;
-	memset(&their_addr, 0, sizeof(struct sockaddr_storage));
+	int addr_size = sizeof(struct sockaddr_in);
+	struct sockaddr_in their_addr;
+	memset(&their_addr, 0, sizeof(struct sockaddr_in));
 	fd = accept( socket, (struct sockaddr *)&their_addr, &addr_size );
 	if(fd == -1 ){
 		perror("accept connection");
@@ -104,79 +90,194 @@ void accept_connection(int socket, int peerIndex, int protocol){
 	peer_info[peerIndex] = their_addr;
 }
 
-void start_stats_timer(){
+void* calculate_stats(){
 	printf("[smiletime] Starting bandwidth stats\n");
-	timer_t timer_id;
-	timer_create(CLOCK_REALTIME, NULL ,&timer_id);
-	struct itimerspec val;
-	memset(&val, 0, sizeof(struct itimerspec));
-	val.it_value.tv_sec = 1;
-	val.it_value.tv_nsec = 0;
-	timer_settime(timer_id, (int)NULL, &val, NULL);
+	int sent_bandwidth;
+	int received_bandwidth;
+	bytes_sent = 0;
+	bytes_received = 0;
+	seconds_elapsed = 0;
+	while( stopRecording == 0)
+	{
+		if(streaming == 1){
+			seconds_elapsed++;
+			//pthread_mutex_lock(&bytes_sent_mutex);
+			//pthread_mutex_unlock(&bytes_sent_mutex);
+			sent_bandwidth = bytes_sent*8;
+			received_bandwidth = bytes_received*8;
+			printf("[%ds] Outgoing Bandwidth: %dbps\n", seconds_elapsed, sent_bandwidth);
+			printf("[%ds] Incoming Bandwidth: %dbps\n", seconds_elapsed, received_bandwidth);
+			bytes_sent = 0;
+			bytes_received = 0;
+			sleep(1);
+		}
+	}
+	pthread_exit(NULL);
 }
 
+void* sendLatencyPackets(){
+  struct timeb t;
+	printf("[smiletime] Starting latency monitoring\n");
 
+	while( stopRecording == 0)
+	{
+		if(streaming == 1){
+      // Get current time
+      ftime(&t);
+      
+      // Create the latency packet
+      latency_packet l;
+      l.packetType = LATENCY_PACKET;
+      l.peer_sender = 0; // This latency packet is for Desktop-to-Mobile latency
+      l.time_sent = (int)(t.time*1000 + t.millitm);
+      HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
+      memcpy(latencypacket->message, &l, sizeof(latency_packet));
 
-/*
-void send_init_control_packet( AVStream* stream0, AVStream* stream1 ) {
-  AVStream* audio_stream;
-  AVStream* video_stream;
-  if( stream0->codec->codec_type == AVMEDIA_TYPE_AUDIO )
+      // Send the latency packet to all peers
+      ywrite(latencypacket);
+      destroy_HTTP_packet(latencypacket);
+
+      printf("[smiletime] Sent latency packet\n");
+
+			sleep(10);
+		}
+	}
+	pthread_exit(NULL);
+}
+
+void calculate_latency( latency_packet *l ){
+  unsigned long dtom_latency;
+  unsigned long mtod_latency;
+  struct timeb now;
+
+  if( l->peer_sender < 0 )
+    return;
+
+  // Get current time
+  ftime(&now);
+
+  // Desktop-to-Mobile latency
+  if( l->peer_sender == 0 )
   {
-    audio_stream = stream0;
-    video_stream = stream1;
+    // Latency is roundtrip / 2
+    dtom_latency = ( ((int)(now.time*1000 + now.millitm)) - l->time_sent ) / 2;
+
+    // Print the Desktop-to-Mobile latency
+    printf("[%ds] Desktop-to-Mobile Latency: %lums\n", seconds_elapsed, dtom_latency);
   }
   else
   {
-    audio_stream = stream1;
-    video_stream = stream0;
-  }
+    if( mobile_latency_packet_consumed == 0 )
+    {
+      // Send the latency packet back to the mobile
+      HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
+      memcpy(latencypacket->message, l, sizeof(latency_packet));
+      printf("%d\n", l->time_sent);
+      printf("%d\n", ((char*)(latencypacket->message))[8]); 
+      printf("%d\n", ((char*)(latencypacket->message))[9]); 
+      printf("%d\n", ((char*)(latencypacket->message))[10]); 
+      printf("%d\n", ((char*)(latencypacket->message))[11]); 
+      ywrite(latencypacket);
+      destroy_HTTP_packet(latencypacket);
 
-  control_packet cp;
-  cp.audio_codec = *audio_stream->codec->codec;
-  cp.video_codec = *video_stream->codec->codec;
-  cp.audio_codec_ctx = *audio_stream->codec;
-  cp.video_codec_ctx = *video_stream->codec;
-  HTTP_packet* np = control_to_network_packet(&cp);
-  printf("TYPE: %c\n", get_packet_type(np));
-  xwrite(controlfd, np );
-}*/
-/*
+      mobile_latency_packet_consumed = 1;
+    }
+    else
+    {
+      // Print the Mobile-to-Desktop latency
+      printf("[%ds] Mobile-to-Desktop Latency: %lums\n", seconds_elapsed, l->time_sent);
+      mobile_latency_packet_consumed = 0;
+    }
+
+    //mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent - 15000 );
+    //while( mtod_latency < 0 ) mtod_latency += 10; // lulz?
+  }
+}
+
+void send_text_message(char* str){
+	text_packet txt;
+	txt.packetType = TEXT_PACKET;
+  memset(txt.message,0,TEXT_MAX_SIZE);
+	strcpy(txt.message, str);
+	printf("sending text message: %s\n", str);
+	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
+	memcpy(txtpacket->message, &txt, sizeof(text_packet));
+	ywrite(txtpacket);
+	destroy_HTTP_packet(txtpacket);
+}
+
 void listen_control_packets(){
 	//listen for control and pantilt packets.
-	void* buffer = malloc(100);
+	int packetType;
+	HTTP_packet* packet;
+	int i;
+	struct timeval timeout;
+   timeout.tv_sec = 2; // 2 second timeout.  New users will be able to send new messages within 2 seconds.
+   timeout.tv_usec = 0;
+
 	while(stopRecording == 0){
-		int size = read(controlfd, buffer, 100);
-		if( size == -1 || size == 0 ){
-			perror("read");
-			exit(1);
+		FD_ZERO(&fds);
+		nfds = 0;
+		for(i = 0; i < numPeers; i++){
+			if(peer_fd[i] != -1){
+				if(peer_fd[i] > nfds) nfds = peer_fd[i];
+				FD_SET(peer_fd[i], &fds);
+			}
 		}
-		//printf("read packet of size: %d\n",size);
-		HTTP_packet packet;
-		packet.message = buffer;
-		packet.length = size;
-		char packet_type = get_packet_type(&packet);
-		switch(packet_type)
+		if(select(nfds+1, &fds, NULL, NULL, &timeout) > 0)
 		{
-			case CONTROL_PACKET:
-				printf("received control packet\n");
-				break;
-			case PANTILT_PACKET:
-				;
-				pantilt_packet* pt = to_pantilt_packet(&packet);
-				if(pt->type == PAN)
-					pan_relative(pt->distance);
-				else if(pt->type == TILT)
-					tilt_relative(pt->distance);
-				break;
-			default:
-				printf("received INVALID packet\n");
-				break;
+			for(i = 0; i < numPeers; i++){
+				if(peer_fd[i] != -1 && FD_ISSET(peer_fd[i], &fds)){
+					int size = recv(peer_fd[i], &packetType, sizeof(packetType), MSG_PEEK);
+					if( size == -1 || size == 0 ){
+						peer_fd[i] = -1;
+						break;
+					}
+					switch(packetType)
+					{
+						case CONTROL_PACKET:
+							packet = create_HTTP_packet(sizeof(control_packet));
+							yread(packet, peer_fd[i]);
+						break;
+						case PANTILT_PACKET:
+							packet = create_HTTP_packet(sizeof(pantilt_packet));
+							yread(packet, peer_fd[i]);
+							pantilt_packet* pt = to_pantilt_packet(packet);
+							printf("pan: %d, tilt: %d\n", pt->pan, pt->tilt);
+							pan_relative(pt->pan);
+							tilt_relative(pt->tilt);
+							free(pt);
+						break;
+						case TEXT_PACKET:
+							packet = create_HTTP_packet(sizeof(text_packet));
+							yread(packet, peer_fd[i]);
+							text_packet* tp = to_text_packet(packet);
+							char username[8];	
+							strcpy(username, "peer : ");
+							username[4] = i + '0';
+							tp->message[strlen(tp->message)] = '\n';
+							println(username, 7, tp->message, strlen(tp->message));
+							free(tp);
+						break;
+						case LATENCY_PACKET:
+							packet = create_HTTP_packet(sizeof(latency_packet));
+							yread(packet, peer_fd[i]);
+							latency_packet* lp = to_latency_packet(packet);
+              calculate_latency(lp);
+							free(lp);
+						break;
+						default:
+							printf("received UNRECOGNIZED packet\n");
+						break;
+					}
+					destroy_HTTP_packet(packet);
+					packet = NULL;
+				}
+			}
 		}
 	}
-	free(buffer);
 	pthread_exit(NULL);
-}*/
+}
 
 //______________NAME SERVER_______________
 

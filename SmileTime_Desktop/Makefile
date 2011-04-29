@@ -1,15 +1,17 @@
 INSTALLROOT=$(PWD)
 
-CC=gcc -pthread -lasound
+CC=gcc -pthread -lasound `pkg-config --cflags --libs gtk+-2.0`
 
 SDLLIBS = $(shell sdl-config --libs) -lSDL_image
 SDLFLAGS = $(shell sdl-config --cflags)
 
-MATHJPG_LIB= -lm 
+MATHJPG_LIB= -lm
 
-CFLAGS = -O0 $(SDLFLAGS) -Wall -g
+CFLAGS = -O0 $(SDLFLAGS) -Wall -g -export-dynamic
 
-SMILETIME_OBJECTS=smiletime.o audio_record.o video_record.o video_play.o audio_play.o  io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o buffer_queue.o
+GTKFLAGS = $(shell `pkg-config --cflags --libs gtk+-2.0`)
+
+SMILETIME_OBJECTS=smiletime.o audio_record.o video_record.o video_play.o audio_play.o  io_tools.o recorder_server.o recorder_client.o network_packet.o helper.o buffer_queue.o chatwindow.o
 LUVCVIEW_OBJECTS= luvcview/utils.o luvcview/v4l2uvc.o luvcview/avilib.o luvcview/color.o
 #PLAY_OBJECTS= player.o audio_play.o video_play.o io_tools.o player_client.o network_packet.o helper.o
 NAMESERVER_OBJ= nameserver.o	
@@ -27,6 +29,9 @@ smiletime:	$(SMILETIME_OBJECTS)
 nameserver:	$(NAMESERVER_OBJ)
 	$(CC)   $(NAMESERVER_OBJ) -o $@
 
+#chatwindow: chatwindow.o 
+#	gcc chatwindow.c -o chatwindow `pkg-config --cflags --libs gtk+-2.0`
+
 smiletime.o:	smiletime.c smiletime.h
 audio_record.o:	audio_record.c audio_record.h
 audio_play.o:	audio_play.c audio_play.h
@@ -34,6 +39,8 @@ video_record.o:	video_record.c video_record.h
 video_play.o:	video_play.c video_play.h
 recorder_server.o: recorder_server.c recorder_server.h
 recorder_client.o: recorder_client.c recorder_client.h
+
+chatwindow.o: chatwindow.c chatwindow.h
 
 player.o:	player.c player.h
 player_client.o: player_client.c player_client.h

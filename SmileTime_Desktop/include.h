@@ -22,6 +22,7 @@
 #include "helper.h"
 
 int stopRecording;
+int streaming;
 
 #define CONTROL_PORT 1336
 #define CONTROL_PORT_S "1336"
