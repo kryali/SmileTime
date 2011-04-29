@@ -30,7 +30,7 @@
 			 		android:layout_width="wrap_content"
 			 		 android:layout_height="wrap_content" 
 			 		 android:id="@id/handle" 
-			 		 android:src="@drawable/icon"></ImageView>
+			 		 android:src="@drawable/chatdrawericon"></ImageView>
 				<LinearLayout 
 					android:layout_width="wrap_content" 
 					android:layout_height="wrap_content" 
