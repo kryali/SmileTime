@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.TimerTask;
 
+import android.util.Log;
+
 public class LatencyTimerTask extends TimerTask {
 
 	OutputStream outStream;
+	private String tag = "LatencyTimerTask";
 	
 	public LatencyTimerTask(OutputStream out){
 		outStream = out;
@@ -25,7 +28,7 @@ public class LatencyTimerTask extends TimerTask {
     int peerSender = 1;
     int packetType = 5; // Latency packet
     long time_sent = System.currentTimeMillis();
-    int time_sent2 = (int)time_sent;
+    int time_sent2 = time_sent%Integer.MAX_VALUE;
 		//byte[] payload = new byte[16];
 		byte[] payload = new byte[12];
 
