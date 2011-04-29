@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+	<RelativeLayout
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	  android:layout_width="fill_parent"
+	  android:layout_height="fill_parent">
+			
+			<ImageView android:src="@drawable/logo2big"
+					   android:layout_width="320px" 
+					   android:id="@+id/image01" 
+					   android:layout_height="240px">
+			</ImageView>
+			<SurfaceView
+				android:layout_width="320px"
+				android:layout_height="240px"
+				android:id="@+id/avsv" 
+				android:layout_toRightOf="@id/image01"/>  
+	
+		<SlidingDrawer 
+			android:layout_height="wrap_content" 
+			android:handle="@+id/handle" 
+			android:content="@+id/content" 
+			android:id="@+id/slide" 
+			android:orientation="vertical" 
+			android:layout_width="fill_parent"
+			android:allowSingleTap="true"
+			android:animateOnClick="false"
+			>
+			 	<ImageView 
+			 		android:layout_width="wrap_content"
+			 		 android:layout_height="wrap_content" 
+			 		 android:id="@id/handle" 
+			 		 android:src="@drawable/icon"></ImageView>
+				<LinearLayout 
+					android:layout_width="wrap_content" 
+					android:layout_height="wrap_content" 
+					android:id="@id/content" android:background="#FF212121">
+					<TextView
+						android:text="This is where the content is.."
+						android:layout_height="400px"
+						android:layout_width="fill_parent"
+					></TextView>
+						
+				</LinearLayout>
+		</SlidingDrawer>
+	
+
+</RelativeLayout>

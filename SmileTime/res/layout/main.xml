@@ -5,23 +5,27 @@
     android:layout_height="fill_parent"
     >
     
-    
-    
-<Button
-	android:layout_width="wrap_content"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:id="@+id/startVideo"
-	android:text="Start Video"> 
-	</Button>
-	
+	>
+	<Button
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:id="@+id/startVideo"
+		android:text="Stream"> 
+		</Button>
+		
+	    
+	<Button
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:id="@+id/connect"
+		android:text="Users"> 
+		</Button>
+</LinearLayout>
     
-<Button
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:id="@+id/connect"
-	android:text="Desktop Connect"> 
-	</Button>
-	
 	
 <SurfaceView
 	android:layout_width="fill_parent"

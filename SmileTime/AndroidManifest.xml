@@ -16,12 +16,27 @@
                   android:label="connect">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name=".AVRecorder"
+                  android:label="streaming"
+                  android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ListUsers"
+                  android:label="Users">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
     </application>
 	<uses-permission android:name="android.permission.INTERNET"/>
-
+	<uses-feature android:name="android.hardware.camera" />
 	<uses-permission android:name="android.permission.RECORD_VIDEO"/>
+	<uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 </manifest> 
