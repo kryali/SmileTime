@@ -129,7 +129,7 @@ void* sendLatencyPackets(){
       latency_packet l;
       l.packetType = LATENCY_PACKET;
       l.peer_sender = 0; // This latency packet is for Desktop-to-Mobile latency
-      l.time_sent = ((int) t.time) * 1000 + t.millitm;
+      l.time_sent = t.time*1000 + t.millitm;
       HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
       memcpy(latencypacket->message, &l, sizeof(latency_packet));
 
@@ -139,16 +139,19 @@ void* sendLatencyPackets(){
 
       printf("[smiletime] Sent latency packet\n");
 
-			sleep(30);
+			sleep(10);
 		}
 	}
 	pthread_exit(NULL);
 }
 
 void calculate_latency( latency_packet *l ){
-  long dtom_latency;
-  long mtod_latency;
+  unsigned long dtom_latency;
+  unsigned long mtod_latency;
   struct timeb now;
+
+  if( l->peer_sender < 0 )
+    return;
 
   // Get current time
   ftime(&now);
@@ -159,13 +162,16 @@ void calculate_latency( latency_packet *l ){
     // Latency is roundtrip / 2
     dtom_latency = ( (now.time*1000 + now.millitm) - l->time_sent ) / 2;
 
+    mtod_latency = (now.time*1000 + now.millitm);
+
     // Print the Desktop-to-Mobile latency
     printf("[%ds] Desktop-to-Mobile Latency: %lums\n", seconds_elapsed, dtom_latency);
   }
   else
   {
     // Print the Mobile-to-Desktop latency
-    mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent );
+    mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent - 1500 );
+    while( mtod_latency < 0 ) mtod_latency += 10; // lulz?
     printf("Peer sender: %d\n", l->peer_sender);
     printf("[%ds] Mobile-to-Desktop Latency: %lums\n", seconds_elapsed, mtod_latency);
   }
@@ -174,6 +180,7 @@ void calculate_latency( latency_packet *l ){
 void send_text_message(char* str){
 	text_packet txt;
 	txt.packetType = TEXT_PACKET;
+  memset(txt.message,0,TEXT_MAX_SIZE);
 	strcpy(txt.message, str);
 	printf("sending text message: %s\n", str);
 	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
