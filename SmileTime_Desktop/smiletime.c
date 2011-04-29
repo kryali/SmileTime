@@ -108,7 +108,7 @@ int main(int argc, char*argv[])
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
 
-	chatwindow_init();
+	//chatwindow_init();
 
 	// * Start listening for peer connections. *
 	listen_peer_connections(strToInt(peer_port));

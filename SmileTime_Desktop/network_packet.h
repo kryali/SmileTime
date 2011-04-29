@@ -63,7 +63,7 @@ typedef struct __text_packet{
 
 typedef struct __latency_packet{
 	int packetType;
-	int peer_sender; // 0 = Desktop-to-Mobile, 1 = Mobile-to-Desktop, 1 = Second Mobile-to-Desktop peer, etc.
+	int peer_sender; // 0 = Desktop-to-Mobile, 1 = Mobile-to-Desktop, 2 = Second Mobile-to-Desktop peer, etc.
   long time_sent;
 } latency_packet;
 

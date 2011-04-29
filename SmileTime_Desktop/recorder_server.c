@@ -160,13 +160,14 @@ void calculate_latency( latency_packet *l ){
     dtom_latency = ( (now.time*1000 + now.millitm) - l->time_sent ) / 2;
 
     // Print the Desktop-to-Mobile latency
-    printf("[%ds] Desktop-to-Mobile Latency: %dms\n", seconds_elapsed, dtom_latency);
+    printf("[%ds] Desktop-to-Mobile Latency: %lums\n", seconds_elapsed, dtom_latency);
   }
   else
   {
     // Print the Mobile-to-Desktop latency
     mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent );
-    printf("[%ds] Mobile-to-Desktop Latency: %dms\n", seconds_elapsed, mtod_latency);
+    printf("Peer sender: %d\n", l->peer_sender);
+    printf("[%ds] Mobile-to-Desktop Latency: %lums\n", seconds_elapsed, mtod_latency);
   }
 }
 
