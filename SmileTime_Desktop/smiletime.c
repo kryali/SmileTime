@@ -87,8 +87,8 @@ int main(int argc, char*argv[])
 	// * Initializiations * 
 	video_record_init();
 	video_play_init();
-//	audio_play_init();
-//	audio_record_init();
+	audio_play_init();
+	audio_record_init();
 	init_udp_av();
 	init_udp_audio();
 	pthread_mutex_init(&bytes_sent_mutex, NULL);
