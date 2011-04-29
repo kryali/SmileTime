@@ -173,6 +173,10 @@ void calculate_latency( latency_packet *l ){
       HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
       memcpy(latencypacket->message, l, sizeof(latency_packet));
       printf("%d\n", l->time_sent);
+      printf("%d\n", (int)latencypacket->message[8]); 
+      printf("%d\n", (int)latencypacket->message[9]); 
+      printf("%d\n", (int)latencypacket->message[10]); 
+      printf("%d\n", (int)latencypacket->message[11]); 
       ywrite(latencypacket);
       destroy_HTTP_packet(latencypacket);
 
