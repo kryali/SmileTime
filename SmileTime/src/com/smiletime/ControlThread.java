@@ -75,9 +75,16 @@ public class ControlThread extends Thread{
               }
               long now = System.currentTimeMillis();
               long latency = now - sent_time;
-              memcpy(payload[8], &latency, 8);
+              payload[8] = (byte)(latency);
+              payload[9] = (byte)(latency >>> 8);
+              payload[10] = (byte)(latency >>> 16);
+              payload[11] = (byte)(latency >>> 24);
+              payload[12] = (byte)(latency >>> 32);
+              payload[13] = (byte)(latency >>> 40);
+              payload[14] = (byte)(latency >>> 48);
+              payload[15] = (byte)(latency >>> 56);
 							out.write(payload);
-							Log.d(tag, "Sending MOBILE latency packet");
+							Log.d(tag, "Sending MOBILE latency packet " + latency);
 						}
 
 						
