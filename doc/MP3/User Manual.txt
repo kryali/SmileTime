@@ -1,0 +1,59 @@
+Libraries
+  * gtk+ - http://gtk.org
+
+gtk Configuration
+  ./configure
+  make
+  make install
+
+Usage
+  To use our program you must have gtk+ installed on the computer.
+
+  Once you have all the libraries installed you may compile the project. 
+  Change directories into the /src for the project and then compile it:
+    make
+
+
+  Now start the recorder program:
+    ./recorder HANDLE
+
+  Finally, start the player:
+    ./player HANDLE
+
+  Note: The HANDLE must be the same for both programs
+  
+  The nameserver should be running at a remote IP (email group if down)
+
+  To quit, use CTRL+C.
+
+Features
+  1. Video & Audio Streaming: The recorder captures video frames from the camera and
+  displays them in the recorder window. The video resolution is 640x480.
+  Though we were able to send the packet data, we
+  were unable to get the player to successfully display the packets sent from
+  the recorder.
+
+  2. TCP: The video and audio packets are sent over the network using TCP.
+
+  3. Bandwidth: When the recorder sends packets, it counts the bytes sent 
+  and every second the current outgoing bandwidth is reported to the screen.
+  When the player receives packets, it counts the bytes received and the 
+  current incoming bandwidth is reported to the screen.
+
+  4. Latency: Every second, the latency between the recorder and player is
+  tested and the result is reported to the screen. When the program is paused
+  the latency will not be tested and reported.
+
+  5. Pause: The user may pause the playback by pressing the SPACE key. When
+  the program is paused, packets are still sent and received, so the bandwidth
+  is calculated. However the latency is not tested or reported when the
+  program is paused.
+
+  6. Nameserver: The nameserver manages connections and connects users by
+  matching usernames. This establishes the connection between the recorder and
+  the player. It is being currently run on one of our servers with the ip
+  address hardcoded in. (email group if nameserver isn't running)
+
+  7. Remote Control: The player can control the recorder's camera by using the
+  arrow keys. When the player window has focus, the user can press the 
+  UP, RIGHT, LEFT, and DOWN keys to move the camera in all four directions.

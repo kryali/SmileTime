@@ -1,0 +1,58 @@
+Recorder
+
+
+Player
+
+The player is modified from our MP1 which was based on the guide at 
+http://dranger.com/ffmpeg/ whose code is licensed under the 
+Creative Commons Attribution-Share Alike 2.5 License.
+
+Key Data Structures:
+  VideoState: Contains audio/video buffers, audio/video packet queues, picture queue, 
+              filename, quit flag, audio clock, and SDL lock and conditional variables.
+
+  PacketQueue: Queue for audio and video packets. Contains an AVPacket pointer to 
+              the first and last packet in the queue. The number of packets, nb_packets,
+              is stored as well as pointers to the lock and condition variable used to
+              ensure reliability of the list.
+
+  VideoPicture: The video picture struct contains a pointer to the image for the picture,
+                the picture dimensions, and an allocated flag which is set once the 
+                picture has been converted to the proper pixel format.
+
+Program Flow:
+  The main loop first initializes some variables and libraries: ffmpeg capabilities,
+  the SDL window which will contain the video, and some video state information. The 
+  VideoState struct contains buffers for the audio samples and video frames and a queue
+  for each stream. It also contains the codec for each stream and SDL information
+  for the window. In this first block of code, the connection to the nameserver
+  is established. Once the handshake with the nameserver has completed, the
+  player has the IP of the recorder and it establishes that connection.
+
+  The main loop then creates the keyboard event thread. This thread listens
+  for keypresses, specifically UP, RIGHT, DOWN, LEFT, and SPACE. The arrow
+  keys provide the ability to move the camera. The SPACE key provides the
+  ability to pause and resume the video playback.
+  
+  Next the main loop launches the stats thread. This thread calculates the
+  current incoming bandwidth and prints it to the screen every 1 second.
+  
+  Finally the decode thread launches. This thread opens the foo.mkv dummy file which 
+  provides the AVCodecContext information. It also initializes the queues, and creates 
+  buffers for the decoder. The decode thread then enters a loop and starts reading packets 
+  consecutively from the network and putting them in the respective video or audio queue.
+  The video thread reads from the queue and decodes the packets.
+  After decoding, the thread adjusts the presentation timestamp in order 
+  ensure that the audio and video are synchronized.
+
+  The main loop launches into its main event loop after launching the decode loop. The
+  event loop waits for events. The main events it waits for are  FF_ALLOC_EVENT and 
+  FF_REFRESH_EVENT. The FF_ALLOC_EVENT is sent whenever a decoded frame is finished. This
+  is to allocate space for and create an SDL Overlay of the frame. When the SDL Overlay
+  picture is made, it is added to the picture queue. This queue gets consumed by the 
+  video refresh function called on the FF_REFRESH_EVENT event. The video display window
+  is refreshed about every 50 ms. The actual refresh of any given frame can vary by a
+  few ms because it may be adjusted in order to keep the audio and video in sync.
+
+  The video stops playing when the user presses CTRL+C. The playback fps 
+  is printed into the terminal. The quit flag is set high and everything is closed.
