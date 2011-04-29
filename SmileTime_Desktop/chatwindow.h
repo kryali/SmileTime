@@ -18,4 +18,4 @@ GtkEntry *chatbox;
 
 void println(char* username, int usernamesize, char* str, int size);
 void button_event(GtkButton *button, gpointer user_data);
-void chatwindow_init();
+void * chatwindow_init();
