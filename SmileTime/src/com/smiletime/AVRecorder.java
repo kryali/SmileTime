@@ -531,22 +531,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		mPreviewRunning = false;
 		
 	}
-
-	public void receiveLatencyPacketFromDesktop(){
-    // Receive the packet
-    byte[] payload = new byte[16];
-    try {
-      in.read(payload);
-    } catch (IOException e1) {
-      // TODO Auto-generated catch block
-      setText("sending failed latency send");
-    }
-
-    // ... and send the packet immediately back to the Desktop
-		try { out.write(payload); }
-    catch (IOException e) { }
-    
-  }
 	
 	public void sendControl(float distanceX, float distanceY){
 		if(!isControlConnected)
