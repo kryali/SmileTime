@@ -28,7 +28,7 @@ public class LatencyTimerTask extends TimerTask {
     int peerSender = 1;
     int packetType = 5; // Latency packet
     long time_sent = System.currentTimeMillis();
-    int time_sent2 = time_sent%Integer.MAX_VALUE;
+    int time_sent2 = (int) (time_sent%Integer.MAX_VALUE);
 		//byte[] payload = new byte[16];
 		byte[] payload = new byte[12];
 

@@ -78,7 +78,7 @@ public class ControlThread extends Thread{
                 }
               }
               long now = System.currentTimeMillis();
-              int now2 = now%Integer.MAX_VALUE;
+              int now2 = (int) (now%Integer.MAX_VALUE);
 							Log.d(tag, "NOW = " + now);
 							Log.d(tag, "NOW = " + now2);
 							Log.d(tag, "SENT_TIME " + sent_time);
