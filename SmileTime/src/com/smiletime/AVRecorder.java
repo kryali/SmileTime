@@ -65,6 +65,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private AudioTrack mTrack;
 	private String tag = "AVR";
 	private int bufferSize = 4160;
+	private boolean isControlConnected = false;
 	
 
 	private boolean shouldSendImage = true;
@@ -380,6 +381,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			serverSocket = new Socket(serverIP, controlPort);
 			out = serverSocket.getOutputStream();
 			in = serverSocket.getInputStream();
+			isControlConnected = true;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -447,6 +449,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	}
 	
 	public void sendControl(float distanceX, float distanceY){
+		if(!isControlConnected)
+			return;
 		int sendX = (int) ((distanceX/mVideoWidth) * (1000-70) + 70);
 		int sendY = (int) ((distanceY/mVideoHeight) * (750-70) + 70) * -1;
 		setText("Sending (" + sendX + ", " + sendY + ")" );
