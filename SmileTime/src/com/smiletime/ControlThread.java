@@ -51,33 +51,41 @@ public class ControlThread extends Thread{
 							| (time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
 
 					if( sender == 0){
-						// Desktop to Mobile
-						//sendLatencyPacketToDesktop(packetType, sender, time);
-						for(int i = 0 ; i < 16; i++){
-							if(i < 4){
-								payload[i] = packetTypeArr[i];
-							} else if( i < 8) {
-								payload[i] = peer_sender[i-4];
-							} else {
-								payload[i] = time_packet[i-8];
+							// Desktop to Mobile
+							//sendLatencyPacketToDesktop(packetType, sender, time);
+							for(int i = 0 ; i < 16; i++){
+								if(i < 4){
+									payload[i] = packetTypeArr[i];
+								} else if( i < 8) {
+									payload[i] = peer_sender[i-4];
+								} else {
+									payload[i] = time_packet[i-8];
+								}
 							}
-						}
-						out.write(payload);
-						Log.d(tag, "Sending latency packet");
-					} else if (sender == 1){
-						// Mobile to Desktop
-						for(int i = 0 ; i < 8; i++){
-							if(i < 4){
-								payload[i] = packetTypeArr[i];
-							} else if( i < 8) {
-								payload[i] = peer_sender[i-4];
+								out.write(payload);
+								Log.d(tag, "Sending latency packet");
+						} else if (sender == 1){
+							// Mobile to Desktop
+							for(int i = 0 ; i < 8; i++){
+								if(i < 4){
+									payload[i] = packetTypeArr[i];
+								} else if( i < 8) {
+									payload[i] = peer_sender[i-4];
+								}
 							}
+							long now = System.currentTimeMillis();
+							long latency = now - sent_time;
+							payload[8] = (byte)(latency);
+							payload[9] = (byte)(latency >>> 8);
+							payload[10] = (byte)(latency >>> 16);
+							payload[11] = (byte)(latency >>> 24);
+							payload[12] = (byte)(latency >>> 32);
+							payload[13] = (byte)(latency >>> 40);
+							payload[14] = (byte)(latency >>> 48);
+							payload[15] = (byte)(latency >>> 56);
+							out.write(payload);
+							Log.d(tag, "Sending MOBILE latency packet " + latency);
 						}
-						long now = System.currentTimeMillis();
-						long latency = now - sent_time;
-						out.write(payload);
-						Log.d(tag, "Sending MOBILE latency packet");
-					}
 
 
 					break;
