@@ -102,13 +102,12 @@ int main(int argc, char*argv[])
 	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
 
 	pthread_create(&keyboard_thread_id, NULL,  captureKeyboard, NULL);
+	pthread_create(&chat_thread_id, NULL,  chatwindow_init, NULL);
 	pthread_create(&stats_thread_id, NULL,  calculate_stats, NULL);
 	pthread_create(&latency_thread_id, NULL,  sendLatencyPackets, NULL);
 
 	// * Connect to nameserver * 
 	connect_to_nameserver(argc, argv);
-
-	chatwindow_init();
 
 	// * Start listening for peer connections. *
 	listen_peer_connections(strToInt(peer_port));
@@ -125,6 +124,7 @@ int main(int argc, char*argv[])
 	pthread_join(video_capture_thread_id, NULL);
 	pthread_join(audio_capture_thread_id, NULL);
 	pthread_join(keyboard_thread_id, NULL);
+	pthread_join(chat_thread_id, NULL);
 	pthread_join(control_network_thread_id, NULL);
 	pthread_join(stats_thread_id, NULL);
 
