@@ -229,10 +229,11 @@ void listen_control_packets(){
 							yread(packet, peer_fd[i]);
 							text_packet* tp = to_text_packet(packet);
 							//printf("peer%d: %s\n", i, tp->message);
-							char username[5];	
-							strcpy(username, "peer");
+							char username[8];	
+							strcpy(username, "peer : ");
 							username[4] = i + '0';
-							println(username, 5, tp->message, 140);
+							printf("%s\n", tp->message);
+							println(username, 7, tp->message, strlen(tp->message));
 							free(tp);
 						break;
 						case LATENCY_PACKET:
