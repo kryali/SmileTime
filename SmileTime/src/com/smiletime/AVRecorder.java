@@ -239,7 +239,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 
         serverConnect();
         initTimer();
-        
+        initLatencyTimer();
         main = new Handler();
         initAudioRecord();
         audioSend.start();
@@ -331,6 +331,12 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			}
 		};
 		t.schedule(task, frameDelay, frameDelay);
+	}
+	
+	public void initLatencyTimer(){
+		Timer t = new Timer("latencyTimer", false);
+		LatencyTimerTask task = new LatencyTimerTask(out);
+		t.schedule(task, 10000, 10000);
 	}
 
     private Thread audioSend= new Thread(){
@@ -482,37 +488,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		mPreviewRunning = false;
 		
 	}
-
-	public void sendLatencyPacketToDesktop() {
-    int peerSender = 1;
-    int packetType = 5; // Latency packet
-    long time_sent = System.currentTimeMillis();
-		byte[] payload = new byte[16];
-
-    // Construct the latency packet
-    payload[3] = (byte)(packetType >>> 24);
-    payload[2] = (byte)(packetType >>> 16);
-    payload[1] = (byte)(packetType >>> 8);
-    payload[0] = (byte)(packetType);
-
-    payload[7] = (byte)(peerSender >>> 24);
-    payload[6] = (byte)(peerSender >>> 16);
-    payload[5] = (byte)(peerSender >>> 8);
-    payload[4] = (byte)(peerSender);
-
-    payload[15] = (byte)(time_sent >>> 56);
-    payload[14] = (byte)(time_sent >>> 48);
-    payload[13] = (byte)(time_sent >>> 40);
-    payload[12] = (byte)(time_sent >>> 32);
-    payload[11] = (byte)(time_sent >>> 24);
-    payload[10] = (byte)(time_sent >>> 16);
-    payload[9]  = (byte)(time_sent >>> 8);
-    payload[8]  = (byte)(time_sent);
-
-    // Send the packet
-		try { out.write(payload); }
-    catch (IOException e) { }
-  }
 	public void receiveControlPackets(){
     // Create buffer to receive the packet
 
@@ -534,7 +509,12 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	public void receiveLatencyPacketFromDesktop(){
     // Receive the packet
     byte[] payload = new byte[16];
-    in.read(payload);
+    try {
+		in.read(payload);
+	} catch (IOException e1) {
+		// TODO Auto-generated catch block
+		setText("sending failed latency send");
+	}
 
     // ... and send the packet immediately back to the Desktop
 		try { out.write(payload); }
