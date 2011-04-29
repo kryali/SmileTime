@@ -40,7 +40,7 @@ public class ControlThread extends Thread{
 		while(true){
 			try {
 				in.read(packetTypeArr);
-				int packetType = byteToInt(packetTypeArr, 0);
+				int packetType = bytetoint(packettypearr, 0);
 				switch (packetType) {
 				case latencyPacketType:
 					Log.d(tag,"Got a latency packet");
@@ -51,10 +51,7 @@ public class ControlThread extends Thread{
 
 					//int sent_time = ((time_packet[7] << 56) | (time_packet[6] << 48) | (time_packet[5] << 40 )| time_packet[4] << 32
 					//		| (time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
-					int sent_time = time_packet[0]; // BREAKPOINT HERE
-					sent_time |= time_packet[1] << 8;
-					sent_time |= time_packet[2] << 16; 
-					sent_time |= time_packet[3] << 24;
+					int sent_time = bytetoint(time_packet)// DISCREPENCY here.  bytes are not the same as the ones sent.
 					if( sender == 0){
 							// Desktop to Mobile
 							//sendLatencyPacketToDesktop(packetType, sender, time);
@@ -80,7 +77,7 @@ public class ControlThread extends Thread{
                 }
               }
               long now = System.currentTimeMillis();
-              int now2 = (int) (now%Integer.MAX_VALUE);
+              int now2 = (int) (now%Integer.MAX_VALUE);//breakpoint here
 							Log.d(tag, "NOW = " + now);
 							Log.d(tag, "NOW = " + now2);
 							Log.d(tag, "SENT_TIME " + sent_time);
