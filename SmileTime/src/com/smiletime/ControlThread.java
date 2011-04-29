@@ -86,6 +86,8 @@ public class ControlThread extends Thread{
 							out.write(payload);
 							Log.d(tag, "Sending MOBILE latency packet " + latency);
 						}
+            else
+							Log.d(tag, "Sender not 0 or 1 ... instead its " + sender);
 
 						
 						break;
