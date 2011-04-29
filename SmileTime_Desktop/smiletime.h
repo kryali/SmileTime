@@ -12,10 +12,8 @@
 #include "video_play.h"
 #include "audio_record.h"
 #include "audio_play.h"
-#include "io_tools.h"
 
 #include "recorder_server.h"
-#include "recorder_client.h"
 
 #include "include.h"
 #include "chatwindow.h"

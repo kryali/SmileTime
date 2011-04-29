@@ -19,8 +19,6 @@
 #include <sys/ioctl.h>
 #include <pthread.h>
 
-#include "buffer_queue.h"
-
 #define CONTROL_PACKET 0
 #define PANTILT_PACKET 1
 #define AUDIO_PACKET 2

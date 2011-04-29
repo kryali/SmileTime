@@ -7,8 +7,6 @@
 #include <linux/soundcard.h>
 #include <sys/ioctl.h>
 
-#include "buffer_queue.h"
-
 #ifndef AUDIO_RECORDER_H
 #define AUDIO_RECORDER_H
 
