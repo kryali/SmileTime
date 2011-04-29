@@ -38,11 +38,12 @@ int yread(HTTP_packet* np, int fd){
 }
 
 //sends to multiple UDP peers
-int xwrite(HTTP_packet* np, int fd){
+int xwrite(HTTP_packet* np, int fd, int port){
 	int ret = 0;
 	int i = 0;
 	for(; i < numPeers; i ++)
 	{
+		peer_info[i].sin_port = htons(port);
   		ret = sendto(fd, np->message, np->length, 0, (struct sockaddr *)&peer_info[i], sizeof(struct sockaddr_in));
 		if(ret == -1){
 			perror("write");

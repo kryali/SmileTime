@@ -86,7 +86,6 @@ void accept_connection(int socket, int peerIndex, int protocol){
 		perror("accept connection");
 		exit(1);
 	}
-	their_addr.sin_port = htons(AV_PORT);
 	peer_fd[peerIndex] = fd;
 	peer_info[peerIndex] = their_addr;
 }

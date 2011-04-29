@@ -21,7 +21,7 @@
 char* strstp(char * str, char * stp, int * size);
 int ywrite(HTTP_packet* np);
 int yread(HTTP_packet* np, int fd);
-int xwrite(HTTP_packet* np, int fd);
+int xwrite(HTTP_packet* np, int fd, int port);
 int xread(HTTP_packet* np);
 int strToInt(char* str);
 void add_user(struct sockaddr_in user);
