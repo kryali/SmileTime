@@ -89,8 +89,8 @@ void init_udp_audio(){
 	if (bind(audio_socket, &si, sizeof(si))==-1)
 		perror("bind");
 	printf("[AUDIO] UDP Socket is bound\n");
-	audioBuffer = malloc(AUDIO_PACKET_SIZE);
-	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
+	audioBuffer = malloc(AUDIO_PACKET_SIZE + sizeof(av_packet));
+	memset(audioBuffer, 0, AUDIO_PACKET_SIZE + sizeof(av_packet));
 }
 
 void * read_audio_packet(){
@@ -99,15 +99,14 @@ void * read_audio_packet(){
 	unsigned int sLen = sizeof(si);
   int frames = AUDIO_PACKET_SIZE/2/channels; // Each frame is 2 bytes
   int rc;
-	memset(audioBuffer, 0, AUDIO_PACKET_SIZE);
-	if( (readbytes = recvfrom(audio_socket, audioBuffer, AUDIO_PACKET_SIZE, 0, &si, &sLen))== -1){
+	memset(audioBuffer, 0, AUDIO_PACKET_SIZE + sizeof(av_packet));
+	if( (readbytes = recvfrom(audio_socket, audioBuffer, AUDIO_PACKET_SIZE + sizeof(av_packet), 0, &si, &sLen))== -1){
 		perror("recvfrom");
 	}
 	pthread_mutex_lock(&bytes_received_mutex);
 	bytes_received += readbytes;
 	pthread_mutex_unlock(&bytes_received_mutex);
-  rc = snd_pcm_writei(handle, audioBuffer, frames);
-
+	rc = snd_pcm_writei(handle, ((void*)audioBuffer) + sizeof(av_packet), frames);
   /* EPIPE means underrun */
   if (rc == -EPIPE)
   {

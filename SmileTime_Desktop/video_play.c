@@ -136,22 +136,21 @@ int accept_connection_s(int socket, int protocol){
 
 void * read_jpg(int fd){
 	struct sockaddr_in si_other;
-	int jpgSize = -1;
+	av_packet pckt;
 	int sLen = sizeof(si_other);
 	int readbytes = 0;
-	if( (readbytes = recvfrom(fd, &jpgSize, sizeof(int), MSG_PEEK, &si_other, &sLen))== -1){
+	if( (readbytes = recvfrom(fd, &pckt, sizeof(av_packet), MSG_PEEK, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
 	pthread_mutex_lock(&bytes_received_mutex);
-	bytes_received += jpgSize;
+	bytes_received += pckt.length;
 	pthread_mutex_unlock(&bytes_received_mutex);
 //	printf("Received jpgSize of %d bytes from %s: [%d]\n", jpgSize,inet_ntoa(si_other.sin_addr), readbytes);
-	memset(jpgBuffer, 0, UDP_MAX);
-	if( (readbytes = recvfrom(fd, jpgBuffer, jpgSize+sizeof(int), 0, &si_other, &sLen))== -1){
+	//memset(pckt.length, 0, UDP_MAX);
+	if( (readbytes = recvfrom(fd, jpgBuffer, pckt.length+sizeof(av_packet), 0, &si_other, &sLen))== -1){
 		perror("recvfrom");
 	}
-//	printf("Read %d/%d of the jpg file\n", readbytes, jpgSize);
-	return (jpgBuffer+sizeof(int));
+	return (jpgBuffer+sizeof(av_packet));
 }
 
 int width1 = VIDEO_WIDTH;

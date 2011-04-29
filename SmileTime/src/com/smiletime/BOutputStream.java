@@ -11,7 +11,7 @@ public class BOutputStream extends OutputStream {
 		private int maxSize = 20000;
 		
 		byte[] buffer = new byte[maxSize];
-		public int size = 4;
+		public int size = 12;
 		
 
 		@Override
@@ -23,6 +23,7 @@ public class BOutputStream extends OutputStream {
 			buffer[size] = (byte)oneByte;
 			size++;
 		}
+		
 		
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
@@ -40,10 +41,19 @@ public class BOutputStream extends OutputStream {
 		public void send(OutputStream out){
 			try {
 				//out.write(intToByteArray(size));
-				buffer[0] = (byte)size;
-				buffer[1] = (byte)(size >>> 8);
-				buffer[2] = (byte)(size >>> 16);
-				buffer[3] = (byte)(size >>> 24);
+				int packetType = 3;
+				buffer[0] = (byte)packetType;
+				buffer[1] = (byte)(packetType >>> 8);
+				buffer[2] = (byte)(packetType >>> 16);
+				buffer[3] = (byte)(packetType >>> 24);
+				buffer[4] = (byte)size;
+				buffer[5] = (byte)(size >>> 8);
+				buffer[6] = (byte)(size >>> 16);
+				buffer[7] = (byte)(size >>> 24);
+				buffer[8] = (byte)size;
+				buffer[9] = (byte)(size >>> 8);
+				buffer[10] = (byte)(size >>> 16);
+				buffer[11] = (byte)(size >>> 24);
 				out.write(buffer, 0, size);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -55,10 +65,19 @@ public class BOutputStream extends OutputStream {
 
 			try{
 				DatagramSocket s= new DatagramSocket();
-				buffer[0] = (byte)size;
-				buffer[1] = (byte)(size >>> 8);
-				buffer[2] = (byte)(size >>> 16);
-				buffer[3] = (byte)(size >>> 24);
+				int packetType = 3;
+				buffer[0] = (byte)packetType;
+				buffer[1] = (byte)(packetType >>> 8);
+				buffer[2] = (byte)(packetType >>> 16);
+				buffer[3] = (byte)(packetType >>> 24);
+				buffer[4] = (byte)size;
+				buffer[5] = (byte)(size >>> 8);
+				buffer[6] = (byte)(size >>> 16);
+				buffer[7] = (byte)(size >>> 24);
+				buffer[8] = (byte)size;
+				buffer[9] = (byte)(size >>> 8);
+				buffer[10] = (byte)(size >>> 16);
+				buffer[11] = (byte)(size >>> 24);
 				DatagramPacket pkt = new DatagramPacket(buffer, buffer.length, new InetSocketAddress(serverIP, serverPort));
 				s.send(pkt);
 			} catch( IOException e){

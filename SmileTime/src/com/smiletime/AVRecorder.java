@@ -5,9 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
@@ -140,7 +145,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         
         //initAudio();
         
-        boolean launchThreads = true;
+        boolean isClient = true;
 
     	Intent i = getIntent();
     	Bundle b = i.getExtras();
@@ -149,7 +154,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     		//setText(name);
         	fetchUser(name);
         } catch (Exception e){
-        	launchThreads = false;
+        	isClient = false;
     		createAlert();
     		 // do nothing
         }
@@ -161,11 +166,25 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         initAudioRecord();
         audioSend.start();
         
-        if(launchThreads){
+        if(isClient){
             serverConnect();
         	launchThreads();
             initTimer();
             initLatencyTimer();
+        } else{
+
+    		String ipAdd = getLocalIpAddress();
+        	try {
+				registerServer(ipAdd);
+				setupServer();
+	        	launchThreads();
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -230,6 +249,50 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		});
 	}
 
+	
+	private void registerServer(String ipAdd) throws UnknownHostException, IOException {
+		int port = 1337;
+		Socket socketClient = new Socket("173.230.140.232", port);
+		OutputStream out = socketClient.getOutputStream();
+		String s = "testmobile#" + ipAdd + ":1338#0";
+		byte[] buffer = new byte[s.length()+5];
+		int size = s.length();
+		buffer[0] = 1;
+		buffer[1] = (byte) size;
+		buffer[2] = (byte)( size >>> 8);
+		buffer[3] = (byte)( size >>> 16);
+		buffer[4] = (byte)( size >>> 24);
+		s.getBytes(0, size, buffer, 5);
+		out.write(buffer);
+		out.flush();
+		out.close();
+		socketClient.close();
+	}
+
+	
+    InputStream inputFromClient = null;
+
+	private void setupServer(){
+		// Set up and listen on port 1336
+		ServerSocket MyService = null;
+	    try {
+	    	MyService = new ServerSocket(controlPort);
+	    }
+        catch (IOException e) {
+           System.out.println(e);
+        }
+        try {
+        	serverSocket = MyService.accept();
+			out = serverSocket.getOutputStream();
+			in = serverSocket.getInputStream();
+			serverIP = serverSocket.getInetAddress().toString();
+			//setText(serverIP);
+        }
+        catch (IOException e) {
+        }
+        setText("Server received connection");
+        
+	}
 	
 	Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
 		int count = 0;
@@ -453,7 +516,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 
     		while(true){
     			if(sendAudio){
-		    		int bufferReadResult = audioRecord.read(audioBuffer, 0, audioBufferSize);
+		    		int bufferReadResult = audioRecord.read(audioBuffer, 12, audioBufferSize);
 					try {
 						DatagramSocket s= new DatagramSocket();				
 						DatagramPacket pkt = new DatagramPacket(audioBuffer, audioBuffer.length, new InetSocketAddress(serverIP, 1338));
@@ -483,7 +546,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			int audioEncoding = AudioFormat.ENCODING_PCM_16BIT;
 			audioBufferSize = AudioRecord.getMinBufferSize(frequency, channelConfiguration, audioEncoding);
 			audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, frequency, channelConfiguration, audioEncoding, audioBufferSize);
-			audioBuffer = new byte[audioBufferSize];
+			audioBuffer = new byte[audioBufferSize+12];
 			//audioRecord = findAudioRecord();
 			audioRecord.getState();
 			audioRecord.startRecording();
@@ -526,6 +589,23 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		
 		ScrollView sv = (ScrollView) findViewById(R.id.scrollChatView);
 		sv.scrollTo(0, 10000);
+	}
+	
+	public String getLocalIpAddress() {
+	    try {
+	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+	                if (!inetAddress.isLoopbackAddress()) {
+	                    return inetAddress.getHostAddress().toString();
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	        Log.e(tag, ex.toString());
+	    }
+	    return null;
 	}
 	
 	public void serverConnect(){
