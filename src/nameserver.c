@@ -150,6 +150,9 @@ void handle_connection(int fd){
 	}
 	int size = 0;
 	char * msg = NULL;
+
+  server_list_prune(iplist);
+
 	switch(headerCode){
 		case FIND:
 			printf("[NAMESERVER] FIND received!\n");
@@ -202,7 +205,6 @@ void handle_connection(int fd){
 			break;
       	case LIST:
 			printf("[NAMESERVER] LIST received!\n");
-      server_list_prune(iplist);
 			list_print(iplist);
 			list * temp = iplist;			
 			int size = 0;
