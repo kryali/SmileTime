@@ -30,8 +30,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.text.format.Time;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -177,7 +177,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     		buffer[0] = (byte) name.length(); // only accepts 255 byte 
     		out.write(buffer);
     		out.write(stringToByte(name));
-    		
+    		out.flush();
     		
     		InputStream in = nameserverClient.getInputStream();
     		
@@ -187,7 +187,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     		byte[] buffer2 = new byte[size];
     		in.read(buffer2);
     		String listStr = new String(buffer2);
-    		
+    		in.close();
+    		out.close();
     		User u = new User(listStr);
     		serverIP = u.ip;
     		setText(serverIP);
@@ -486,6 +487,15 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	}
 	
 	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event){
+		if( keyCode == KeyEvent.KEYCODE_BACK){
+			System.runFinalizersOnExit(true);
+			System.exit(0);
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
 		// TODO Auto-generated method stub
@@ -570,5 +580,18 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		} catch (IOException e) {
 			//
 		}
+	}
+	
+	@Override
+	public void onBackPressed(){
+		System.runFinalizersOnExit(true);
+		System.exit(0);
+	}
+	
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		System.runFinalizersOnExit(true);
+		System.exit(0);
 	}
 }

@@ -77,7 +77,7 @@ public class ControlThread extends Thread{
 									payload[i] = peer_sender[i-4];
                 }
               }
-              sent_time = ((time_packet[4] << 24) | (time_packet[3] << 16) | (time_packet[2] << 8 )| time_packet[3]);
+              sent_time = ((time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
               long now = System.currentTimeMillis();
               int now2 = (int) (now%Integer.MAX_VALUE);//breakpoint here
 							Log.d(tag, "NOW = " + now);

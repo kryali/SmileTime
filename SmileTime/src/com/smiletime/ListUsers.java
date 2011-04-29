@@ -38,6 +38,13 @@ public class ListUsers extends ListActivity {
     			Intent i = new Intent(ListUsers.this, AVRecorder.class);
     			i.putExtra("name", ((TextView) view).getText());
     			startActivity(i);
+    			try {
+					socketClient.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    			finish();
     		}
     	});
     }
@@ -78,6 +85,7 @@ public class ListUsers extends ListActivity {
     		String listStr = new String(buffer2);
     		
     		users =  listStr.split("#");
+    		out.close();
     		socketClient.close();
         	//TextView connect = (TextView) findViewById(R.id.status);
         	///connect.setText("Socket Connected, size: " + size + ": " + users[0]);
