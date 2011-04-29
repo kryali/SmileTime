@@ -247,6 +247,9 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         AVDecodeThread t = new AVDecodeThread(handler);
         t.start();
         
+        ControlThread ct = new ControlThread(in, out, msgHandler);
+        ct.start();
+        
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
@@ -280,12 +283,30 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		
 		Button but = (Button) findViewById(R.id.chatButton);
 		but.setOnClickListener(new OnClickListener() {
-			
+
+			byte[] payload = new byte[144];
 			@Override
 			public void onClick(View v) {
 
 				EditText e = (EditText) findViewById(R.id.chatInput);
-				insertMessage("[ME] " + e.getText().toString());
+				String s = e.getText().toString();
+				insertMessage("ME>" + s);
+				byte[] message = s.getBytes();
+				int packetType = 4;
+				payload[0] = (byte) packetType;
+				payload[1] = (byte) (packetType >>> 8);
+				payload[2] = (byte) (packetType >>> 16);
+				payload[3] = (byte) (packetType >>> 24);
+				for(int i = 0; i < message.length; i++){
+					payload[i+4] = message[i];
+				}
+				payload[message.length+4] = '\0';
+				try {
+					out.write(payload);
+				} catch (IOException e1) {
+					
+					e.toString();
+				}
 			}
 		});
 	}
@@ -314,7 +335,11 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     
     final Handler msgHandler = new Handler(){
     	public void handleMessage(Message msg){
-    		
+
+        	Bundle b = msg.getData();
+        	byte[] packet = b.getByteArray("message");
+        	String str = new String(packet);
+        	insertMessage("PEER:0> " + str);
     	}
     };
 	
@@ -488,24 +513,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		mPreviewRunning = false;
 		
 	}
-	public void receiveControlPackets(){
-    // Create buffer to receive the packet
 
-    // Receive packets
-    // in.read();
-
-    // Handle the packet
-    /*
-      packetType = (int) buffer;
-      switch(packetType)
-      {
-        case 5: // Latency packet
-        break;
-
-        default:
-      }
-    */
-  }
+	
 	public void receiveLatencyPacketFromDesktop(){
     // Receive the packet
     byte[] payload = new byte[16];
