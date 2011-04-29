@@ -311,6 +311,12 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			} 
         }
     };
+    
+    final Handler msgHandler = new Handler(){
+    	public void handleMessage(Message msg){
+    		
+    	}
+    };
 	
 	public void initTimer(){
 		Timer t = new Timer("frameTimer", false);
