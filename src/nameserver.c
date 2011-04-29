@@ -90,10 +90,8 @@ void add_server(char * msg){
 	char protocol = *msg;
 	printf("PROTOCOL %c\n", protocol);
 
-	//printf("ADDING \n");
 	list_add(&iplist, name, ip, port,protocol);
   server_list_prune(iplist);
-	//printf("DONE ADDING LLUZ \n");
 	list_print(iplist);
 }
 
@@ -204,6 +202,7 @@ void handle_connection(int fd){
 			break;
       	case LIST:
 			printf("[NAMESERVER] LIST received!\n");
+      server_list_prune(iplist);
 			list_print(iplist);
 			list * temp = iplist;			
 			int size = 0;
