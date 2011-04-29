@@ -18,23 +18,26 @@
 		android:layout_width="300px"
 		android:layout_height="fill_parent"
 	>
-		<Button
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+		<ImageButton
+			android:layout_marginTop="50px"
+			android:layout_width="199px"
+			android:layout_height="84px"
 			android:id="@+id/startVideo"
-			android:text="Stream"
-			android:layout_toLeftOf="@id/img"> 
-			</Button>
+			android:src="@drawable/host"
+			android:background="@null"
+		> 
+			</ImageButton>
 			
 		    
-		<Button
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+		<ImageButton
+			android:layout_marginTop="20px"
+			android:layout_width="199px"
+			android:layout_height="84px"
 			android:id="@+id/connect"
-			android:text="Users"
-			android:layout_toRightOf="@id/startVideo"
-			android:layout_below="@id/img"
+			android:layout_below="@id/startVideo"
+			android:src="@drawable/join"
+			android:background="@null"
 			> 
-			</Button>
+			</ImageButton>
     </RelativeLayout>
 </LinearLayout>
