@@ -206,6 +206,7 @@ void handle_connection(int fd){
 			break;
       	case LIST:
 			printf("[NAMESERVER] LIST received!\n");
+      server_list_prune(iplist);
 			list_print(iplist);
 			list * temp = iplist;			
 			int size = 0;
