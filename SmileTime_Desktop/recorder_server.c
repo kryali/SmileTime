@@ -86,7 +86,6 @@ void accept_connection(int socket, int peerIndex, int protocol){
 		perror("accept connection");
 		exit(1);
 	}
-	their_addr.sin_port = htons(AV_PORT);
 	peer_fd[peerIndex] = fd;
 	peer_info[peerIndex] = their_addr;
 }
@@ -252,6 +251,7 @@ void listen_control_packets(){
 							char username[8];	
 							strcpy(username, "peer : ");
 							username[4] = i + '0';
+							tp->message[strlen(tp->message)] = '\n';
 							println(username, 7, tp->message, strlen(tp->message));
 							free(tp);
 						break;

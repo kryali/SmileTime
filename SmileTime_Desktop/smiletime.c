@@ -96,7 +96,7 @@ int main(int argc, char*argv[])
 
 	// * Start recording and encoding audio and video, capturing keyboard input, and prepare for AV streaming * 
 	pthread_create(&video_capture_thread_id, NULL, startVideoEncoding, NULL);
-	pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
+	//pthread_create(&audio_capture_thread_id, NULL, startAudioEncoding, NULL);
 	pthread_create(&control_network_thread_id, NULL, (void*)listen_control_packets,(void*) NULL);
 	pthread_create(&audio_decode_thread_id, NULL, startAudioDecoding, NULL);
 	pthread_create(&video_decode_thread_id, NULL, startVideoDecoding, NULL);
