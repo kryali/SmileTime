@@ -18,11 +18,11 @@
 #include "recorder_client.h"
 
 #include "include.h"
+#include "chatwindow.h"
 
 pthread_t control_network_thread_id;
 pthread_t video_capture_thread_id;
 pthread_t audio_capture_thread_id;
-pthread_t text_send_thread_id;
 pthread_t keyboard_thread_id;
 pthread_t audio_decode_thread_id;
 pthread_t video_decode_thread_id;

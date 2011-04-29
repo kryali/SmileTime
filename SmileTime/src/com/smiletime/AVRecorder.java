@@ -36,12 +36,16 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
-import android.widget.HorizontalScrollView;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +69,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private AudioTrack mTrack;
 	private String tag = "AVR";
 	private int bufferSize = 4160;
+	private boolean isControlConnected = false;
 	
 
 	private boolean shouldSendImage = true;
@@ -273,8 +278,16 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			}
 		});
 		
-		
+		Button but = (Button) findViewById(R.id.chatButton);
+		but.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
 
+				EditText e = (EditText) findViewById(R.id.chatInput);
+				insertMessage("[ME] " + e.getText().toString());
+			}
+		});
 	}
 	
 	public void hideTitleAndNotification(){
@@ -374,12 +387,30 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		isAudioRecording = true;
 	}
 
+	public void insertMessage(String str){
+		TableLayout tl = (TableLayout) findViewById(R.id.chatText);
+		TableRow tr = new TableRow(this);
+		TextView tv1 = new TextView(this);
+		tv1.setText(str);
+		tr.addView(tv1);
+		tr.setBackgroundColor(0xFF212121);
+		TableRow.LayoutParams lp = new TableRow.LayoutParams();
+		lp.setMargins(10, 0, 0, 0);
+		tr.setLayoutParams(lp);
+		tr.setPadding(2, 2, 2, 2);
+		tl.addView(tr);
+		
+		ScrollView sv = (ScrollView) findViewById(R.id.scrollChatView);
+		sv.scrollTo(0, 10000);
+	}
+	
 	public void serverConnect(){
 
         try {
 			serverSocket = new Socket(serverIP, controlPort);
 			out = serverSocket.getOutputStream();
 			in = serverSocket.getInputStream();
+			isControlConnected = true;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -506,6 +537,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
   }
 	
 	public void sendControl(float distanceX, float distanceY){
+		if(!isControlConnected)
+			return;
 		int sendX = (int) ((distanceX/mVideoWidth) * (1000-70) + 70);
 		int sendY = (int) ((distanceY/mVideoHeight) * (750-70) + 70) * -1;
 		setText("Sending (" + sendX + ", " + sendY + ")" );

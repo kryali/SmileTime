@@ -115,7 +115,6 @@ void* calculate_stats(){
 	pthread_exit(NULL);
 }
 
-
 void* sendLatencyPackets(){
   struct timeb t;
 	printf("[smiletime] Starting latency monitoring\n");
@@ -171,11 +170,11 @@ void calculate_latency( latency_packet *l ){
   }
 }
 
-void send_text_message(){
+void send_text_message(char* str){
 	text_packet txt;
 	txt.packetType = TEXT_PACKET;
-	fgets(txt.message, TEXT_MAX_SIZE, stdin);
-	printf("sending text message: %s", txt.message);
+	strcpy(txt.message, str);
+	printf("sending text message: %s\n", str);
 	HTTP_packet* txtpacket = create_HTTP_packet(sizeof(text_packet));
 	memcpy(txtpacket->message, &txt, sizeof(text_packet));
 	ywrite(txtpacket);
@@ -228,7 +227,11 @@ void listen_control_packets(){
 							packet = create_HTTP_packet(sizeof(text_packet));
 							yread(packet, peer_fd[i]);
 							text_packet* tp = to_text_packet(packet);
-							printf("peer%d: %s\n", i, tp->message);
+							//printf("peer%d: %s\n", i, tp->message);
+							char username[5];	
+							strcpy(username, "peer");
+							username[4] = i + '0';
+							println(username, 5, tp->message, 140);
 							free(tp);
 						break;
 						case LATENCY_PACKET:

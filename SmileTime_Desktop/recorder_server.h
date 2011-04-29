@@ -27,7 +27,7 @@ void listen_peer_connections( int port );
 int listen_on_port(int port, int protocol);
 void accept_peer_connection(int socket, int protocol);
 void accept_connection(int socket, int peerIndex, int protocol);
-void send_text_message();
+void send_text_message(char* str);
 void init_udp_av();
 void establish_video_connection();
 void establish_audio_connection();
