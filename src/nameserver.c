@@ -146,8 +146,7 @@ void handle_connection(int fd){
 			msg = malloc(size);
 			// Read the name
 			memset(msg, 0, size);
-			read(fd, msg, size);
-			msg[size-1] = '\0';
+			read(fd, msg, size-1);
 	
 			printf("Message read, %s\n", msg);
 
