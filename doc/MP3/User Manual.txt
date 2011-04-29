@@ -9,36 +9,38 @@ gtk Configuration
 Usage
   To use our program you must have gtk+ installed on the computer.
 
-  Once you have all the libraries installed you may compile the project. 
-  Change directories into the /src for the project and then compile it:
+  Next you must compile the Desktop application
+    cd SmileTime_Desktop
     make
 
+  Finally, start the smiletime Desktop application:
+    ./smiletime HANDLE
 
-  Now start the recorder program:
-    ./recorder HANDLE
-
-  Finally, start the player:
-    ./player HANDLE
-
-  Note: The HANDLE must be the same for both programs
+  Note: Once you start the Desktop application your HANDLE will be added to
+  the nameserver list. This list is presented in the Android mobile
+  application.
   
-  The nameserver should be running at a remote IP (email group if down)
+  The nameserver should be running at a remote IP (email group if it is down)
 
   To quit, use CTRL+C.
 
 Features
-  1. Video & Audio Streaming: The recorder captures video frames from the camera and
-  displays them in the recorder window. The video resolution is 640x480.
-  Though we were able to send the packet data, we
-  were unable to get the player to successfully display the packets sent from
-  the recorder.
+  1. Desktop Video & Audio Streaming: The smiletime desktop application 
+  captures video frames from the camera and displays them in the recorder window. 
+  The video resolution is 320x240. The video and audio packets from the
+  desktop get sent over the network to the mobile application at a framerate
+  of roughly 14 fps.  
 
-  2. TCP: The video and audio packets are sent over the network using TCP.
+  2. Mobile Video & Audio Streaming: The smiletime mobile application captures
+  video frames and audio samples from the mobile phone's webcam and
+  microphone. It records video at a resolution of 320x240 at roughly 14 fps.
 
-  3. Bandwidth: When the recorder sends packets, it counts the bytes sent 
-  and every second the current outgoing bandwidth is reported to the screen.
-  When the player receives packets, it counts the bytes received and the 
-  current incoming bandwidth is reported to the screen.
+  3. Bandwidth: When the desktop application sends packets, it counts the bytes sent 
+  and every second the current outgoing bandwidth (in bits per second) is 
+  reported to the screen.  When the player receives packets, it counts the 
+  bytes received and the current incoming bandwidth is reported to the screen.
+
+  ... UPDATE MORE
 
   4. Latency: Every second, the latency between the recorder and player is
   tested and the result is reported to the screen. When the program is paused
