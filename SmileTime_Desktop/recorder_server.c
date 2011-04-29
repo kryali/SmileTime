@@ -173,6 +173,7 @@ void calculate_latency( latency_packet *l ){
       // Send the latency packet back to the mobile
       HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
       memcpy(latencypacket->message, l, sizeof(latency_packet));
+      printf("%d\n", l->time_sent);
       ywrite(latencypacket);
       destroy_HTTP_packet(latencypacket);
 

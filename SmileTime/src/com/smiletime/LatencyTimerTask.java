@@ -49,7 +49,7 @@ public class LatencyTimerTask extends TimerTask {
     payload[10] = (byte)(time_sent2 >>> 16);
     payload[9]  = (byte)(time_sent2 >>> 8);
     payload[8]  = (byte)(time_sent2);
-
+    Log.d(tag, "TEST = " + time_sent2); 
     // Send the packet
 		try { outStream.write(payload); }
     catch (IOException e) { 
