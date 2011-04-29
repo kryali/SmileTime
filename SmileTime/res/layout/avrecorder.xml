@@ -50,6 +50,7 @@
 								android:layout_width="wrap_content"
 								android:layout_height="wrap_content"
 								android:layout_marginBottom="1dp"
+								android:padding="2px"
 								android:background="#212121"
 								>
 								<TextView
@@ -69,7 +70,6 @@
 							android:id="@+id/chatInput"
 							android:layout_width="440px"
 							android:layout_height="wrap_content"
-							android:text="Send a message"
 							></EditText>
 						<Button
 							android:id="@+id/chatButton"
