@@ -22,6 +22,7 @@ char* strstp(char * str, char * stp, int * size){
 void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	if(*head == NULL){
 		list * newnode = malloc(sizeof(list));
+		memset(newnode, 0, sizeof(list));
 		newnode->name = name;
 		newnode->ip = ip;
 		newnode->port = port;
@@ -33,6 +34,7 @@ void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	list * curr = *head;
 
 	while(curr->next != NULL){
+		printf("curr->name: %s vs. name: %s\n", curr->name, name);
 		// Increment to the end of the list
 		if( strcmp(curr->name, name) == 0)
 			return; // Already exists
@@ -40,6 +42,7 @@ void list_add(list ** head, char * name, char * ip, char * port, char protocol){
 	}
 	curr->next = malloc(sizeof(list));
 	curr = curr->next;
+	memset(curr, 0, sizeof(list));
 	curr->name = name;
 	curr->port = port;
 	curr->ip = ip;
