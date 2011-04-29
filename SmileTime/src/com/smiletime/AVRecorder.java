@@ -207,9 +207,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		setContentView(R.layout.avrecorder);
 		mSurfaceView = (SurfaceView) findViewById(R.id.avsv);
 		
-		//HorizontalScrollView h = (HorizontalScrollView) findViewById(R.id.ScrollView01);
-		LinearLayout l = (LinearLayout) findViewById(R.id.llayout);
-	
+		
+
         //mSurfaceView.setMinimumHeight(mVideoHeight);
         //mSurfaceView.setMinimumWidth(mVideoWidth);
         holder = mSurfaceView.getHolder();
