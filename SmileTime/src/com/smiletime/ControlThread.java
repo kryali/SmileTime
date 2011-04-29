@@ -46,6 +46,9 @@ public class ControlThread extends Thread{
 						int sender = ((peer_sender[3] << 24) | (peer_sender[2] << 16) | (peer_sender[1] << 8 )| peer_sender[0]);
 						
 						in.read(time_packet);
+
+						long sent_time = ((time_packet[7] << 56) | (time_packet[6] << 48) | (time_packet[5] << 40 )| time_packet[4] << 32
+                            | (time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
 						
 						if( sender == 0){
 							// Desktop to Mobile
@@ -63,6 +66,18 @@ public class ControlThread extends Thread{
 							Log.d(tag, "Sending latency packet");
 						} else if (sender == 1){
 							// Mobile to Desktop
+							for(int i = 0 ; i < 8; i++){
+								if(i < 4){
+									payload[i] = packetTypeArr[i];
+								} else if( i < 8) {
+									payload[i] = peer_sender[i-4];
+                }
+              }
+              long now = System.currentTimeMillis();
+              long latency = now - sent_time;
+              memcpy(payload[8], &latency, 8);
+							out.write(payload);
+							Log.d(tag, "Sending MOBILE latency packet");
 						}
 
 						
