@@ -107,7 +107,6 @@ void * read_audio_packet(){
 	bytes_received += readbytes;
 	pthread_mutex_unlock(&bytes_received_mutex);
   rc = snd_pcm_writei(handle, audioBuffer, frames);
-
   /* EPIPE means underrun */
   if (rc == -EPIPE)
   {
