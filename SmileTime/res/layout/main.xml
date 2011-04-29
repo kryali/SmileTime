@@ -1,34 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+		android:background="#212121"
     >
     
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:orientation="horizontal"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
+	<ImageView
+		android:src="@drawable/presentation"
+		android:layout_width="300px"
+		android:layout_height="wrap_content"
+		android:id="@+id/img"
+		android:layout_gravity="left"
+		>
+	</ImageView>
+	<RelativeLayout
+		android:layout_width="300px"
+		android:layout_height="fill_parent"
 	>
-	<Button
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:id="@+id/startVideo"
-		android:text="Stream"> 
-		</Button>
-		
-	    
-	<Button
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:id="@+id/connect"
-		android:text="Users"> 
-		</Button>
-</LinearLayout>
-    
-	
-<SurfaceView
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-	android:id="@+id/sv" />    
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/startVideo"
+			android:text="Stream"
+			android:layout_toLeftOf="@id/img"> 
+			</Button>
+			
+		    
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/connect"
+			android:text="Users"
+			android:layout_toRightOf="@id/startVideo"
+			android:layout_below="@id/img"
+			> 
+			</Button>
+    </RelativeLayout>
 </LinearLayout>

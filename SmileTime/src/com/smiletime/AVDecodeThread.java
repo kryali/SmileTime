@@ -40,7 +40,7 @@ public class AVDecodeThread extends Thread {
 
 				if(packetType == 3){
 					// This is a video packet
-					Log.d("VDT", "Recieved a video packet!");
+					//Log.d("VDT", "Recieved a video packet!");
 					Message msg = new Message();
 					Bundle b = new Bundle();
 					b.putByteArray("packet", data);
