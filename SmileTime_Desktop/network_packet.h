@@ -30,9 +30,6 @@
 
 #define TEXT_MAX_SIZE 140
 
-#define PAN 0
-#define TILT 1
-
 typedef struct __HTTP_packet
 {
 	void *message;

@@ -122,24 +122,24 @@ void* sendLatencyPackets(){
 	while( stopRecording == 0)
 	{
 		if(streaming == 1){
-      // Get current time
-      ftime(&t);
-      
-      // Create the latency packet
-      latency_packet l;
-      l.packetType = LATENCY_PACKET;
-      l.peer_sender = 0; // This latency packet is for Desktop-to-Mobile latency
-      l.time_sent = (int)(t.time*1000 + t.millitm);
-      HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
-      memcpy(latencypacket->message, &l, sizeof(latency_packet));
+		  // Get current time
+		  ftime(&t);
+		  
+		  // Create the latency packet
+		  latency_packet l;
+		  l.packetType = LATENCY_PACKET;
+		  l.peer_sender = 0; // This latency packet is for Desktop-to-Mobile latency
+		  l.time_sent = (int)(t.time*1000 + t.millitm);
+		  HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
+		  memcpy(latencypacket->message, &l, sizeof(latency_packet));
 
-      // Send the latency packet to all peers
-      ywrite(latencypacket);
-      destroy_HTTP_packet(latencypacket);
+		  // Send the latency packet to all peers
+		  ywrite(latencypacket);
+		  destroy_HTTP_packet(latencypacket);
 
-      printf("[smiletime] Sent latency packet\n");
+		  printf("[smiletime] Sent latency packet\n");
 
-			sleep(10);
+				sleep(10);
 		}
 	}
 	pthread_exit(NULL);
@@ -167,6 +167,7 @@ void calculate_latency( latency_packet *l ){
   }
   else
   {
+  /*
     if( mobile_latency_packet_consumed == 0 )
     {
       // Send the latency packet back to the mobile
@@ -191,6 +192,7 @@ void calculate_latency( latency_packet *l ){
 
     //mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent - 15000 );
     //while( mtod_latency < 0 ) mtod_latency += 10; // lulz?
+  */
   }
 }
 
