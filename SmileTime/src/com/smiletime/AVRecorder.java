@@ -207,6 +207,19 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
       super.onConfigurationChanged(newConfig);
     }
 	
+    public void launchThreads(){
+
+        
+        VideoDecodeThread t = new VideoDecodeThread(handler);
+        t.start();
+        
+        ControlThread ct = new ControlThread(in, out, msgHandler);
+        ct.start();
+        
+        AudioDecodeThread at = new AudioDecodeThread();
+        at.start();
+    }
+    
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -247,11 +260,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         initAudioRecord();
         audioSend.start();
         
-        AVDecodeThread t = new AVDecodeThread(handler);
-        t.start();
-        
-        ControlThread ct = new ControlThread(in, out, msgHandler);
-        ct.start();
+        launchThreads();
         
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -537,7 +546,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			return;
 		int sendX = (int) ((distanceX/mVideoWidth) * (1000-70) + 70);
 		int sendY = (int) ((distanceY/mVideoHeight) * (750-70) + 70) * -1;
-		setText("Sending (" + sendX + ", " + sendY + ")" );
+		//setText("Sending (" + sendX + ", " + sendY + ")" );
 		int packetType = 1;
 		byte[] payload = new byte[12];
 

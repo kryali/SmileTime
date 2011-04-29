@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.TimerTask;
 
+import android.util.Log;
+
 public class LatencyTimerTask extends TimerTask {
 
 	OutputStream outStream;
+	private String tag = "LatencyTimerTask";
 	
 	public LatencyTimerTask(OutputStream out){
 		outStream = out;
