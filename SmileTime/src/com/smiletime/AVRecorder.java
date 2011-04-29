@@ -36,12 +36,16 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
-import android.widget.HorizontalScrollView;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -274,8 +278,16 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			}
 		});
 		
-		
+		Button but = (Button) findViewById(R.id.chatButton);
+		but.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
 
+				EditText e = (EditText) findViewById(R.id.chatInput);
+				insertMessage("[ME] " + e.getText().toString());
+			}
+		});
 	}
 	
 	public void hideTitleAndNotification(){
@@ -298,6 +310,12 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	        	Log.d(tag, "Displaying a video jpg");
 			} 
         }
+    };
+    
+    final Handler msgHandler = new Handler(){
+    	public void handleMessage(Message msg){
+    		
+    	}
     };
 	
 	public void initTimer(){
@@ -375,6 +393,23 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		isAudioRecording = true;
 	}
 
+	public void insertMessage(String str){
+		TableLayout tl = (TableLayout) findViewById(R.id.chatText);
+		TableRow tr = new TableRow(this);
+		TextView tv1 = new TextView(this);
+		tv1.setText(str);
+		tr.addView(tv1);
+		tr.setBackgroundColor(0xFF212121);
+		TableRow.LayoutParams lp = new TableRow.LayoutParams();
+		lp.setMargins(10, 0, 0, 0);
+		tr.setLayoutParams(lp);
+		tr.setPadding(2, 2, 2, 2);
+		tl.addView(tr);
+		
+		ScrollView sv = (ScrollView) findViewById(R.id.scrollChatView);
+		sv.scrollTo(0, 10000);
+	}
+	
 	public void serverConnect(){
 
         try {
@@ -447,6 +482,65 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		mPreviewRunning = false;
 		
 	}
+
+	public void sendLatencyPacketToDesktop() {
+    int peerSender = 1;
+    int packetType = 5; // Latency packet
+    long time_sent = System.currentTimeMillis();
+		byte[] payload = new byte[16];
+
+    // Construct the latency packet
+    payload[3] = (byte)(packetType >>> 24);
+    payload[2] = (byte)(packetType >>> 16);
+    payload[1] = (byte)(packetType >>> 8);
+    payload[0] = (byte)(packetType);
+
+    payload[7] = (byte)(peerSender >>> 24);
+    payload[6] = (byte)(peerSender >>> 16);
+    payload[5] = (byte)(peerSender >>> 8);
+    payload[4] = (byte)(peerSender);
+
+    payload[15] = (byte)(time_sent >>> 56);
+    payload[14] = (byte)(time_sent >>> 48);
+    payload[13] = (byte)(time_sent >>> 40);
+    payload[12] = (byte)(time_sent >>> 32);
+    payload[11] = (byte)(time_sent >>> 24);
+    payload[10] = (byte)(time_sent >>> 16);
+    payload[9]  = (byte)(time_sent >>> 8);
+    payload[8]  = (byte)(time_sent);
+
+    // Send the packet
+		try { out.write(payload); }
+    catch (IOException e) { }
+  }
+	public void receiveControlPackets(){
+    // Create buffer to receive the packet
+
+    // Receive packets
+    // in.read();
+
+    // Handle the packet
+    /*
+      packetType = (int) buffer;
+      switch(packetType)
+      {
+        case 5: // Latency packet
+        break;
+
+        default:
+      }
+    */
+  }
+	public void receiveLatencyPacketFromDesktop(){
+    // Receive the packet
+    byte[] payload = new byte[16];
+    in.read(payload);
+
+    // ... and send the packet immediately back to the Desktop
+		try { out.write(payload); }
+    catch (IOException e) { }
+    
+  }
 	
 	public void sendControl(float distanceX, float distanceY){
 		if(!isControlConnected)

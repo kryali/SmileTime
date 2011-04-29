@@ -36,14 +36,16 @@
 					android:layout_height="wrap_content" 
 					android:id="@id/content" android:background="#FF212121">
 					<ScrollView
-							android:id="@+id/chatText"
+					
+							android:id="@+id/scrollChatView"
 							android:layout_width="fill_parent"
-							android:layout_height="wrap_content"
+							android:layout_height="200px"
 							android:layout_margin="10px"
 							>
 						<TableLayout
+							android:id="@+id/chatText"
 							android:layout_width="fill_parent"
-							android:layout_height="320px"
+							android:layout_height="100px"
 							android:orientation="vertical"
 							android:background="#cccccc">
 							<TableRow
