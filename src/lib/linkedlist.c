@@ -1,12 +1,36 @@
 list * list_find(list * head, char * name){
-	printf("%d\n", head);
+	//printf("%d\n", head);
 	while(head != NULL){
 		if( strcmp(head->name, name) == 0){
 			return head;
 		}
 		head = head->next;
 	}
-	return "NULL";
+
+	return NULL;
+}
+
+list* list_remove(list * head, list * element){
+  list* prev;
+  prev = NULL;
+
+	while(head != NULL){
+		if( head == element ){
+      if( prev != NULL )
+      {
+        prev->next = head->next;
+        free(head);
+      }
+      else
+        free(head);
+
+      return head;
+		}
+
+    prev = head;
+		head = head->next;
+	}
+	return NULL;
 }
 
 

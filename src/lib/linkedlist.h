@@ -23,6 +23,8 @@ void list_destroy(list ** head);
 void list_print(list * head);
 char* strstp(char * str, char * stp, int * size);
 
+list *list_remove(list * head, list * element);
+
 
 #include "linkedlist.c"
 #endif

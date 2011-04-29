@@ -18,7 +18,6 @@ void populate(){
 	list_add(&iplist, "Batman", "127.0.0.4", "1337", UDP);
 }
 
-
 void init_server(){
 
 	// Open up a socket
@@ -61,7 +60,7 @@ void init_server(){
 
 void message_listen(){
 	struct sockaddr_storage their_addr;
-	int addr_size = sizeof(struct sockaddr_storage);
+	unsigned int addr_size = sizeof(struct sockaddr_storage);
 	int acceptfd;
 	while(1){
 		memset(&their_addr, 0, sizeof(struct sockaddr_storage));
@@ -93,6 +92,7 @@ void add_server(char * msg){
 
 	//printf("ADDING \n");
 	list_add(&iplist, name, ip, port,protocol);
+  server_list_prune(iplist);
 	//printf("DONE ADDING LLUZ \n");
 	list_print(iplist);
 }
@@ -112,6 +112,26 @@ char * nameServerMsg(char * name, char * ip, char * port, char protocol, int * s
     strcat(msg, &protocol);
     msg[*size-1] = '\0';
     return msg;
+}
+
+void server_list_prune(list *head) {
+  int i;
+  list *removed;
+  list *new_head;
+	while(head != NULL){
+    for( i=0; i < strlen(head->name); i++ ) 
+    {
+      if( head->name[i] < 48 || head->name[i] > 122 )
+      {
+        new_head = head->next;
+        removed = list_remove(iplist, head);
+        if( removed == iplist )
+          iplist = new_head;
+        break;
+      }
+    }
+		head = head->next;
+	}
 }
 
 char * server_find(char * name){

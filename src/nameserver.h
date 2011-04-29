@@ -43,6 +43,7 @@ char * server_find(char * name);
 char * nameServerMsg(char * name, char * ip, char * port, char protocol, int * size);
 void populate();
 //char* strstp(char * str, char * stp, int * size);
+void server_list_prune(list *head);
 
 int nameserver_socket;
 list * iplist;
