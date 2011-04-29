@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -70,6 +71,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private String tag = "AVR";
 	private int bufferSize = 4160;
 	private boolean isControlConnected = false;
+	private long lastTime = -1; 
+	private int frames;
 	
 
 	private boolean shouldSendImage = true;
@@ -292,6 +295,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 				String s = e.getText().toString();
 				insertMessage("ME>" + s);
 				byte[] message = s.getBytes();
+				
+				e.setText("");
 				int packetType = 4;
 				payload[0] = (byte) packetType;
 				payload[1] = (byte) (packetType >>> 8);
@@ -320,7 +325,19 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         public void handleMessage(Message msg) {
         	Bundle b = msg.getData();
         	byte[] packet = b.getByteArray("packet");
-
+        	long currTime = System.currentTimeMillis();
+        	int sSinceLast = (int) ((currTime - lastTime)/(float)1000);
+        	if( lastTime == -1){
+        		lastTime = currTime;
+        	} else if(sSinceLast > 3) {
+        		// If it's been three seconds since the last time, update the fps
+        		TextView v = (TextView) findViewById(R.id.fps);
+        		int fps = (int) (frames/(float)sSinceLast);
+        		v.setText("FPS: " + fps);
+        		frames = 0;
+        		lastTime = currTime;
+        	}
+        	
 			int packetType = ((packet[3] << 24) | (packet[2] << 16) | (packet[1] << 8 )| packet[0]);
 			if( packetType == 3){
 	        	ImageView v = (ImageView) findViewById(R.id.image01);
@@ -329,6 +346,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	        	Bitmap bm = BitmapFactory.decodeByteArray(packet, 12, packet.length-12);
 	        	v.setImageBitmap(bm);
 	        	Log.d(tag, "Displaying a video jpg");
+	        	frames++;
 			} 
         }
     };

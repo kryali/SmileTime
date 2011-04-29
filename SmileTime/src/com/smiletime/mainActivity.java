@@ -7,6 +7,8 @@ import java.net.UnknownHostException;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,13 +29,17 @@ public class mainActivity extends Activity{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.main);
-        
-        
-        connectToServer();
         setUpButtons();
-                
     }
+    
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+      super.onConfigurationChanged(newConfig);
+    }
+	
     
     public void connectToServer(){
 
