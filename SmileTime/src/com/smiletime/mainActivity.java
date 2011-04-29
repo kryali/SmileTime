@@ -1,23 +1,19 @@
 package com.smiletime;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.media.MediaRecorder;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 public class mainActivity extends Activity{
     /** Called when the activity is first created. */
@@ -27,13 +23,17 @@ public class mainActivity extends Activity{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.main);
-        
-        
-        connectToServer();
         setUpButtons();
-                
     }
+    
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+      super.onConfigurationChanged(newConfig);
+    }
+	
     
     public void connectToServer(){
 
@@ -50,7 +50,7 @@ public class mainActivity extends Activity{
     }
     
     public void setUpButtons(){
-    	Button connect = (Button) findViewById(R.id.connect);
+    	ImageButton connect = (ImageButton) findViewById(R.id.connect);
     	connect.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -61,7 +61,7 @@ public class mainActivity extends Activity{
 		});
     	
 
-        Button videoRecord = (Button) findViewById(R.id.startVideo);
+        ImageButton videoRecord = (ImageButton) findViewById(R.id.startVideo);
 
         videoRecord.setOnClickListener(new OnClickListener() {
 			

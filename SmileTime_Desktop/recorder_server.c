@@ -1,5 +1,6 @@
 #include "recorder_server.h"
 
+int mobile_latency_packet_consumed;
 
 void listen_peer_connections( int port){
 	recorder_control_socket = listen_on_port(port, SOCK_STREAM);
@@ -162,18 +163,30 @@ void calculate_latency( latency_packet *l ){
     // Latency is roundtrip / 2
     dtom_latency = ( (now.time*1000 + now.millitm) - l->time_sent ) / 2;
 
-    mtod_latency = (now.time*1000 + now.millitm);
-
     // Print the Desktop-to-Mobile latency
     printf("[%ds] Desktop-to-Mobile Latency: %lums\n", seconds_elapsed, dtom_latency);
   }
   else
   {
-    // Print the Mobile-to-Desktop latency
-    mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent - 1500 );
-    while( mtod_latency < 0 ) mtod_latency += 10; // lulz?
-    printf("Peer sender: %d\n", l->peer_sender);
-    printf("[%ds] Mobile-to-Desktop Latency: %lums\n", seconds_elapsed, mtod_latency);
+    if( mobile_latency_packet_consumed == 0 )
+    {
+      // Send the latency packet back to the mobile
+      HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
+      memcpy(latencypacket->message, l, sizeof(latency_packet));
+      ywrite(latencypacket);
+      destroy_HTTP_packet(latencypacket);
+
+      mobile_latency_packet_consumed = 1;
+    }
+    else
+    {
+      // Print the Mobile-to-Desktop latency
+      printf("[%ds] Mobile-to-Desktop Latency: %lums\n", seconds_elapsed, l->time_sent);
+      mobile_latency_packet_consumed = 0;
+    }
+
+    //mtod_latency = ( (now.time*1000 + now.millitm) - l->time_sent - 15000 );
+    //while( mtod_latency < 0 ) mtod_latency += 10; // lulz?
   }
 }
 

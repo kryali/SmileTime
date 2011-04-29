@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -70,6 +71,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private String tag = "AVR";
 	private int bufferSize = 4160;
 	private boolean isControlConnected = false;
+	private long lastTime = -1; 
+	private int frames;
 	
 
 	private boolean shouldSendImage = true;
@@ -247,6 +250,9 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         AVDecodeThread t = new AVDecodeThread(handler);
         t.start();
         
+        ControlThread ct = new ControlThread(in, out, msgHandler);
+        ct.start();
+        
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
@@ -280,12 +286,32 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		
 		Button but = (Button) findViewById(R.id.chatButton);
 		but.setOnClickListener(new OnClickListener() {
-			
+
+			byte[] payload = new byte[144];
 			@Override
 			public void onClick(View v) {
 
 				EditText e = (EditText) findViewById(R.id.chatInput);
-				insertMessage("[ME] " + e.getText().toString());
+				String s = e.getText().toString();
+				insertMessage("ME>" + s);
+				byte[] message = s.getBytes();
+				
+				e.setText("");
+				int packetType = 4;
+				payload[0] = (byte) packetType;
+				payload[1] = (byte) (packetType >>> 8);
+				payload[2] = (byte) (packetType >>> 16);
+				payload[3] = (byte) (packetType >>> 24);
+				for(int i = 0; i < message.length; i++){
+					payload[i+4] = message[i];
+				}
+				payload[message.length+4] = '\0';
+				try {
+					out.write(payload);
+				} catch (IOException e1) {
+					
+					e.toString();
+				}
 			}
 		});
 	}
@@ -299,7 +325,19 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         public void handleMessage(Message msg) {
         	Bundle b = msg.getData();
         	byte[] packet = b.getByteArray("packet");
-
+        	long currTime = System.currentTimeMillis();
+        	int sSinceLast = (int) ((currTime - lastTime)/(float)1000);
+        	if( lastTime == -1){
+        		lastTime = currTime;
+        	} else if(sSinceLast > 3) {
+        		// If it's been three seconds since the last time, update the fps
+        		TextView v = (TextView) findViewById(R.id.fps);
+        		int fps = (int) (frames/(float)sSinceLast);
+        		v.setText("FPS: " + fps);
+        		frames = 0;
+        		lastTime = currTime;
+        	}
+        	
 			int packetType = ((packet[3] << 24) | (packet[2] << 16) | (packet[1] << 8 )| packet[0]);
 			if( packetType == 3){
 	        	ImageView v = (ImageView) findViewById(R.id.image01);
@@ -308,13 +346,18 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	        	Bitmap bm = BitmapFactory.decodeByteArray(packet, 12, packet.length-12);
 	        	v.setImageBitmap(bm);
 	        	Log.d(tag, "Displaying a video jpg");
+	        	frames++;
 			} 
         }
     };
     
     final Handler msgHandler = new Handler(){
     	public void handleMessage(Message msg){
-    		
+
+        	Bundle b = msg.getData();
+        	byte[] packet = b.getByteArray("message");
+        	String str = new String(packet);
+        	insertMessage("PEER:0> " + str);
     	}
     };
 	
@@ -488,39 +531,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		mPreviewRunning = false;
 		
 	}
-	public void receiveControlPackets(){
-    // Create buffer to receive the packet
-
-    // Receive packets
-    // in.read();
-
-    // Handle the packet
-    /*
-      packetType = (int) buffer;
-      switch(packetType)
-      {
-        case 5: // Latency packet
-        break;
-
-        default:
-      }
-    */
-  }
-	public void receiveLatencyPacketFromDesktop(){
-    // Receive the packet
-    byte[] payload = new byte[16];
-    try {
-		in.read(payload);
-	} catch (IOException e1) {
-		// TODO Auto-generated catch block
-		setText("sending failed latency send");
-	}
-
-    // ... and send the packet immediately back to the Desktop
-		try { out.write(payload); }
-    catch (IOException e) { }
-    
-  }
 	
 	public void sendControl(float distanceX, float distanceY){
 		if(!isControlConnected)
