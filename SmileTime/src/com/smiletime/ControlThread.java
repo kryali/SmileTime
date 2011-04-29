@@ -43,7 +43,7 @@ public class ControlThread extends Thread{
 				int packetType = byteToInt(packetTypeArr, 0);
 				switch (packetType) {
 				case latencyPacketType:
-					Log.d(tag,"Got a latency packet");
+					//Log.d(tag,"Got a latency packet");
 					in.read(peer_sender);
 					int sender = ((peer_sender[3] << 24) | (peer_sender[2] << 16) | (peer_sender[1] << 8 )| peer_sender[0]);
 
@@ -67,7 +67,7 @@ public class ControlThread extends Thread{
 								}
 							}
 								out.write(payload);
-								Log.d(tag, "Sending latency packet");
+								//Log.d(tag, "Sending latency packet");
 						} else if (sender == 1){
 							// Mobile to Desktop
 							for(int i = 0 ; i < 8; i++){
@@ -80,11 +80,11 @@ public class ControlThread extends Thread{
               sent_time = ((time_packet[3] << 24) | (time_packet[2] << 16) | (time_packet[1] << 8 )| time_packet[0]);
               long now = System.currentTimeMillis();
               int now2 = (int) (now%Integer.MAX_VALUE);//breakpoint here
-							Log.d(tag, "NOW = " + now);
-							Log.d(tag, "NOW = " + now2);
-							Log.d(tag, "SENT_TIME " + sent_time);
+							//Log.d(tag, "NOW = " + now);
+							//Log.d(tag, "NOW = " + now2);
+							//Log.d(tag, "SENT_TIME " + sent_time);
               int latency = now2 - sent_time;
-							Log.d(tag, "Sending MOBILE latency packet " + latency);
+							//Log.d(tag, "Sending MOBILE latency packet " + latency);
 
               // Create the payload and send
               payload[8] = (byte)(latency);
@@ -100,12 +100,12 @@ public class ControlThread extends Thread{
 							out.write(payload);
 						}
             else
-							Log.d(tag, "Sender not 0 or 1 ... instead its " + sender);
+							//Log.d(tag, "Sender not 0 or 1 ... instead its " + sender);
 
 
 					break;
 				case messagePacketType:
-					Log.d(tag,"Got a message packet");
+					//Log.d(tag,"Got a message packet");
 					in.read(message_packet);
 
 					Message msg = new Message();

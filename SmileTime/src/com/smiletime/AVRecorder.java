@@ -10,12 +10,14 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -73,6 +75,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private boolean isControlConnected = false;
 	private long lastTime = -1; 
 	private int frames;
+	private Semaphore jpgMut;
+	private Semaphore frameMut;
 	
 
 	private boolean shouldSendImage = true;
@@ -86,6 +90,145 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	private InputStream in;
 	private Socket nameserverClient;
 	
+	public void createAlert(){
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setTitle("Enter Username");
+		alert.setMessage("Create your username");
+
+		// Set an EditText view to get user input 
+		final EditText input = new EditText(this);
+		alert.setView(input);
+
+		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int whichButton) {
+		  String value = input.getText().toString();
+		  // Do something with value!
+		  }
+		});
+
+		alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+		  public void onClick(DialogInterface dialog, int whichButton) {
+		    // Canceled.
+		  }
+		});
+
+		alert.show();
+	}
+	
+
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+		hideTitleAndNotification();
+		
+		setContentView(R.layout.avrecorder);
+		mSurfaceView = (SurfaceView) findViewById(R.id.avsv);
+		
+
+        //mSurfaceView.setMinimumHeight(mVideoHeight);
+        //mSurfaceView.setMinimumWidth(mVideoWidth);
+        holder = mSurfaceView.getHolder();
+        holder.setFixedSize(mVideoWidth, mVideoHeight);
+        Surface s = holder.getSurface();
+        s.setSize(mVideoWidth, mVideoHeight);
+        
+        if(frameRate != -1)
+        	frameDelay = (int)(((float)1/ (float)frameRate) * 1000);
+        
+        //initAudio();
+        
+        boolean launchThreads = true;
+
+    	Intent i = getIntent();
+    	Bundle b = i.getExtras();
+    	try {
+    		String name = b.getString("name");
+    		//setText(name);
+        	fetchUser(name);
+        } catch (Exception e){
+        	launchThreads = false;
+    		createAlert();
+    		 // do nothing
+        }
+
+        jpgMut = new Semaphore(1);
+        frameMut = new Semaphore(1);
+        
+        main = new Handler();
+        initAudioRecord();
+        audioSend.start();
+        
+        if(launchThreads){
+            serverConnect();
+        	launchThreads();
+            initTimer();
+            initLatencyTimer();
+        }
+        holder.addCallback(this);
+        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+		ImageView v = (ImageView) findViewById(R.id.image01);
+		v.setOnTouchListener(new OnTouchListener() {
+			
+			float firstX;
+			float firstY;
+			float tolerance = 60;
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				// TODO Auto-generated method stub
+				// int a = event.getAction();
+				if(event.getAction() == MotionEvent.ACTION_DOWN){
+					//setText("Touch down (" + event.getX() + ", " + event.getY() + ")");
+					firstX = event.getX();
+					firstY = event.getY();
+				}
+				else if( event.getAction() == MotionEvent.ACTION_UP){
+					float distanceX =  (event.getX() - firstX);
+					float distanceY =    (event.getY()-firstY);
+					//setText("Touch up (" +distanceX + ", " +  distanceY + ")");
+					if( Math.abs(distanceY) > tolerance || Math.abs(distanceX) > tolerance){
+						sendControl(distanceX, distanceY);
+					}
+				}
+				return true;
+			}
+		});
+		
+		Button but = (Button) findViewById(R.id.chatButton);
+		but.setOnClickListener(new OnClickListener() {
+
+			byte[] payload = new byte[144];
+			@Override
+			public void onClick(View v) {
+
+				EditText e = (EditText) findViewById(R.id.chatInput);
+				String s = e.getText().toString();
+				insertMessage("ME>" + s);
+				byte[] message = s.getBytes();
+				
+				e.setText("");
+				int packetType = 4;
+				payload[0] = (byte) packetType;
+				payload[1] = (byte) (packetType >>> 8);
+				payload[2] = (byte) (packetType >>> 16);
+				payload[3] = (byte) (packetType >>> 24);
+				for(int i = 0; i < message.length; i++){
+					payload[i+4] = message[i];
+				}
+				payload[message.length+4] = '\0';
+				try {
+					out.write(payload);
+				} catch (IOException e1) {
+					
+					e.toString();
+				}
+			}
+		});
+	}
 
 	
 	Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
@@ -197,8 +340,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     		//in.read();
     	} catch (Exception e) {
     		e.printStackTrace();
-        	TextView connect = (TextView) findViewById(R.id.status);
-        	connect.setText("[FAIL]" + e);
 		}
 
     }
@@ -211,7 +352,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     public void launchThreads(){
 
         
-        VideoDecodeThread t = new VideoDecodeThread(handler);
+        VideoDecodeThread t = new VideoDecodeThread(handler, jpgMut);
         t.start();
         
         ControlThread ct = new ControlThread(in, out, msgHandler);
@@ -220,112 +361,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
         AudioDecodeThread at = new AudioDecodeThread();
         at.start();
     }
-    
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-		hideTitleAndNotification();
-		setContentView(R.layout.avrecorder);
-		mSurfaceView = (SurfaceView) findViewById(R.id.avsv);
-		
-		
-
-        //mSurfaceView.setMinimumHeight(mVideoHeight);
-        //mSurfaceView.setMinimumWidth(mVideoWidth);
-        holder = mSurfaceView.getHolder();
-        holder.setFixedSize(mVideoWidth, mVideoHeight);
-        Surface s = holder.getSurface();
-        s.setSize(mVideoWidth, mVideoHeight);
-        
-        if(frameRate != -1)
-        	frameDelay = (int)(((float)1/ (float)frameRate) * 1000);
-        
-        //initAudio();
-        
-
-    	Intent i = getIntent();
-    	Bundle b = i.getExtras();
-    	try {
-    		String name = b.getString("name");
-    		//setText(name);
-        	fetchUser(name);
-        } catch (Exception e){
-        	; // do nothing
-        }
-
-        serverConnect();
-        initTimer();
-        initLatencyTimer();
-        main = new Handler();
-        initAudioRecord();
-        audioSend.start();
-        
-        launchThreads();
-        
-        holder.addCallback(this);
-        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-
-		ImageView v = (ImageView) findViewById(R.id.image01);
-		v.setOnTouchListener(new OnTouchListener() {
-			
-			float firstX;
-			float firstY;
-			float tolerance = 60;
-			
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				// TODO Auto-generated method stub
-				// int a = event.getAction();
-				if(event.getAction() == MotionEvent.ACTION_DOWN){
-					//setText("Touch down (" + event.getX() + ", " + event.getY() + ")");
-					firstX = event.getX();
-					firstY = event.getY();
-				}
-				else if( event.getAction() == MotionEvent.ACTION_UP){
-					float distanceX =  (event.getX() - firstX);
-					float distanceY =    (event.getY()-firstY);
-					//setText("Touch up (" +distanceX + ", " +  distanceY + ")");
-					if( Math.abs(distanceY) > tolerance || Math.abs(distanceX) > tolerance){
-						sendControl(distanceX, distanceY);
-					}
-				}
-				return true;
-			}
-		});
-		
-		Button but = (Button) findViewById(R.id.chatButton);
-		but.setOnClickListener(new OnClickListener() {
-
-			byte[] payload = new byte[144];
-			@Override
-			public void onClick(View v) {
-
-				EditText e = (EditText) findViewById(R.id.chatInput);
-				String s = e.getText().toString();
-				insertMessage("ME>" + s);
-				byte[] message = s.getBytes();
-				
-				e.setText("");
-				int packetType = 4;
-				payload[0] = (byte) packetType;
-				payload[1] = (byte) (packetType >>> 8);
-				payload[2] = (byte) (packetType >>> 16);
-				payload[3] = (byte) (packetType >>> 24);
-				for(int i = 0; i < message.length; i++){
-					payload[i+4] = message[i];
-				}
-				payload[message.length+4] = '\0';
-				try {
-					out.write(payload);
-				} catch (IOException e1) {
-					
-					e.toString();
-				}
-			}
-		});
-	}
-	
+    	
 	public void hideTitleAndNotification(){
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -333,30 +369,50 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 	
 	final Handler handler = new Handler() {
         public void handleMessage(Message msg) {
+        	
         	Bundle b = msg.getData();
         	byte[] packet = b.getByteArray("packet");
         	long currTime = System.currentTimeMillis();
-        	int sSinceLast = (int) ((currTime - lastTime)/(float)1000);
+        	float sSinceLast = ((currTime - lastTime)/(float)1000);
         	if( lastTime == -1){
         		lastTime = currTime;
         	} else if(sSinceLast > 3) {
         		// If it's been three seconds since the last time, update the fps
         		TextView v = (TextView) findViewById(R.id.fps);
         		int fps = (int) (frames/(float)sSinceLast);
-        		v.setText("FPS: " + fps);
+        		try {
+					frameMut.acquire();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         		frames = 0;
+        		frameMut.release();
         		lastTime = currTime;
         	}
         	
 			int packetType = ((packet[3] << 24) | (packet[2] << 16) | (packet[1] << 8 )| packet[0]);
 			if( packetType == 3){
 	        	ImageView v = (ImageView) findViewById(R.id.image01);
-	        	Resources res = getResources();
-	        	//Bitmap bm = BitmapFactory.decodeResource(res, R.drawable.kiran);
 	        	Bitmap bm = BitmapFactory.decodeByteArray(packet, 12, packet.length-12);
+	        	try {
+					jpgMut.acquire();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	        	v.setImageBitmap(bm);
+	        	v.invalidate();
+	        	jpgMut.release();
 	        	Log.d(tag, "Displaying a video jpg");
+	        	try {
+					frameMut.acquire();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	        	frames++;
+	        	frameMut.release();
 			} 
         }
     };
@@ -377,7 +433,6 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 			
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				shouldSendImage = true;
 				//if(mPreviewRunning)
 					//mCamera.takePicture(null, null, mPictureCallback);
@@ -392,6 +447,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 		t.schedule(task, 10000, 10000);
 	}
 
+	private int udpAudioCounter=0;
+	
     private Thread audioSend= new Thread(){
     	public void run(){
 
@@ -402,6 +459,8 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
 						DatagramSocket s= new DatagramSocket();				
 						DatagramPacket pkt = new DatagramPacket(audioBuffer, audioBuffer.length, new InetSocketAddress(serverIP, 1338));
 						s.send(pkt);
+						udpAudioCounter++;
+						Log.d("counter", "#packets: "+ udpAudioCounter + "readFromDev: " + bufferReadResult + " bfferLen:" + audioBuffer.length);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -416,6 +475,7 @@ public class AVRecorder extends Activity implements SurfaceHolder.Callback {
     		}
     	}
     };
+    
 	public void initAudioRecord(){
 		
 		try{
