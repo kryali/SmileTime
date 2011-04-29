@@ -130,7 +130,7 @@ void* sendLatencyPackets(){
       latency_packet l;
       l.packetType = LATENCY_PACKET;
       l.peer_sender = 0; // This latency packet is for Desktop-to-Mobile latency
-      l.time_sent = t.time*1000 + t.millitm;
+      l.time_sent = (int)(t.time*1000 + t.millitm);
       HTTP_packet* latencypacket = create_HTTP_packet(sizeof(latency_packet));
       memcpy(latencypacket->message, &l, sizeof(latency_packet));
 

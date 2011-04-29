@@ -31,9 +31,11 @@ public class ControlThread extends Thread{
 	public void run(){
 		byte[] packetTypeArr = new byte[4];
 		byte[] peer_sender = new byte[4];
-		byte[] time_packet = new byte[8];
+		//byte[] time_packet = new byte[8];
+		byte[] time_packet = new byte[4];
 		byte[] message_packet = new byte[140];
-		byte[] payload = new byte[16];
+		//byte[] payload = new byte[16];
+		byte[] payload = new byte[12];
 
 		while(true){
 			try {
