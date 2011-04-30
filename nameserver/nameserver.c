@@ -134,6 +134,7 @@ void server_list_prune(list *head) {
 
 char * server_find(char * name){
 	int size = 0;
+  server_list_prune(iplist);
 	list * f = list_find(iplist, name);
 	if( strcmp(f->name, "NULL") == 0){
 		return "(null)";
@@ -150,6 +151,9 @@ void handle_connection(int fd){
 	}
 	int size = 0;
 	char * msg = NULL;
+
+  server_list_prune(iplist);
+
 	switch(headerCode){
 		case FIND:
 			printf("[NAMESERVER] FIND received!\n");
