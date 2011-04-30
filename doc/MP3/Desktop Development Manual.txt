@@ -1,0 +1,18 @@
+smiletime!
+
+About:
+	Smiletime is a desktop to mobile and mobile to mobile streamer for audio, video, and text messages.
+
+Program Flow:
+	Smiletime starts by initializing Audio/Video recording/playing, as well as an SDL window to display captured video and a GTK window to act as a chatbox.
+After initialization, smiletime connects to a hard coded nameserver location.  This allows all users to contact the same server so that 
+
+	Video recorder captures 320x240 MJPG images from dev/video0 using V4L2.  These MJPG frames are converted to JPEG images before being sent as av_packets through the network.
+	Video player takes captured MJPG and JPEG images and converts them to YUV422 images and displays them on the the SDL window.
+	
+	Audio recorder captures uncompressed audio at a sample rate of 11025 from the microphone using ALSA.
+	Audio player takes uncompressed audio and plays it to the speakers using ALSA.
+
+	The keyboard thread takes input from the arrow keys and pans and tilts the camera.
+
+	The chat thread 
