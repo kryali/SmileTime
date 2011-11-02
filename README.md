@@ -1,8 +1,8 @@
 Smiletime is a multi-platform video chat system. It is available for Android and Linux. 
 
-We entered it in our Multimedia systems class competition and won 1st prize :)
+We entered it in our Multimedia systems class competition and won 1st prize.
 The code is presently in need of a lot of refactoring and cleaning up. 
-Hope to be able to do this soon if time allows :).
+Hope to be able to do this soon if time allows.  :)
 
 -MIT License-
 
